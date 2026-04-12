@@ -1,0 +1,44 @@
+@page "/client"
+@model Elearning.Web.Pages.Client.IndexModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<section class="section-panel client-shell">
+    <div class="portal-header">
+        <span class="portal-pill">@L["Menu:Client"]</span>
+        <h1>@L["Client:HeroTitle"]</h1>
+        <p class="lead">@L["Client:HeroSubtitle"]</p>
+        <div class="client-toolbar">
+            <div class="client-user">
+                <span class="text-muted">@L["Auth:SignedInAs"]</span>
+                <strong>@Model.UserName</strong>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-outline-secondary" href="/">@L["Auth:BackHome"]</a>
+                <a class="btn btn-danger" href="/client/logout">@L["Auth:Logout"]</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-4 col-md-6">
+            <article class="portal-panel">
+                <h2>@L["Client:Feature:Catalog"]</h2>
+                <p>@L["Client:Section:Dashboard"]</p>
+            </article>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <article class="portal-panel">
+                <h2>@L["Client:Feature:LearningPath"]</h2>
+                <p>@L["Client:Section:Enrollment"]</p>
+            </article>
+        </div>
+        <div class="col-xl-4 col-md-12">
+            <article class="portal-panel">
+                <h2>@L["Client:Feature:Progress"]</h2>
+                <p>@L["Client:Section:Profile"]</p>
+            </article>
+        </div>
+    </div>
+</section>

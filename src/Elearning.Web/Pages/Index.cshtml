@@ -1,0 +1,88 @@
+@page "/"
+@model Elearning.Web.Pages.IndexModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<section class="learning-shell">
+    <div class="landing-auth-bar">
+        @if (Model.IsAuthenticated)
+        {
+            <div class="landing-auth-card">
+                <span class="text-muted">@L["Auth:SignedInAs"]</span>
+                <strong>@Model.UserName</strong>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-sm btn-primary" href="/client">@L["Auth:OpenClient"]</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="/client/logout">@L["Auth:Logout"]</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="landing-auth-card">
+                <span class="text-muted">@L["Auth:GuestMessage"]</span>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-sm btn-primary" href="/login?returnUrl=%2Fclient">@L["Auth:Login"]</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="/admin">@L["Auth:OpenAdmin"]</a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="learning-hero">
+        <div class="learning-copy">
+            <span class="learning-eyebrow">@L["Landing:Eyebrow"]</span>
+            <h1>@L["Landing:Title"]</h1>
+            <p class="lead">@L["Landing:Subtitle"]</p>
+            <div class="learning-actions">
+                <a class="btn btn-primary" href="/client">@L["Landing:OpenClient"]</a>
+                <a class="btn btn-outline-primary" href="/admin">@L["Landing:OpenAdmin"]</a>
+            </div>
+        </div>
+
+        <div class="learning-hero-card">
+            <div class="learning-stat">
+                <strong>@L["Landing:ClientCardTitle"]</strong>
+                <span>@L["Landing:ClientCardDescription"]</span>
+            </div>
+            <div class="learning-stat">
+                <strong>@L["Landing:AdminCardTitle"]</strong>
+                <span>@L["Landing:AdminCardDescription"]</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-6">
+            <article class="portal-card portal-card-client">
+                <div class="portal-card-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h2>@L["Client:Title"]</h2>
+                <p>@L["Client:Description"]</p>
+                <ul class="portal-list">
+                    <li>@L["Client:Feature:Catalog"]</li>
+                    <li>@L["Client:Feature:LearningPath"]</li>
+                    <li>@L["Client:Feature:Progress"]</li>
+                </ul>
+                <a class="btn btn-primary" href="/client">@L["Client:OpenPortal"]</a>
+            </article>
+        </div>
+
+        <div class="col-xl-6">
+            <article class="portal-card portal-card-admin">
+                <div class="portal-card-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <h2>@L["Admin:Title"]</h2>
+                <p>@L["Admin:Description"]</p>
+                <ul class="portal-list">
+                    <li>@L["Admin:Feature:Courses"]</li>
+                    <li>@L["Admin:Feature:Users"]</li>
+                    <li>@L["Admin:Feature:Reports"]</li>
+                </ul>
+                <a class="btn btn-outline-primary" href="/admin">@L["Admin:OpenPortal"]</a>
+            </article>
+        </div>
+    </div>
+</section>

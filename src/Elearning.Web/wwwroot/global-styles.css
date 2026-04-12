@@ -1,0 +1,24 @@
+:root .lpx-brand-logo {
+    --lpx-logo: url('/images/logo/leptonx/logo-light.png');
+    --lpx-logo-icon: url('/images/logo/leptonx/logo-light-thumbnail.png');
+}
+
+:root {
+    --elearning-surface: #f8fafc;
+    --elearning-border: rgba(15, 23, 42, 0.08);
+    --elearning-text: #0f172a;
+    --elearning-muted: #475569;
+}
+
+body {
+    background:
+        radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 20%),
+        linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%);
+    color: var(--elearning-text);
+}
+
+.card,
+.portal-card,
+.section-panel {
+    border-color: var(--elearning-border);
+}

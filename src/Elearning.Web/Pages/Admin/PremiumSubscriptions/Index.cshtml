@@ -1,0 +1,163 @@
+@page "/admin/premiumsubscriptions"
+@model Elearning.Web.Pages.Admin.PremiumSubscriptions.IndexModel
+@using Elearning.Localization
+@using Elearning.PremiumSubscriptions
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin">@L["PremiumSubscriptions:BackToAdmin"]</a>
+    <h1 class="h3 mb-1">@L["PremiumSubscriptions:ListTitle"]</h1>
+    <p class="text-muted mb-0">@L["PremiumSubscriptions:ListSubtitle"]</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <span>@L["PremiumSubscriptions:Stats:Total"]</span>
+                <div class="fs-2 fw-bold">@Model.TotalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <span>@L["PremiumSubscriptions:Stats:Active"]</span>
+                <div class="fs-2 fw-bold">@Model.ActiveCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <span>@L["PremiumSubscriptions:Stats:Expired"]</span>
+                <div class="fs-2 fw-bold">@Model.ExpiredCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <span>@L["PremiumSubscriptions:Stats:Cancelled"]</span>
+                <div class="fs-2 fw-bold">@Model.CancelledCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <span class="fw-semibold">@L["PremiumSubscriptions:Title"]</span>
+        @if (Model.CanCreate)
+        {
+            <a class="btn btn-primary btn-sm" href="/admin/premiumsubscriptions/create">@L["PremiumSubscriptions:Create"]</a>
+        }
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-lg-6">
+                <input asp-for="Filter" class="form-control" placeholder="@L["PremiumSubscriptions:SearchPlaceholder"]" />
+            </div>
+            <div class="col-lg-3">
+                <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select>
+            </div>
+            <div class="col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">@L["PremiumSubscriptions:Search"]</button>
+                <a class="btn btn-outline-secondary" href="/admin/premiumsubscriptions">@L["PremiumSubscriptions:Reset"]</a>
+            </div>
+        </form>
+
+        @if (Model.Subscriptions.Count == 0)
+        {
+            <div class="alert alert-light border">@L["PremiumSubscriptions:NoItems"]</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>@L["PremiumSubscriptions:User"]</th>
+                            <th>@L["PremiumSubscriptions:Plan"]</th>
+                            <th>@L["PremiumSubscriptions:ActivatedTime"]</th>
+                            <th>@L["PremiumSubscriptions:ActivationNumber"]</th>
+                            <th>@L["PremiumSubscriptions:EndTime"]</th>
+                            <th>@L["PremiumSubscriptions:RemainingDays"]</th>
+                            <th>@L["PremiumSubscriptions:Status"]</th>
+                            <th class="text-end">@L["PremiumSubscriptions:Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var subscription in Model.Subscriptions)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@subscription.UserName</strong>
+                                    <div class="text-muted small">@subscription.Email</div>
+                                </td>
+                                <td>@subscription.PremiumPlanName</td>
+                                <td>@subscription.ActivatedTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@subscription.ActivationNumber</td>
+                                <td>@subscription.EndTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@subscription.RemainingDays</td>
+                                <td>
+                                    <span class="badge @GetStatusBadge(subscription.Status)">
+                                        @L[$"Enum:PremiumSubscriptionStatus:{subscription.Status}"]
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a class="btn btn-sm btn-outline-primary" href="/admin/premiumsubscriptions/edit/@subscription.Id">@L["PremiumSubscriptions:Edit"]</a>
+                                        @if (Model.CanUpdate && subscription.IsCurrentlyActive)
+                                        {
+                                            <form method="post" asp-page-handler="Extend" asp-route-id="@subscription.Id">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">@L["PremiumSubscriptions:Extend"]</button>
+                                            </form>
+                                        }
+                                        @if (Model.CanCancel && subscription.IsCurrentlyActive)
+                                        {
+                                            <form method="post" asp-page-handler="Cancel" asp-route-id="@subscription.Id" onsubmit="return confirm('@L["PremiumSubscriptions:ConfirmCancel"]');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">@L["PremiumSubscriptions:CancelPremium"]</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Premium subscriptions pagination" class="d-flex justify-content-between align-items-center mt-3">
+                <span>@L["PremiumSubscriptions:Page"] @Model.CurrentPage / @Model.TotalPages</span>
+                <div class="d-flex gap-2">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a class="btn btn-outline-secondary btn-sm" href="@Model.BuildPageUrl(Model.CurrentPage - 1)">Prev</a>
+                    }
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a class="btn btn-outline-secondary btn-sm" href="@Model.BuildPageUrl(Model.CurrentPage + 1)">Next</a>
+                    }
+                </div>
+            </nav>
+        }
+    </div>
+</div>
+
+@functions {
+    private static string GetStatusBadge(PremiumSubscriptionStatus status)
+    {
+        return status switch
+        {
+            PremiumSubscriptionStatus.Active => "bg-success-subtle text-success-emphasis",
+            PremiumSubscriptionStatus.Expired => "bg-warning-subtle text-warning-emphasis",
+            PremiumSubscriptionStatus.Cancelled => "bg-secondary-subtle text-secondary-emphasis",
+            _ => "bg-light text-dark"
+        };
+    }
+}

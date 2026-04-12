@@ -1,0 +1,76 @@
+@page "/admin/questions/preview/{id:guid}"
+@model Elearning.Web.Pages.Admin.Questions.PreviewModel
+@using Elearning.Localization
+@using Elearning.QuestionTypes
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin/questions">@L["Questions:BackToList"]</a>
+    <h1 class="h3 mb-1">@L["Questions:PreviewTitle"]</h1>
+    <p class="text-muted mb-0">@L["Questions:PreviewDescription"]</p>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">@Model.Question.Title</span>
+        <a class="btn btn-sm btn-outline-primary" href="/admin/questions/edit/@Model.Question.Id">@L["Questions:Edit"]</a>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <span class="badge bg-primary-subtle text-primary-emphasis">@Model.Question.QuestionTypeName</span>
+            <span class="badge bg-info-subtle text-info-emphasis">@L[$"Enum:QuestionDifficulty:{Model.Question.Difficulty}"]</span>
+            <span class="badge bg-secondary-subtle text-secondary-emphasis">@L["Questions:Score"]: @Model.Question.Score</span>
+        </div>
+
+        <div class="mb-4">
+            <h2 class="h5">@L["Questions:Content"]</h2>
+            <p class="mb-0">@Model.Question.Content</p>
+        </div>
+
+        @if (Model.Question.Options.Count > 0)
+        {
+            <div class="mb-4">
+                <h2 class="h5">@L["Questions:Options"]</h2>
+                @foreach (var option in Model.Question.Options)
+                {
+                    <div class="border rounded p-2 mb-2">
+                        <span class="me-2">@(option.IsCorrect ? L["Questions:IsCorrect"] : L["Questions:Option"])</span>
+                        @option.Text
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Model.Question.MatchingPairs.Count > 0)
+        {
+            <div class="mb-4">
+                <h2 class="h5">@L["Questions:MatchingPairs"]</h2>
+                @foreach (var pair in Model.Question.MatchingPairs)
+                {
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6"><div class="border rounded p-2">@pair.LeftText</div></div>
+                        <div class="col-md-6"><div class="border rounded p-2">@pair.RightText</div></div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Model.Question.EssayAnswer != null)
+        {
+            <div class="mb-4">
+                <h2 class="h5">@L["Questions:EssayAnswer"]</h2>
+                <p><strong>@L["Questions:SampleAnswer"]:</strong> @Model.Question.EssayAnswer.SampleAnswer</p>
+                <p><strong>@L["Questions:Rubric"]:</strong> @Model.Question.EssayAnswer.Rubric</p>
+                <p><strong>@L["Questions:MaxWords"]:</strong> @Model.Question.EssayAnswer.MaxWords</p>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Question.Explanation))
+        {
+            <div class="alert alert-light border">
+                <strong>@L["Questions:Explanation"]:</strong> @Model.Question.Explanation
+            </div>
+        }
+    </div>
+</div>

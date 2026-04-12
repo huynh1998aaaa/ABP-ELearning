@@ -1,0 +1,91 @@
+@page "/admin/accounts/edit/{id:guid}"
+@model Elearning.Web.Pages.Admin.Accounts.EditModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin/accounts">@L["Accounts:BackToAdmin"]</a>
+    <h1 class="h3 mb-1">@L["Accounts:EditTitle"]</h1>
+    <p class="text-muted mb-0">@L["Accounts:EditDescription"]</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <abp-validation-summary />
+            <input asp-for="Input.ConcurrencyStamp" type="hidden" />
+
+            <div class="col-md-6">
+                <label asp-for="Input.UserName" class="form-label">@L["Accounts:UserName"]</label>
+                <input asp-for="Input.UserName" class="form-control" />
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Email" class="form-label">@L["Accounts:Email"]</label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Name" class="form-label">@L["Accounts:Name"]</label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Surname" class="form-label">@L["Accounts:Surname"]</label>
+                <input asp-for="Input.Surname" class="form-control" />
+                <span asp-validation-for="Input.Surname" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.PhoneNumber" class="form-label">@L["Accounts:Phone"]</label>
+                <input asp-for="Input.PhoneNumber" class="form-control" />
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Input.RoleNames" class="form-label">@L["Accounts:Roles"]</label>
+                <select asp-for="Input.RoleNames" asp-items="Model.AvailableRoles" class="form-select" multiple></select>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input asp-for="Input.IsActive" class="form-check-input" />
+                    <label asp-for="Input.IsActive" class="form-check-label">@L["Accounts:IsActive"]</label>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">@L["Accounts:Save"]</button>
+                <a class="btn btn-outline-secondary" href="/admin/accounts">@L["Accounts:Cancel"]</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="fw-semibold">@L["Accounts:ResetPasswordTitle"]</span>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="ResetPassword" class="row g-3">
+            <abp-validation-summary />
+            <div class="col-md-6">
+                <label asp-for="ResetPassword.NewPassword" class="form-label">@L["Accounts:NewPassword"]</label>
+                <input asp-for="ResetPassword.NewPassword" class="form-control" />
+                <span asp-validation-for="ResetPassword.NewPassword" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="ResetPassword.ConfirmPassword" class="form-label">@L["Accounts:ConfirmPassword"]</label>
+                <input asp-for="ResetPassword.ConfirmPassword" class="form-control" />
+                <span asp-validation-for="ResetPassword.ConfirmPassword" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-warning">@L["Accounts:ResetPassword"]</button>
+            </div>
+        </form>
+    </div>
+</div>

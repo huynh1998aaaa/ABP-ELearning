@@ -1,0 +1,35 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Elearning.Application.Contracts/Elearning.Application.Contracts.csproj" />
+    <Project Path="src/Elearning.Application/Elearning.Application.csproj" />
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <Project Path="src/Elearning.DbMigrator/Elearning.DbMigrator.csproj" />
+    <Project Path="src/Elearning.Domain.Shared/Elearning.Domain.Shared.csproj" />
+    <Project Path="src/Elearning.Domain/Elearning.Domain.csproj" />
+    <Project Path="src/Elearning.EntityFrameworkCore/Elearning.EntityFrameworkCore.csproj" />
+    <Project Path="src/Elearning.HttpApi.Client/Elearning.HttpApi.Client.csproj" />
+    
+    
+    <Project Path="src/Elearning.HttpApi/Elearning.HttpApi.csproj" />
+    
+    
+    <Project Path="src/Elearning.Web/Elearning.Web.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Elearning.Application.Tests/Elearning.Application.Tests.csproj" />
+    <Project Path="test/Elearning.Domain.Tests/Elearning.Domain.Tests.csproj" />
+    <Project Path="test/Elearning.EntityFrameworkCore.Tests/Elearning.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/Elearning.HttpApi.Client.ConsoleTestApp/Elearning.HttpApi.Client.ConsoleTestApp.csproj" />
+    
+    <Project Path="test/Elearning.TestBase/Elearning.TestBase.csproj" />
+    <Project Path="test/Elearning.Web.Tests/Elearning.Web.Tests.csproj" />
+  </Folder>
+</Solution>

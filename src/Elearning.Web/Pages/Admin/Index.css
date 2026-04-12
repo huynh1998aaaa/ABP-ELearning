@@ -1,0 +1,43 @@
+.admin-shell {
+    padding: 2rem;
+    border-radius: 1.5rem;
+    background:
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 25%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 247, 237, 0.96));
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.portal-header {
+    margin-bottom: 2rem;
+}
+
+.portal-header h1 {
+    margin: 0.75rem 0;
+}
+
+.portal-pill {
+    display: inline-flex;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(180, 83, 9, 0.12);
+    color: #9a3412;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.portal-panel {
+    height: 100%;
+    padding: 1.5rem;
+    border: 1px solid rgba(180, 83, 9, 0.14);
+    border-radius: 1.25rem;
+    background: #fff;
+}
+
+.portal-panel-highlight {
+    border-color: rgba(29, 78, 216, 0.18);
+    background: linear-gradient(180deg, rgba(239, 246, 255, 0.92), #fff);
+}
+
+.portal-panel .btn {
+    margin-top: 1rem;
+}

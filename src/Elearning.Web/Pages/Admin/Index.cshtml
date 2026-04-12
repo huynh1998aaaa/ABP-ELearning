@@ -1,0 +1,34 @@
+@page "/admin"
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<section class="section-panel admin-shell">
+    <div class="portal-header">
+        <span class="portal-pill">@L["Menu:Admin"]</span>
+        <h1>@L["Admin:HeroTitle"]</h1>
+        <p class="lead">@L["Admin:HeroSubtitle"]</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-4 col-md-6">
+            <article class="portal-panel portal-panel-highlight">
+                <h2>@L["Accounts:Title"]</h2>
+                <p>@L["Accounts:Summary"]</p>
+                <a class="btn btn-primary" href="/Admin/Accounts">@L["Accounts:OpenManagement"]</a>
+            </article>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <article class="portal-panel">
+                <h2>@L["Admin:Feature:Courses"]</h2>
+                <p>@L["Admin:Section:Content"]</p>
+            </article>
+        </div>
+        <div class="col-xl-4 col-md-12">
+            <article class="portal-panel">
+                <h2>@L["Admin:Feature:Users"]</h2>
+                <p>@L["Admin:Section:Operations"]</p>
+            </article>
+        </div>
+    </div>
+</section>
