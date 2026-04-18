@@ -37,6 +37,13 @@ public class EditModel : QuestionFormPageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnGetModalAsync()
+    {
+        await LoadQuestionTypesAsync(activeOnly: false);
+        await LoadQuestionAsync();
+        return Partial("_EditForm", this);
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
@@ -50,6 +57,29 @@ public class EditModel : QuestionFormPageModel
 
         await _questionAppService.UpdateAsync(Id, Input);
         return RedirectToPage("./Preview", new { id = Id });
+    }
+
+    public async Task<IActionResult> OnPostModalAsync()
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadQuestionTypesAsync(activeOnly: false);
+            Question = await _questionAppService.GetAsync(Id);
+            Input.Options = PadOptions(Input.Options);
+            Input.MatchingPairs = PadMatchingPairs(Input.MatchingPairs);
+            Response.StatusCode = 400;
+            return Partial("_EditForm", this);
+        }
+
+        try
+        {
+            await _questionAppService.UpdateAsync(Id, Input);
+            return AjaxSuccess();
+        }
+        catch (System.Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
     }
 
     private async Task LoadQuestionAsync()

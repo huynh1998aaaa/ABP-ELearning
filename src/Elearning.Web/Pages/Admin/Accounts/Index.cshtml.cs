@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Volo.Abp;
 using Volo.Abp.Identity;
 
 namespace Elearning.Web.Pages.Admin.Accounts;
@@ -52,6 +53,17 @@ public class IndexModel : ElearningAdminPageModel
 
     public async Task OnGetAsync()
     {
+        await LoadAsync();
+    }
+
+    public async Task<IActionResult> OnGetTableAsync()
+    {
+        await LoadAsync();
+        return Partial("_Table", this);
+    }
+
+    private async Task LoadAsync()
+    {
         if (CurrentPage < 1)
         {
             CurrentPage = 1;
@@ -92,13 +104,41 @@ public class IndexModel : ElearningAdminPageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)
     {
-        if (!(await _authorizationService.AuthorizeAsync(User, IdentityPermissions.Users.Delete)).Succeeded)
+        try
         {
-            return Forbid();
+            if (!(await _authorizationService.AuthorizeAsync(User, IdentityPermissions.Users.Delete)).Succeeded)
+            {
+                return Forbid();
+            }
+
+            if (CurrentUser.Id == id)
+            {
+                throw new UserFriendlyException(L["Accounts:CannotDeleteCurrentUser"]);
+            }
+
+            await _identityUserAppService.DeleteAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
         }
 
-        await _identityUserAppService.DeleteAsync(id);
         return RedirectToPage(new { Filter, CurrentPage });
+    }
+
+    public string BuildTableUrl()
+    {
+        var query = new List<string> { "handler=Table", $"currentPage={CurrentPage}" };
+        if (!string.IsNullOrWhiteSpace(Filter))
+        {
+            query.Add($"filter={Uri.EscapeDataString(Filter)}");
+        }
+
+        return $"/admin/accounts?{string.Join("&", query)}";
     }
 
     public string BuildPageUrl(int page)

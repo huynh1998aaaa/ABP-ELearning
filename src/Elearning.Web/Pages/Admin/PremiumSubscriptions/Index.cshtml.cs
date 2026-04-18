@@ -59,6 +59,17 @@ public class IndexModel : ElearningAdminPageModel
 
     public async Task OnGetAsync()
     {
+        await LoadAsync();
+    }
+
+    public async Task<IActionResult> OnGetTableAsync()
+    {
+        await LoadAsync();
+        return Partial("_Table", this);
+    }
+
+    private async Task LoadAsync()
+    {
         if (CurrentPage < 1)
         {
             CurrentPage = 1;
@@ -88,14 +99,54 @@ public class IndexModel : ElearningAdminPageModel
 
     public async Task<IActionResult> OnPostExtendAsync(Guid id)
     {
-        await _subscriptionAppService.ExtendAsync(id);
+        try
+        {
+            await _subscriptionAppService.ExtendAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, Status, CurrentPage });
     }
 
     public async Task<IActionResult> OnPostCancelAsync(Guid id)
     {
-        await _subscriptionAppService.CancelAsync(id, new CancelPremiumSubscriptionDto());
+        try
+        {
+            await _subscriptionAppService.CancelAsync(id, new CancelPremiumSubscriptionDto());
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, Status, CurrentPage });
+    }
+
+    public string BuildTableUrl()
+    {
+        var query = new List<string> { "handler=Table", $"currentPage={CurrentPage}" };
+        if (!string.IsNullOrWhiteSpace(Filter))
+        {
+            query.Add($"filter={Uri.EscapeDataString(Filter)}");
+        }
+
+        if (Status.HasValue)
+        {
+            query.Add($"status={Status.Value}");
+        }
+
+        return $"/admin/premiumsubscriptions?{string.Join("&", query)}";
     }
 
     public string BuildPageUrl(int page)

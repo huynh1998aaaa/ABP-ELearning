@@ -109,6 +109,7 @@ public class ElearningWebModule : AbpModule
         ConfigureAuthentication(context);
         ConfigureExternalProviders(context.Services, configuration);
         ConfigureUrls(configuration);
+        ConfigureRequestLocalization();
         ConfigureBundles();
         ConfigureVirtualFileSystem(hostingEnvironment);
         ConfigureNavigationServices();
@@ -155,6 +156,19 @@ public class ElearningWebModule : AbpModule
         });
     }
 
+    private void ConfigureRequestLocalization()
+    {
+        Configure<RequestLocalizationOptions>(options =>
+        {
+            var supportedCultures = new[] { "vi", "en" };
+
+            options
+                .SetDefaultCulture("vi")
+                .AddSupportedCultures(supportedCultures)
+                .AddSupportedUICultures(supportedCultures);
+        });
+    }
+
     private void ConfigureBundles()
     {
         Configure<AbpBundlingOptions>(options =>
@@ -164,6 +178,7 @@ public class ElearningWebModule : AbpModule
                 bundle =>
                 {
                     bundle.AddFiles("/global-styles.css");
+                    bundle.AddFiles("/css/client/client.css");
                 }
             );
         });

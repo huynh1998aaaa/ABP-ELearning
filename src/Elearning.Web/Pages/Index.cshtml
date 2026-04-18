@@ -22,8 +22,7 @@
             <div class="landing-auth-card">
                 <span class="text-muted">@L["Auth:GuestMessage"]</span>
                 <div class="d-flex gap-2 flex-wrap">
-                    <a class="btn btn-sm btn-primary" href="/login?returnUrl=%2Fclient">@L["Auth:Login"]</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="/admin">@L["Auth:OpenAdmin"]</a>
+                    <a class="btn btn-sm btn-primary" href="/login">@L["Auth:Login"]</a>
                 </div>
             </div>
         }
@@ -36,7 +35,7 @@
             <p class="lead">@L["Landing:Subtitle"]</p>
             <div class="learning-actions">
                 <a class="btn btn-primary" href="/client">@L["Landing:OpenClient"]</a>
-                <a class="btn btn-outline-primary" href="/admin">@L["Landing:OpenAdmin"]</a>
+                <a class="btn btn-outline-primary" href="/login">@L["Auth:Login"]</a>
             </div>
         </div>
 
@@ -45,10 +44,13 @@
                 <strong>@L["Landing:ClientCardTitle"]</strong>
                 <span>@L["Landing:ClientCardDescription"]</span>
             </div>
-            <div class="learning-stat">
-                <strong>@L["Landing:AdminCardTitle"]</strong>
-                <span>@L["Landing:AdminCardDescription"]</span>
-            </div>
+            @if (Model.CanAccessAdmin)
+            {
+                <div class="learning-stat">
+                    <strong>@L["Landing:AdminCardTitle"]</strong>
+                    <span>@L["Landing:AdminCardDescription"]</span>
+                </div>
+            }
         </div>
     </div>
 
@@ -69,20 +71,23 @@
             </article>
         </div>
 
-        <div class="col-xl-6">
-            <article class="portal-card portal-card-admin">
-                <div class="portal-card-icon">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                </div>
-                <h2>@L["Admin:Title"]</h2>
-                <p>@L["Admin:Description"]</p>
-                <ul class="portal-list">
-                    <li>@L["Admin:Feature:Courses"]</li>
-                    <li>@L["Admin:Feature:Users"]</li>
-                    <li>@L["Admin:Feature:Reports"]</li>
-                </ul>
-                <a class="btn btn-outline-primary" href="/admin">@L["Admin:OpenPortal"]</a>
-            </article>
-        </div>
+        @if (Model.CanAccessAdmin)
+        {
+            <div class="col-xl-6">
+                <article class="portal-card portal-card-admin">
+                    <div class="portal-card-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h2>@L["Admin:Title"]</h2>
+                    <p>@L["Admin:Description"]</p>
+                    <ul class="portal-list">
+                        <li>@L["Admin:Feature:Courses"]</li>
+                        <li>@L["Admin:Feature:Users"]</li>
+                        <li>@L["Admin:Feature:Reports"]</li>
+                    </ul>
+                    <a class="btn btn-outline-primary" href="/admin">@L["Admin:OpenPortal"]</a>
+                </article>
+            </div>
+        }
     </div>
 </section>

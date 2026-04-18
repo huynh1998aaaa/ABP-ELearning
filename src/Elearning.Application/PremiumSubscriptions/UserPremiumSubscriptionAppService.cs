@@ -6,6 +6,7 @@ using Elearning.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 using Volo.Abp.Identity;
@@ -130,8 +131,7 @@ public class UserPremiumSubscriptionAppService : ElearningAppService, IUserPremi
         var plan = await _premiumPlanRepository.GetAsync(input.PremiumPlanId);
         if (!plan.IsActive)
         {
-            throw new BusinessException(ElearningDomainErrorCodes.InactivePremiumPlanCannotBeUsed)
-                .WithData(nameof(PremiumPlan.Id), input.PremiumPlanId);
+            throw new UserFriendlyException(L["PremiumSubscriptions:InactivePlanCannotBeUsed"]);
         }
 
         var now = Clock.Now;
@@ -156,6 +156,17 @@ public class UserPremiumSubscriptionAppService : ElearningAppService, IUserPremi
     {
         var subscription = await _subscriptionRepository.GetAsync(id);
         var plan = await _premiumPlanRepository.GetAsync(subscription.PremiumPlanId);
+        var now = Clock.Now;
+
+        if (!plan.IsActive)
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:InactivePlanCannotBeExtended"]);
+        }
+
+        if (!subscription.IsCurrentlyActive(now))
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:OnlyActiveCanBeExtended"]);
+        }
 
         subscription.Extend(plan.DurationMonths);
         await _subscriptionRepository.UpdateAsync(subscription, autoSave: true);
@@ -167,7 +178,19 @@ public class UserPremiumSubscriptionAppService : ElearningAppService, IUserPremi
     public async Task CancelAsync(Guid id, CancelPremiumSubscriptionDto input)
     {
         var subscription = await _subscriptionRepository.GetAsync(id);
-        subscription.Cancel(Clock.Now, input.Reason);
+        var now = Clock.Now;
+
+        if (subscription.Status == PremiumSubscriptionStatus.Cancelled)
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:AlreadyCancelled"]);
+        }
+
+        if (!subscription.IsCurrentlyActive(now))
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:OnlyActiveCanBeCancelled"]);
+        }
+
+        subscription.Cancel(now, input.Reason);
         await _subscriptionRepository.UpdateAsync(subscription, autoSave: true);
     }
 
@@ -180,8 +203,7 @@ public class UserPremiumSubscriptionAppService : ElearningAppService, IUserPremi
                 x.StartTime <= now &&
                 x.EndTime > now)))
         {
-            throw new BusinessException(ElearningDomainErrorCodes.UserAlreadyHasActivePremium)
-                .WithData(nameof(UserPremiumSubscription.UserId), userId);
+            throw new UserFriendlyException(L["PremiumSubscriptions:UserAlreadyHasActive"]);
         }
     }
 

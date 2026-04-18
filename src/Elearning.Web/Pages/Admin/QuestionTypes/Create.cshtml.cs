@@ -40,6 +40,12 @@ public class CreateModel : ElearningAdminPageModel
         LoadOptions();
     }
 
+    public IActionResult OnGetModal()
+    {
+        LoadOptions();
+        return Partial("_CreateForm", this);
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
@@ -50,6 +56,26 @@ public class CreateModel : ElearningAdminPageModel
 
         await _questionTypeAppService.CreateAsync(Input);
         return RedirectToPage("./Index");
+    }
+
+    public async Task<IActionResult> OnPostModalAsync()
+    {
+        if (!ModelState.IsValid)
+        {
+            LoadOptions();
+            Response.StatusCode = 400;
+            return Partial("_CreateForm", this);
+        }
+
+        try
+        {
+            await _questionTypeAppService.CreateAsync(Input);
+            return AjaxSuccess();
+        }
+        catch (System.Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
     }
 
     private void LoadOptions()

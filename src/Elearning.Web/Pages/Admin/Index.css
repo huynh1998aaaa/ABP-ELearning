@@ -31,6 +31,8 @@
     border: 1px solid rgba(180, 83, 9, 0.14);
     border-radius: 1.25rem;
     background: #fff;
+    position: relative;
+    overflow: hidden;
 }
 
 .portal-panel-highlight {
@@ -40,4 +42,93 @@
 
 .portal-panel .btn {
     margin-top: 1rem;
+}
+
+.admin-workflow {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1.25rem;
+    background: linear-gradient(135deg, #fff, rgba(239, 246, 255, 0.9));
+}
+
+.admin-workflow h2 {
+    margin: 0.75rem 0 0.5rem;
+}
+
+.admin-workflow p {
+    margin: 0;
+    color: #64748b;
+}
+
+.admin-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    max-width: 34rem;
+}
+
+.admin-flow span {
+    padding: 0.55rem 0.8rem;
+    border-radius: 999px;
+    background: #0f172a;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.admin-section-title {
+    margin: 1.75rem 0 0.75rem;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
+}
+
+.module-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 800;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.module-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.admin-checklist h3 {
+    font-size: 1rem;
+}
+
+.admin-checklist ul {
+    margin-bottom: 0;
+    padding-left: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .admin-shell {
+        padding: 1.25rem;
+    }
+
+    .admin-workflow {
+        flex-direction: column;
+    }
+
+    .admin-flow {
+        justify-content: flex-start;
+    }
 }

@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Elearning.Permissions;
+using Elearning.PremiumSubscriptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,17 +22,23 @@ public class EditModel : ElearningAdminPageModel
     private readonly IdentityUserManager _identityUserManager;
     private readonly IIdentityRoleAppService _identityRoleAppService;
     private readonly IIdentityUserAppService _identityUserAppService;
+    private readonly IAuthorizationService _authorizationService;
+    private readonly IUserPremiumSubscriptionAppService _premiumSubscriptionAppService;
 
     public EditModel(
         IIdentityUserAppService identityUserAppService,
         IIdentityRoleAppService identityRoleAppService,
         IIdentityUserRepository identityUserRepository,
-        IdentityUserManager identityUserManager)
+        IdentityUserManager identityUserManager,
+        IUserPremiumSubscriptionAppService premiumSubscriptionAppService,
+        IAuthorizationService authorizationService)
     {
         _identityUserAppService = identityUserAppService;
         _identityRoleAppService = identityRoleAppService;
         _identityUserRepository = identityUserRepository;
         _identityUserManager = identityUserManager;
+        _premiumSubscriptionAppService = premiumSubscriptionAppService;
+        _authorizationService = authorizationService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -44,11 +52,23 @@ public class EditModel : ElearningAdminPageModel
 
     public List<SelectListItem> AvailableRoles { get; private set; } = new();
 
+    public PremiumStatusDto PremiumStatus { get; private set; } = new();
+
+    public bool CanManagePremium { get; private set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
         await LoadRolesAsync();
         await LoadUserAsync();
+        await LoadPremiumAsync();
         return Page();
+    }
+
+    public async Task<IActionResult> OnGetModalAsync()
+    {
+        await LoadRolesAsync();
+        await LoadUserAsync();
+        return Partial("_EditForm", this);
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -60,6 +80,7 @@ public class EditModel : ElearningAdminPageModel
         {
             await LoadRolesAsync();
             await LoadUserAsync();
+            await LoadPremiumAsync();
             return Page();
         }
 
@@ -82,6 +103,43 @@ public class EditModel : ElearningAdminPageModel
         return RedirectToPage("./Index");
     }
 
+    public async Task<IActionResult> OnPostModalAsync()
+    {
+        RemoveResetPasswordValidation();
+
+        if (!ModelState.IsValid)
+        {
+            await LoadRolesAsync();
+            Response.StatusCode = 400;
+            return Partial("_EditForm", this);
+        }
+
+        try
+        {
+            await _identityUserAppService.UpdateAsync(Id, new IdentityUserUpdateDto
+            {
+                UserName = Input.UserName,
+                Email = Input.Email,
+                Name = Input.Name,
+                Surname = Input.Surname,
+                PhoneNumber = Input.PhoneNumber,
+                IsActive = Input.IsActive,
+                ConcurrencyStamp = Input.ConcurrencyStamp
+            });
+
+            await _identityUserAppService.UpdateRolesAsync(Id, new IdentityUserUpdateRolesDto
+            {
+                RoleNames = Input.RoleNames.ToArray()
+            });
+
+            return AjaxSuccess();
+        }
+        catch (System.Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+    }
+
     public async Task<IActionResult> OnPostResetPasswordAsync()
     {
         ModelState.Remove($"{nameof(Input)}.{nameof(Input.UserName)}");
@@ -97,6 +155,7 @@ public class EditModel : ElearningAdminPageModel
         {
             await LoadRolesAsync();
             await LoadUserAsync();
+            await LoadPremiumAsync();
             return Page();
         }
 
@@ -110,6 +169,7 @@ public class EditModel : ElearningAdminPageModel
                 AddIdentityErrors(removeResult);
                 await LoadRolesAsync();
                 await LoadUserAsync();
+                await LoadPremiumAsync();
                 return Page();
             }
         }
@@ -120,6 +180,7 @@ public class EditModel : ElearningAdminPageModel
             AddIdentityErrors(addPasswordResult);
             await LoadRolesAsync();
             await LoadUserAsync();
+            await LoadPremiumAsync();
             return Page();
         }
 
@@ -157,12 +218,33 @@ public class EditModel : ElearningAdminPageModel
         };
     }
 
+    private async Task LoadPremiumAsync()
+    {
+        CanManagePremium = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Default)).Succeeded;
+        if (!CanManagePremium)
+        {
+            PremiumStatus = new PremiumStatusDto
+            {
+                IsPremium = false
+            };
+            return;
+        }
+
+        PremiumStatus = await _premiumSubscriptionAppService.GetUserPremiumStatusAsync(Id);
+    }
+
     private void AddIdentityErrors(IdentityResult identityResult)
     {
         foreach (var error in identityResult.Errors)
         {
             ModelState.AddModelError(string.Empty, error.Description);
         }
+    }
+
+    private void RemoveResetPasswordValidation()
+    {
+        ModelState.Remove($"{nameof(ResetPassword)}.{nameof(ResetPassword.NewPassword)}");
+        ModelState.Remove($"{nameof(ResetPassword)}.{nameof(ResetPassword.ConfirmPassword)}");
     }
 
     public class EditAccountInputModel

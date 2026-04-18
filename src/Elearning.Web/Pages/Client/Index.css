@@ -1,44 +1,290 @@
 .client-shell {
-    padding: 2rem;
-    border-radius: 1.5rem;
-    background:
-        radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 25%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.96));
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+    width: min(1332px, calc(100% - 2rem));
+    margin: 0 auto 2.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #101828;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.client-shell .portal-pill {
-    background: rgba(37, 99, 235, 0.12);
-    color: #1d4ed8;
+.client-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.75rem;
+    border: 1px solid #e9e9ee;
+    border-radius: 0 0 1.05rem 1.05rem;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.05);
 }
 
-.client-shell .portal-panel {
-    height: 100%;
-    padding: 1.5rem;
-    border: 1px solid rgba(37, 99, 235, 0.14);
-    border-radius: 1.25rem;
+.client-brand {
+    color: #6874e8;
+    font-size: 1.05rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.client-topbar-actions,
+.client-toolbar-actions,
+.client-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.client-user {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.client-user-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #202939;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.client-user-icon {
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #6f3fe6, #3d215f);
+    box-shadow: 0 0 0 0.18rem rgba(111, 63, 230, 0.1);
+}
+
+.client-status-badge,
+.section-badge,
+.section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.9rem;
+    padding: 0.24rem 0.78rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.client-status-free,
+.section-badge {
+    background: #f0f0f0;
+    color: #7a7a7a;
+}
+
+.client-status-premium,
+.section-badge-premium {
+    background: #ab8add;
+    color: #fff;
+}
+
+.client-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.65rem 1.45rem;
+    border-radius: 0.8rem;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.client-action-premium {
+    background: linear-gradient(90deg, #e77be9 0%, #9f92dd 100%);
+}
+
+.client-action-logout {
+    background: linear-gradient(90deg, #f19d9d 0%, #ff4e8f 100%);
+}
+
+.client-announcement,
+.learning-section {
+    margin-inline: auto;
+}
+
+.client-announcement {
+    max-width: 1290px;
+    margin-top: 2rem;
+    margin-bottom: 1.8rem;
+    padding: 1.8rem 2rem;
+    border: 1px solid #ffbf75;
+    border-radius: 1rem;
+    background: #fff2dd;
+    color: #e66a14;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.learning-section {
+    max-width: 1290px;
+    margin-bottom: 2.2rem;
+    padding: 1.7rem 1.7rem 1.55rem;
+    border: 1px solid #ececec;
+    border-radius: 1.45rem;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.learning-section-premium {
     background: #fff;
 }
 
-.client-toolbar {
+.learning-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-top: 1.5rem;
-    padding: 1rem 1.25rem;
-    border: 1px solid rgba(37, 99, 235, 0.14);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.7);
+    margin-bottom: 1.45rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid #ececec;
 }
 
-.client-user {
+.learning-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.learning-section-header h2 {
+    margin: 0;
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: #101828;
+}
+
+.section-icon-free {
+    background: linear-gradient(180deg, #79b7ff, #448fff);
+    color: #fff;
+}
+
+.section-icon-premium {
+    background: transparent;
+    color: #37a8ff;
+    padding-inline: 0;
+    min-width: 0;
+}
+
+.learning-grid {
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.15rem;
+}
+
+.learning-card {
+    display: block;
+    min-height: 4.8rem;
+    padding: 1.28rem 1.5rem;
+    border: 1px solid #dddddf;
+    border-radius: 1rem;
+    background: #fff;
+    color: #101828;
+    text-decoration: none;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.learning-card:hover {
+    transform: translateY(-2px);
+    border-color: #c9cad1;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+    color: #101828;
+}
+
+.learning-card-premium,
+.learning-card-locked {
+    background: #fcfaff;
+}
+
+.learning-card-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.learning-card h3 {
+    margin: 0;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    font-weight: 800;
+    color: #101828;
+}
+
+.learning-card-gem {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: 0 0 0.9rem;
+    background: linear-gradient(135deg, #53c2ff, #337eff);
+    clip-path: polygon(50% 0%, 100% 38%, 76% 100%, 24% 100%, 0% 38%);
+}
+
+.learning-empty {
+    padding: 1.25rem;
+    border: 1px dashed #d8d8de;
+    border-radius: 1rem;
+    color: #667085;
+    text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .learning-card {
+        transition: none;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .client-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .client-topbar-actions,
+    .client-user {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .learning-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 767.98px) {
-    .client-toolbar {
+    .client-shell {
+        width: min(100%, calc(100% - 1rem));
+    }
+
+    .client-topbar,
+    .learning-section {
+        padding-inline: 1rem;
+    }
+
+    .client-topbar-actions,
+    .client-toolbar-actions,
+    .client-user {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
+    }
+
+    .client-action-button {
+        width: 100%;
+    }
+
+    .learning-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .client-announcement {
+        padding-inline: 1rem;
     }
 }

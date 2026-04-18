@@ -43,7 +43,7 @@ public class ElearningDomainSharedModule : AbpModule
         Configure<AbpLocalizationOptions>(options =>
         {
             options.Resources
-                .Add<ElearningResource>("en")
+                .Add<ElearningResource>("vi")
                 .AddBaseTypes(typeof(AbpValidationResource))
                 .AddVirtualJson("/Localization/Elearning");
 

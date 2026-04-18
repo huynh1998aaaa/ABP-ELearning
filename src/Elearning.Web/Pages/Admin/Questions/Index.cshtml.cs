@@ -60,17 +60,29 @@ public class IndexModel : ElearningAdminPageModel
 
     public bool CanUpdate { get; private set; }
 
-    public bool CanDelete { get; private set; }
-
     public bool CanPublish { get; private set; }
 
     public bool CanImport { get; private set; }
+
+    [BindProperty]
+    public List<Guid> SelectedQuestionIds { get; set; } = new();
 
     public int TotalPages => TotalCount == 0
         ? 1
         : (int)Math.Ceiling((double)TotalCount / PageSize);
 
     public async Task OnGetAsync()
+    {
+        await LoadAsync();
+    }
+
+    public async Task<IActionResult> OnGetTableAsync()
+    {
+        await LoadAsync();
+        return Partial("_Table", this);
+    }
+
+    private async Task LoadAsync()
     {
         if (CurrentPage < 1)
         {
@@ -79,7 +91,6 @@ public class IndexModel : ElearningAdminPageModel
 
         CanCreate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Create)).Succeeded;
         CanUpdate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Update)).Succeeded;
-        CanDelete = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Delete)).Succeeded;
         CanPublish = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Publish)).Succeeded;
         CanImport = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Import)).Succeeded;
 
@@ -109,32 +120,171 @@ public class IndexModel : ElearningAdminPageModel
 
     public async Task<IActionResult> OnPostActivateAsync(Guid id)
     {
-        await _questionAppService.ActivateAsync(id);
+        try
+        {
+            await _questionAppService.ActivateAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
     }
 
     public async Task<IActionResult> OnPostDeactivateAsync(Guid id)
     {
-        await _questionAppService.DeactivateAsync(id);
+        try
+        {
+            await _questionAppService.DeactivateAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
     }
 
     public async Task<IActionResult> OnPostPublishAsync(Guid id)
     {
-        await _questionAppService.PublishAsync(id);
+        try
+        {
+            await _questionAppService.PublishAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
     }
 
     public async Task<IActionResult> OnPostArchiveAsync(Guid id)
     {
-        await _questionAppService.ArchiveAsync(id);
+        try
+        {
+            await _questionAppService.ArchiveAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
     }
 
-    public async Task<IActionResult> OnPostDeleteAsync(Guid id)
+    public async Task<IActionResult> OnPostBulkPublishAsync()
     {
-        await _questionAppService.DeleteAsync(id);
+        try
+        {
+            if (SelectedQuestionIds.Count == 0)
+            {
+                return IsAjaxRequest
+                    ? AjaxError(L["Questions:BulkNoSelection"])
+                    : RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+            }
+
+            var result = await _questionAppService.BulkPublishAsync(new BulkQuestionActionInput
+            {
+                QuestionIds = SelectedQuestionIds
+            });
+
+            if (IsAjaxRequest)
+            {
+                return result.HasErrors
+                    ? AjaxError(BuildBulkResultMessage("Questions:BulkPublishPartial", result))
+                    : AjaxSuccess(BuildBulkResultMessage("Questions:BulkPublishSuccess", result));
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+    }
+
+    public async Task<IActionResult> OnPostBulkArchiveAsync()
+    {
+        try
+        {
+            if (SelectedQuestionIds.Count == 0)
+            {
+                return IsAjaxRequest
+                    ? AjaxError(L["Questions:BulkNoSelection"])
+                    : RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+            }
+
+            var result = await _questionAppService.BulkArchiveAsync(new BulkQuestionActionInput
+            {
+                QuestionIds = SelectedQuestionIds
+            });
+
+            if (IsAjaxRequest)
+            {
+                return result.HasErrors
+                    ? AjaxError(BuildBulkResultMessage("Questions:BulkArchivePartial", result))
+                    : AjaxSuccess(BuildBulkResultMessage("Questions:BulkArchiveSuccess", result));
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
+        return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+    }
+
+    private string BuildBulkResultMessage(string localizationKey, BulkQuestionActionResultDto result)
+    {
+        var message = L[localizationKey, result.SucceededCount, result.SkippedCount].Value;
+        if (result.Errors.Count == 0)
+        {
+            return message;
+        }
+
+        var firstErrors = string.Join(" | ", result.Errors.Take(3));
+        return $"{message} {L["Questions:BulkErrors", result.Errors.Count]} {firstErrors}";
+    }
+
+    public string BuildTableUrl()
+    {
+        var query = new List<string> { "handler=Table", $"currentPage={CurrentPage}" };
+        if (!string.IsNullOrWhiteSpace(Filter))
+        {
+            query.Add($"filter={Uri.EscapeDataString(Filter)}");
+        }
+        if (QuestionTypeId.HasValue)
+        {
+            query.Add($"questionTypeId={QuestionTypeId}");
+        }
+        if (Difficulty.HasValue)
+        {
+            query.Add($"difficulty={Difficulty}");
+        }
+        if (Status.HasValue)
+        {
+            query.Add($"status={Status}");
+        }
+
+        return "/admin/questions?" + string.Join("&", query);
     }
 
     public string BuildPageUrl(int page)

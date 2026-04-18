@@ -15,8 +15,6 @@ public interface IQuestionAppService : IApplicationService
 
     Task<QuestionDto> UpdateAsync(Guid id, UpdateQuestionDto input);
 
-    Task DeleteAsync(Guid id);
-
     Task ActivateAsync(Guid id);
 
     Task DeactivateAsync(Guid id);
@@ -24,4 +22,8 @@ public interface IQuestionAppService : IApplicationService
     Task PublishAsync(Guid id);
 
     Task ArchiveAsync(Guid id);
+
+    Task<BulkQuestionActionResultDto> BulkPublishAsync(BulkQuestionActionInput input);
+
+    Task<BulkQuestionActionResultDto> BulkArchiveAsync(BulkQuestionActionInput input);
 }

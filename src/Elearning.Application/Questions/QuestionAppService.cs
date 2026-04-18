@@ -157,17 +157,11 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
         return await GetAsync(question.Id);
     }
 
-    [Authorize(ElearningPermissions.Questions.Delete)]
-    public async Task DeleteAsync(Guid id)
-    {
-        await DeleteAnswersAsync(id);
-        await _questionRepository.DeleteAsync(id);
-    }
-
     [Authorize(ElearningPermissions.Questions.Update)]
     public async Task ActivateAsync(Guid id)
     {
         var question = await _questionRepository.GetAsync(id);
+        EnsureCanActivate(question);
         question.Activate();
         await _questionRepository.UpdateAsync(question, autoSave: true);
     }
@@ -184,6 +178,7 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
     public async Task PublishAsync(Guid id)
     {
         var question = await _questionRepository.GetAsync(id);
+        EnsureCanPublish(question);
         var questionType = await _questionTypeRepository.GetAsync(question.QuestionTypeId);
         var options = (await GetOptionsAsync(id))
             .Select(x => new QuestionOptionInputDto
@@ -214,6 +209,73 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
         var question = await _questionRepository.GetAsync(id);
         question.Archive();
         await _questionRepository.UpdateAsync(question, autoSave: true);
+    }
+
+    [Authorize(ElearningPermissions.Questions.Publish)]
+    public async Task<BulkQuestionActionResultDto> BulkPublishAsync(BulkQuestionActionInput input)
+    {
+        var questionIds = NormalizeQuestionIds(input);
+        if (questionIds.Count == 0)
+        {
+            throw new UserFriendlyException(L["Questions:BulkNoSelection"]);
+        }
+
+        var result = CreateBulkResult(questionIds);
+        foreach (var questionId in questionIds)
+        {
+            try
+            {
+                var question = await _questionRepository.GetAsync(questionId);
+                if (question.Status == QuestionStatus.Published)
+                {
+                    result.SkippedCount++;
+                    continue;
+                }
+
+                await PublishAsync(questionId);
+                result.SucceededCount++;
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add(BuildBulkErrorMessage(questionId, ex));
+            }
+        }
+
+        return result;
+    }
+
+    [Authorize(ElearningPermissions.Questions.Publish)]
+    public async Task<BulkQuestionActionResultDto> BulkArchiveAsync(BulkQuestionActionInput input)
+    {
+        var questionIds = NormalizeQuestionIds(input);
+        if (questionIds.Count == 0)
+        {
+            throw new UserFriendlyException(L["Questions:BulkNoSelection"]);
+        }
+
+        var result = CreateBulkResult(questionIds);
+        foreach (var questionId in questionIds)
+        {
+            try
+            {
+                var question = await _questionRepository.GetAsync(questionId);
+                if (question.Status == QuestionStatus.Archived)
+                {
+                    result.SkippedCount++;
+                    continue;
+                }
+
+                question.Archive();
+                await _questionRepository.UpdateAsync(question, autoSave: true);
+                result.SucceededCount++;
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add(BuildBulkErrorMessage(questionId, ex));
+            }
+        }
+
+        return result;
     }
 
     private async Task ReplaceAnswersAsync(
@@ -374,6 +436,55 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
     {
         throw new BusinessException(ElearningDomainErrorCodes.InvalidQuestionAnswers)
             .WithData("Reason", message);
+    }
+
+    private void EnsureCanActivate(Question question)
+    {
+        if (question.Status == QuestionStatus.Archived)
+        {
+            throw new UserFriendlyException(L["Questions:ArchivedCannotBeActivated"]);
+        }
+    }
+
+    private void EnsureCanPublish(Question question)
+    {
+        if (question.Status == QuestionStatus.Archived)
+        {
+            throw new UserFriendlyException(L["Questions:ArchivedCannotBePublished"]);
+        }
+
+        if (!question.IsActive)
+        {
+            throw new UserFriendlyException(L["Questions:InactiveCannotBePublished"]);
+        }
+    }
+
+    private static List<Guid> NormalizeQuestionIds(BulkQuestionActionInput? input)
+    {
+        return input?.QuestionIds?
+            .Where(x => x != Guid.Empty)
+            .Distinct()
+            .ToList() ?? [];
+    }
+
+    private static BulkQuestionActionResultDto CreateBulkResult(IReadOnlyCollection<Guid> questionIds)
+    {
+        return new BulkQuestionActionResultDto
+        {
+            RequestedCount = questionIds.Count
+        };
+    }
+
+    private string BuildBulkErrorMessage(Guid questionId, Exception exception)
+    {
+        var message = exception switch
+        {
+            UserFriendlyException => exception.Message,
+            BusinessException businessException when businessException.Data.Contains("Reason") => businessException.Data["Reason"]?.ToString() ?? businessException.Message,
+            _ => L["Common:AjaxOperationFailed"].Value
+        };
+
+        return L["Questions:BulkItemError", questionId, message];
     }
 
     private static IQueryable<Question> ApplySorting(IQueryable<Question> query, string? sorting)

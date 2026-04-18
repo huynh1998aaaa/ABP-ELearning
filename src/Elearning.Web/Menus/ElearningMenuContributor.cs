@@ -1,10 +1,7 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Elearning.Localization;
-using Elearning.MultiTenancy;
 using Elearning.Permissions;
-using Volo.Abp.Identity.Web.Navigation;
-using Volo.Abp.SettingManagement.Web.Navigation;
-using Volo.Abp.TenantManagement.Web.Navigation;
+using Volo.Abp.Identity;
 using Volo.Abp.UI.Navigation;
 
 namespace Elearning.Web.Menus;
@@ -21,7 +18,6 @@ public class ElearningMenuContributor : IMenuContributor
 
     private Task ConfigureMainMenuAsync(MenuConfigurationContext context)
     {
-        var administration = context.Menu.GetAdministration();
         var l = context.GetLocalizer<ElearningResource>();
 
         context.Menu.Items.Clear();
@@ -53,6 +49,7 @@ public class ElearningMenuContributor : IMenuContributor
             l["Menu:Admin"],
             "/admin",
             icon: "fas fa-user-shield",
+            requiredPermissionName: ElearningPermissions.AdminPortal.Access,
             order: 2
         );
 
@@ -61,7 +58,8 @@ public class ElearningMenuContributor : IMenuContributor
                 ElearningMenus.AdminAccounts,
                 l["Menu:Accounts"],
                 "/Admin/Accounts",
-                icon: "fas fa-users"
+                icon: "fas fa-users",
+                requiredPermissionName: IdentityPermissions.Users.Default
             )
         );
 
@@ -72,6 +70,16 @@ public class ElearningMenuContributor : IMenuContributor
                 "/Admin/QuestionTypes",
                 icon: "fas fa-list-check",
                 requiredPermissionName: ElearningPermissions.QuestionTypes.Default
+            )
+        );
+
+        adminMenuItem.AddItem(
+            new ApplicationMenuItem(
+                ElearningMenus.AdminSubjects,
+                l["Menu:Subjects"],
+                "/Admin/Subjects",
+                icon: "fas fa-book",
+                requiredPermissionName: ElearningPermissions.Subjects.Default
             )
         );
 
@@ -95,15 +103,27 @@ public class ElearningMenuContributor : IMenuContributor
             )
         );
 
+        adminMenuItem.AddItem(
+            new ApplicationMenuItem(
+                ElearningMenus.AdminExams,
+                l["Menu:Exams"],
+                "/Admin/Exams",
+                icon: "fas fa-file-lines",
+                requiredPermissionName: ElearningPermissions.Exams.Default
+            )
+        );
+
+        adminMenuItem.AddItem(
+            new ApplicationMenuItem(
+                ElearningMenus.AdminPractices,
+                l["Menu:Practices"],
+                "/Admin/Practices",
+                icon: "fas fa-book-open-reader",
+                requiredPermissionName: ElearningPermissions.Practices.Default
+            )
+        );
+
         context.Menu.Items.Insert(2, adminMenuItem);
-
-        if (MultiTenancyConsts.IsEnabled)
-        {
-            administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);
-        }
-
-        administration.SetSubItemOrder(IdentityMenuNames.GroupName, 2);
-        administration.SetSubItemOrder(SettingManagementMenuNames.GroupName, 3);
 
         return Task.CompletedTask;
     }

@@ -1,44 +1,90 @@
 @page "/client"
 @model Elearning.Web.Pages.Client.IndexModel
+@using Elearning.ClientContent
 @using Elearning.Localization
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
 
 <section class="section-panel client-shell">
-    <div class="portal-header">
-        <span class="portal-pill">@L["Menu:Client"]</span>
-        <h1>@L["Client:HeroTitle"]</h1>
-        <p class="lead">@L["Client:HeroSubtitle"]</p>
-        <div class="client-toolbar">
+    <header class="client-topbar">
+        <a class="client-brand" href="/client">OMD.TestGo V3.5</a>
+
+        <div class="client-topbar-actions">
             <div class="client-user">
-                <span class="text-muted">@L["Auth:SignedInAs"]</span>
-                <strong>@Model.UserName</strong>
+                <div class="client-user-line">
+                    <span class="client-user-icon" aria-hidden="true"></span>
+                    <strong>@(Model.UserName ?? "Guest")</strong>
+                </div>
+                <span class="client-status-badge @(Model.IsPremium ? "client-status-premium" : "client-status-free")">
+                    @(Model.IsPremium ? L["Client:PremiumStatus"] : L["Client:FreeStatus"])
+                </span>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a class="btn btn-outline-secondary" href="/">@L["Auth:BackHome"]</a>
-                <a class="btn btn-danger" href="/client/logout">@L["Auth:Logout"]</a>
+
+            <div class="client-toolbar-actions">
+                <a class="client-action-button client-action-premium" href="/">
+                    @L["Client:UpgradePremium"]
+                </a>
+                <a class="client-action-button client-action-logout" href="/client/logout">
+                    @L["Auth:Logout"]
+                </a>
             </div>
         </div>
+    </header>
+
+    <div class="client-announcement client-announcement-highlight">
+        @if (Model.IsPremium)
+        {
+            <span>@L["Client:Announcement:Premium"]</span>
+        }
+        else
+        {
+            <span>@L["Client:Announcement:Free"]</span>
+        }
     </div>
 
-    <div class="row g-4">
-        <div class="col-xl-4 col-md-6">
-            <article class="portal-panel">
-                <h2>@L["Client:Feature:Catalog"]</h2>
-                <p>@L["Client:Section:Dashboard"]</p>
-            </article>
+    <section class="learning-section">
+        <div class="learning-section-header">
+            <div class="learning-section-title">
+                <span class="section-icon section-icon-free">FREE</span>
+                <h2>@L["Client:FreeSectionTitle"]</h2>
+            </div>
+            <span class="section-badge">@L["Enum:ClientLearningAccessLevel:Free"]</span>
         </div>
-        <div class="col-xl-4 col-md-6">
-            <article class="portal-panel">
-                <h2>@L["Client:Feature:LearningPath"]</h2>
-                <p>@L["Client:Section:Enrollment"]</p>
-            </article>
+        <div class="learning-grid">
+            @if (Model.FreeItems.Count == 0)
+            {
+                <div class="learning-empty">@L["Client:NoFreeItems"]</div>
+            }
+            else
+            {
+                @foreach (var item in Model.FreeItems)
+                {
+                    <partial name="_LearningItemCard" model="item" />
+                }
+            }
         </div>
-        <div class="col-xl-4 col-md-12">
-            <article class="portal-panel">
-                <h2>@L["Client:Feature:Progress"]</h2>
-                <p>@L["Client:Section:Profile"]</p>
-            </article>
+    </section>
+
+    <section class="learning-section learning-section-premium">
+        <div class="learning-section-header">
+            <div class="learning-section-title">
+                <span class="section-icon section-icon-premium">PREMIUM</span>
+                <h2>@L["Client:PremiumSectionTitle"]</h2>
+            </div>
+            <span class="section-badge section-badge-premium">@L["Enum:ClientLearningAccessLevel:Premium"]</span>
         </div>
-    </div>
+        <div class="learning-grid">
+            @if (Model.PremiumItems.Count == 0)
+            {
+                <div class="learning-empty">@L["Client:NoPremiumItems"]</div>
+            }
+            else
+            {
+                @foreach (var item in Model.PremiumItems)
+                {
+                    <partial name="_LearningItemCard" model="item" />
+                }
+            }
+        </div>
+    </section>
 </section>

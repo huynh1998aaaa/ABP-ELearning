@@ -32,10 +32,13 @@ public class CreateModel : QuestionFormPageModel
 
     public async Task OnGetAsync()
     {
-        await LoadQuestionTypesAsync(activeOnly: true);
-        Input.QuestionTypeId = AvailableQuestionTypes.FirstOrDefault()?.Id ?? Input.QuestionTypeId;
-        Input.Options = PadOptions(Input.Options);
-        Input.MatchingPairs = PadMatchingPairs(Input.MatchingPairs);
+        await PrepareCreateFormAsync();
+    }
+
+    public async Task<IActionResult> OnGetModalAsync()
+    {
+        await PrepareCreateFormAsync();
+        return Partial("_CreateForm", this);
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -50,5 +53,35 @@ public class CreateModel : QuestionFormPageModel
 
         var question = await _questionAppService.CreateAsync(Input);
         return RedirectToPage("./Preview", new { id = question.Id });
+    }
+
+    public async Task<IActionResult> OnPostModalAsync()
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadQuestionTypesAsync(activeOnly: true);
+            Input.Options = PadOptions(Input.Options);
+            Input.MatchingPairs = PadMatchingPairs(Input.MatchingPairs);
+            Response.StatusCode = 400;
+            return Partial("_CreateForm", this);
+        }
+
+        try
+        {
+            await _questionAppService.CreateAsync(Input);
+            return AjaxSuccess();
+        }
+        catch (System.Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+    }
+
+    private async Task PrepareCreateFormAsync()
+    {
+        await LoadQuestionTypesAsync(activeOnly: true);
+        Input.QuestionTypeId = AvailableQuestionTypes.FirstOrDefault()?.Id ?? Input.QuestionTypeId;
+        Input.Options = PadOptions(Input.Options);
+        Input.MatchingPairs = PadMatchingPairs(Input.MatchingPairs);
     }
 }

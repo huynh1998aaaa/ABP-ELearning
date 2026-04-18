@@ -53,6 +53,17 @@ public class IndexModel : ElearningAdminPageModel
 
     public async Task OnGetAsync()
     {
+        await LoadAsync();
+    }
+
+    public async Task<IActionResult> OnGetTableAsync()
+    {
+        await LoadAsync();
+        return Partial("_Table", this);
+    }
+
+    private async Task LoadAsync()
+    {
         if (CurrentPage < 1)
         {
             CurrentPage = 1;
@@ -82,20 +93,67 @@ public class IndexModel : ElearningAdminPageModel
 
     public async Task<IActionResult> OnPostActivateAsync(Guid id)
     {
-        await _questionTypeAppService.ActivateAsync(id);
+        try
+        {
+            await _questionTypeAppService.ActivateAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, CurrentPage });
     }
 
     public async Task<IActionResult> OnPostDeactivateAsync(Guid id)
     {
-        await _questionTypeAppService.DeactivateAsync(id);
+        try
+        {
+            await _questionTypeAppService.DeactivateAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, CurrentPage });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)
     {
-        await _questionTypeAppService.DeleteAsync(id);
+        try
+        {
+            await _questionTypeAppService.DeleteAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
         return RedirectToPage(new { Filter, CurrentPage });
+    }
+
+    public string BuildTableUrl()
+    {
+        var query = new List<string> { "handler=Table", $"currentPage={CurrentPage}" };
+        if (!string.IsNullOrWhiteSpace(Filter))
+        {
+            query.Add($"filter={Uri.EscapeDataString(Filter)}");
+        }
+
+        return $"/admin/questiontypes?{string.Join("&", query)}";
     }
 
     public string BuildPageUrl(int page)

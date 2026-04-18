@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Elearning.Permissions;
 using Elearning.QuestionTypes;
 using Microsoft.AspNetCore.Authorization;
+using UglyToad.PdfPig;
 using Volo.Abp;
 using Volo.Abp.Uow;
 
@@ -107,6 +110,98 @@ public class QuestionImportAppService : ElearningAppService, IQuestionImportAppS
         return result;
     }
 
+    public Task<QuestionPdfParseResultDto> PreviewPdfAsync(QuestionImportFileDto input)
+    {
+        return Task.FromResult(ParsePdfToStagingRows(input));
+    }
+
+    public Task<QuestionImportTemplateDto> ConvertPdfToExcelAsync(QuestionImportFileDto input)
+    {
+        var parseResult = ParsePdfToStagingRows(input);
+        using var workbook = new XLWorkbook();
+
+        AddInstructionsSheet(workbook);
+        AddChoiceSheet(workbook, "SingleChoice");
+        AddChoiceSheet(workbook, "MultipleChoice");
+        AddMatchingSheet(workbook);
+        AddEssaySheet(workbook);
+        AddQuestionTypesSheet(workbook);
+        AddPdfReviewQueueSheet(workbook);
+
+        var singleChoiceRow = FirstDataRow;
+        var multipleChoiceRow = FirstDataRow;
+        var matchingRow = FirstDataRow;
+        var essayRow = FirstDataRow;
+        var reviewRow = FirstDataRow;
+
+        foreach (var row in parseResult.Rows)
+        {
+            if (row.ParseStatus != QuestionPdfParseStatus.Ready)
+            {
+                WriteReviewQueueRow(workbook.Worksheet("PdfReviewQueue"), reviewRow++, row);
+                continue;
+            }
+
+            if (string.Equals(row.DetectedType, QuestionTypeCodes.SingleChoice, StringComparison.OrdinalIgnoreCase))
+            {
+                WriteChoiceRow(workbook.Worksheet("SingleChoice"), singleChoiceRow++, row);
+                continue;
+            }
+
+            if (string.Equals(row.DetectedType, QuestionTypeCodes.MultipleChoice, StringComparison.OrdinalIgnoreCase))
+            {
+                WriteChoiceRow(workbook.Worksheet("MultipleChoice"), multipleChoiceRow++, row);
+                continue;
+            }
+
+            if (string.Equals(row.DetectedType, QuestionTypeCodes.Matching, StringComparison.OrdinalIgnoreCase))
+            {
+                WriteMatchingRow(workbook.Worksheet("Matching"), matchingRow++, row);
+                continue;
+            }
+
+            if (string.Equals(row.DetectedType, QuestionTypeCodes.Essay, StringComparison.OrdinalIgnoreCase))
+            {
+                WriteEssayRow(workbook.Worksheet("Essay"), essayRow++, row);
+                continue;
+            }
+
+            row.ParseStatus = QuestionPdfParseStatus.NeedsReview;
+            row.ParseMessage = "Không xác định được loại câu hỏi khi xuất Excel.";
+            WriteReviewQueueRow(workbook.Worksheet("PdfReviewQueue"), reviewRow++, row);
+        }
+
+        if (parseResult.Errors.Count > 0 && parseResult.Rows.Count == 0)
+        {
+            WriteReviewQueueRow(workbook.Worksheet("PdfReviewQueue"), reviewRow, new QuestionPdfStagingRowDto
+            {
+                SourceFileName = input.FileName,
+                ParseStatus = QuestionPdfParseStatus.Invalid,
+                ParseMessage = string.Join(Environment.NewLine, parseResult.Errors)
+            });
+        }
+
+        foreach (var sheet in workbook.Worksheets)
+        {
+            sheet.Columns().AdjustToContents();
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+
+        var safeName = Path.GetFileNameWithoutExtension(input.FileName);
+        if (safeName.IsNullOrWhiteSpace())
+        {
+            safeName = "questions-from-pdf";
+        }
+
+        return Task.FromResult(new QuestionImportTemplateDto
+        {
+            FileName = $"{safeName}-normalized-{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx",
+            Content = stream.ToArray()
+        });
+    }
+
     private static XLWorkbook? TryOpenWorkbook(Stream stream, QuestionImportResultDto result)
     {
         try
@@ -119,6 +214,452 @@ public class QuestionImportAppService : ElearningAppService, IQuestionImportAppS
             return null;
         }
     }
+
+    private static QuestionPdfParseResultDto ParsePdfToStagingRows(QuestionImportFileDto input)
+    {
+        var result = new QuestionPdfParseResultDto
+        {
+            SourceFileName = input.FileName
+        };
+
+        if (input.Content.Length == 0 || !input.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            result.Errors.Add("File PDF import phải là .pdf và không được rỗng.");
+            return result;
+        }
+
+        var extractedText = ExtractPdfText(input.Content, result);
+        if (extractedText.IsNullOrWhiteSpace())
+        {
+            result.Errors.Add("Không trích xuất được text từ PDF. File có thể là scan/image hoặc cần OCR.");
+            return result;
+        }
+
+        var blocks = SplitQuestionBlocks(extractedText);
+        if (blocks.Count == 0)
+        {
+            result.Rows.Add(new QuestionPdfStagingRowDto
+            {
+                SourceFileName = input.FileName,
+                RawSourceText = Truncate(extractedText, 4000),
+                ParseStatus = QuestionPdfParseStatus.Invalid,
+                ParseMessage = "Không tách được câu hỏi từ text PDF."
+            });
+            return result;
+        }
+
+        foreach (var block in blocks)
+        {
+            result.Rows.Add(ParseQuestionBlock(input.FileName, block));
+        }
+
+        return result;
+    }
+
+    private static string ExtractPdfText(byte[] content, QuestionPdfParseResultDto result)
+    {
+        try
+        {
+            using var document = PdfDocument.Open(content);
+            result.PageCount = document.NumberOfPages;
+
+            var builder = new StringBuilder();
+            foreach (var page in document.GetPages())
+            {
+                var pageText = page.Text ?? string.Empty;
+                var wordText = string.Join(" ", page.GetWords().Select(x => x.Text));
+                if (wordText.Length > pageText.Length)
+                {
+                    pageText = wordText;
+                }
+
+                if (!pageText.IsNullOrWhiteSpace())
+                {
+                    builder.AppendLine($"[Page {page.Number}]");
+                    builder.AppendLine(pageText);
+                    builder.AppendLine();
+                }
+            }
+
+            return NormalizeExtractedText(builder.ToString());
+        }
+        catch (Exception ex)
+        {
+            result.Errors.Add($"Không đọc được PDF: {ex.Message}");
+            return string.Empty;
+        }
+    }
+
+    private static string NormalizeExtractedText(string text)
+    {
+        var normalized = text.Replace("\r\n", "\n").Replace('\r', '\n');
+        normalized = Regex.Replace(normalized, @"\bCertify For Sure with IT Exam Dumps\b", string.Empty, RegexOptions.IgnoreCase);
+        normalized = Regex.Replace(normalized, @"\bThe No\.1 IT Certification Dumps\s+\d+\b", string.Empty, RegexOptions.IgnoreCase);
+        normalized = Regex.Replace(normalized, @"\[\s*Page\s+\d+\s*\]", string.Empty, RegexOptions.IgnoreCase);
+        normalized = Regex.Replace(normalized, @"[ \t]+", " ");
+        normalized = Regex.Replace(normalized, @"\n{3,}", "\n\n");
+        return normalized.Trim();
+    }
+
+    private static List<string> SplitQuestionBlocks(string text)
+    {
+        var matches = Regex.Matches(
+            text,
+            @"(?im)\b(?:Question\s*(?:#|No\.?|Number)?\s*\d+|\d{1,5}\.\s*-\s*\(?Topic\s+\d+\)?)(?=\s|$)");
+
+        if (matches.Count == 0)
+        {
+            return text.IsNullOrWhiteSpace() ? [] : [text];
+        }
+
+        var blocks = new List<string>();
+        for (var i = 0; i < matches.Count; i++)
+        {
+            var start = matches[i].Index;
+            var end = i + 1 < matches.Count ? matches[i + 1].Index : text.Length;
+            var block = text[start..end].Trim();
+            if (!block.IsNullOrWhiteSpace())
+            {
+                blocks.Add(block);
+            }
+        }
+
+        return blocks;
+    }
+
+    private static QuestionPdfStagingRowDto ParseQuestionBlock(string sourceFileName, string block)
+    {
+        var row = new QuestionPdfStagingRowDto
+        {
+            SourceFileName = sourceFileName,
+            SourceQuestionNo = ExtractQuestionNumber(block),
+            RawSourceText = Truncate(block, 4000)
+        };
+
+        var unsupportedReason = DetectUnsupportedReason(block);
+        var optionMatches = ExtractOptions(block);
+        var correctLetters = ExtractCorrectAnswerLetters(block);
+        var explanation = ExtractExplanation(block);
+        var content = ExtractQuestionContent(block, optionMatches);
+
+        row.Content = Truncate(content, QuestionConsts.MaxContentLength);
+        row.Title = BuildTitle(content, row.SourceQuestionNo);
+        row.Explanation = Truncate(explanation, QuestionConsts.MaxExplanationLength);
+        row.Difficulty = nameof(QuestionDifficulty.Medium);
+        row.Score = 1;
+
+        ApplyOptions(row, optionMatches);
+
+        if (!unsupportedReason.IsNullOrWhiteSpace())
+        {
+            row.ParseStatus = QuestionPdfParseStatus.Unsupported;
+            row.ParseMessage = unsupportedReason;
+            return row;
+        }
+
+        if (content.IsNullOrWhiteSpace())
+        {
+            row.ParseStatus = QuestionPdfParseStatus.Invalid;
+            row.ParseMessage = "Không xác định được nội dung câu hỏi.";
+            return row;
+        }
+
+        if (content.Length > QuestionConsts.MaxContentLength)
+        {
+            row.ParseStatus = QuestionPdfParseStatus.Invalid;
+            row.ParseMessage = $"Nội dung câu hỏi vượt quá {QuestionConsts.MaxContentLength} ký tự.";
+            return row;
+        }
+
+        if (optionMatches.Count < 2)
+        {
+            row.ParseStatus = QuestionPdfParseStatus.NeedsReview;
+            row.ParseMessage = "Không parse được tối thiểu 2 option. Cần review thủ công.";
+            return row;
+        }
+
+        if (correctLetters.Count == 0)
+        {
+            row.ParseStatus = QuestionPdfParseStatus.NeedsReview;
+            row.ParseMessage = "Không tìm thấy đáp án đúng trong PDF. Cần review thủ công.";
+            return row;
+        }
+
+        var correctIndexes = new List<int>();
+        foreach (var letter in correctLetters)
+        {
+            var optionIndex = optionMatches.FindIndex(x => string.Equals(x.Letter, letter, StringComparison.OrdinalIgnoreCase));
+            if (optionIndex < 0)
+            {
+                row.ParseStatus = QuestionPdfParseStatus.NeedsReview;
+                row.ParseMessage = $"Đáp án đúng '{letter}' không khớp với option đã parse.";
+                return row;
+            }
+
+            correctIndexes.Add(optionIndex + 1);
+        }
+
+        row.CorrectAnswers = string.Join(",", correctIndexes.Distinct().OrderBy(x => x));
+        row.DetectedType = correctIndexes.Distinct().Count() > 1
+            ? QuestionTypeCodes.MultipleChoice
+            : QuestionTypeCodes.SingleChoice;
+        row.ParseStatus = QuestionPdfParseStatus.Ready;
+        row.ParseMessage = "Đã parse được câu hỏi trắc nghiệm và có thể xuất sang Excel import.";
+        return row;
+    }
+
+    private static int ExtractQuestionNumber(string block)
+    {
+        var match = Regex.Match(block, @"(?im)\bQuestion\s*(?:#|No\.?|Number)?\s*(\d+)\b");
+        if (!match.Success)
+        {
+            match = Regex.Match(block, @"(?im)\b(\d{1,5})\.\s*-\s*\(?Topic\s+\d+\)?(?=\s|$)");
+        }
+
+        return match.Success && int.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)
+            ? number
+            : 0;
+    }
+
+    private static string DetectUnsupportedReason(string block)
+    {
+        if (Regex.IsMatch(block, @"(?i)\b(hotspot|exhibit|simulation|simlet|testlet|lab)\b"))
+        {
+            return "Câu hỏi có hotspot/exhibit/simulation/lab nên chưa import tự động trong v1.";
+        }
+
+        if (Regex.IsMatch(block, @"(?i)\bdrag\s+and\s+drop\b|\bdrag\s+drop\b"))
+        {
+            return "Câu hỏi dạng drag/drop cần review thủ công trước khi map sang Matching.";
+        }
+
+        return string.Empty;
+    }
+
+    private static List<PdfChoiceOption> ExtractOptions(string block)
+    {
+        var normalized = Regex.Replace(block, @"\s+", " ");
+        var matches = Regex.Matches(
+            normalized,
+            @"(?is)(?:^|\s)([A-F])[\.\)]\s*(.*?)(?=(?:\s+[A-F][\.\)]\s*)|(?:\s+(?:Correct\s+Answers?|Answers?|Explanation|Reference)\b)|$)");
+
+        var options = new List<PdfChoiceOption>();
+        foreach (Match match in matches)
+        {
+            var letter = match.Groups[1].Value.Trim().ToUpperInvariant();
+            var text = CleanInlineText(match.Groups[2].Value);
+            if (text.IsNullOrWhiteSpace() || options.Any(x => x.Letter == letter))
+            {
+                continue;
+            }
+
+            options.Add(new PdfChoiceOption(letter, Truncate(text, QuestionConsts.MaxOptionTextLength)));
+        }
+
+        return options.OrderBy(x => x.Letter).Take(MaxChoiceOptions).ToList();
+    }
+
+    private static List<string> ExtractCorrectAnswerLetters(string block)
+    {
+        var match = Regex.Match(
+            block,
+            @"(?is)\b(?:Correct\s+Answers?|Answers?)\s*:?\s*([A-F](?:\s*[,;/ ]\s*[A-F])*)\b");
+        if (!match.Success)
+        {
+            return [];
+        }
+
+        return Regex.Matches(match.Groups[1].Value, @"[A-F]", RegexOptions.IgnoreCase)
+            .Select(x => x.Value.ToUpperInvariant())
+            .Distinct()
+            .ToList();
+    }
+
+    private static string ExtractExplanation(string block)
+    {
+        var match = Regex.Match(block, @"(?is)\bExplanation(?:/Reference)?\s*:?\s*(.+)$");
+        return match.Success ? CleanInlineText(match.Groups[1].Value) : string.Empty;
+    }
+
+    private static string ExtractQuestionContent(string block, IReadOnlyList<PdfChoiceOption> options)
+    {
+        var content = Regex.Replace(block, @"(?im)^\s*\[Page\s+\d+\]\s*$", string.Empty);
+        content = Regex.Replace(content, @"(?im)\bQuestion\s*(?:#|No\.?|Number)?\s*\d+\b\.?:?", string.Empty);
+        content = Regex.Replace(content, @"(?im)\b\d{1,5}\.\s*-\s*\(?Topic\s+\d+\)?", string.Empty);
+
+        var firstOption = options.Count == 0
+            ? null
+            : Regex.Match(content, $@"(?is)(?:^|\s){Regex.Escape(options[0].Letter)}[\.\)]\s*{Regex.Escape(options[0].Text[..Math.Min(options[0].Text.Length, 15)])}");
+        if (firstOption is { Success: true })
+        {
+            content = content[..firstOption.Index];
+        }
+        else
+        {
+            content = Regex.Split(content, @"(?is)\s+[A-F][\.\)]\s*").FirstOrDefault() ?? content;
+        }
+
+        content = Regex.Split(content, @"(?is)\b(?:Correct\s+Answers?|Answers?|Explanation|Reference)\b").FirstOrDefault() ?? content;
+        return CleanInlineText(content);
+    }
+
+    private static void ApplyOptions(QuestionPdfStagingRowDto row, IReadOnlyList<PdfChoiceOption> options)
+    {
+        if (options.Count > 0)
+        {
+            row.Option1 = options[0].Text;
+        }
+
+        if (options.Count > 1)
+        {
+            row.Option2 = options[1].Text;
+        }
+
+        if (options.Count > 2)
+        {
+            row.Option3 = options[2].Text;
+        }
+
+        if (options.Count > 3)
+        {
+            row.Option4 = options[3].Text;
+        }
+
+        if (options.Count > 4)
+        {
+            row.Option5 = options[4].Text;
+        }
+
+        if (options.Count > 5)
+        {
+            row.Option6 = options[5].Text;
+        }
+    }
+
+    private static string BuildTitle(string content, int sourceQuestionNo)
+    {
+        var title = content.IsNullOrWhiteSpace()
+            ? $"Question {sourceQuestionNo}"
+            : content;
+        title = CleanInlineText(title);
+
+        if (title.Length > QuestionConsts.MaxTitleLength)
+        {
+            title = title[..QuestionConsts.MaxTitleLength].Trim();
+        }
+
+        return title;
+    }
+
+    private static string CleanInlineText(string value)
+    {
+        return Regex.Replace(value, @"\s+", " ").Trim();
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        if (value.Length <= maxLength)
+        {
+            return value;
+        }
+
+        return value[..maxLength].Trim();
+    }
+
+    private static void AddPdfReviewQueueSheet(XLWorkbook workbook)
+    {
+        var sheet = workbook.Worksheets.Add("PdfReviewQueue");
+        AddHeaders(sheet,
+        [
+            "SourceFileName", "SourceQuestionNo", "ParseStatus", "DetectedType", "ParseMessage",
+            "Title", "Content", "Explanation",
+            "Option1", "Option2", "Option3", "Option4", "Option5", "Option6",
+            "CorrectAnswers", "RawSourceText"
+        ]);
+    }
+
+    private static void WriteChoiceRow(IXLWorksheet sheet, int rowNumber, QuestionPdfStagingRowDto row)
+    {
+        SetCell(sheet, rowNumber, "Title", row.Title);
+        SetCell(sheet, rowNumber, "Content", row.Content);
+        SetCell(sheet, rowNumber, "Difficulty", row.Difficulty);
+        SetCell(sheet, rowNumber, "Score", row.Score);
+        SetCell(sheet, rowNumber, "Explanation", row.Explanation);
+        SetCell(sheet, rowNumber, "Option1", row.Option1);
+        SetCell(sheet, rowNumber, "Option2", row.Option2);
+        SetCell(sheet, rowNumber, "Option3", row.Option3);
+        SetCell(sheet, rowNumber, "Option4", row.Option4);
+        SetCell(sheet, rowNumber, "Option5", row.Option5);
+        SetCell(sheet, rowNumber, "Option6", row.Option6);
+        SetCell(sheet, rowNumber, "CorrectAnswers", row.CorrectAnswers);
+        SetCell(sheet, rowNumber, "SortOrder", row.SourceQuestionNo);
+        SetCell(sheet, rowNumber, "IsActive", true);
+    }
+
+    private static void WriteMatchingRow(IXLWorksheet sheet, int rowNumber, QuestionPdfStagingRowDto row)
+    {
+        SetCell(sheet, rowNumber, "Title", row.Title);
+        SetCell(sheet, rowNumber, "Content", row.Content);
+        SetCell(sheet, rowNumber, "Difficulty", row.Difficulty);
+        SetCell(sheet, rowNumber, "Score", row.Score);
+        SetCell(sheet, rowNumber, "Explanation", row.Explanation);
+        SetCell(sheet, rowNumber, "Left1", row.Left1);
+        SetCell(sheet, rowNumber, "Right1", row.Right1);
+        SetCell(sheet, rowNumber, "Left2", row.Left2);
+        SetCell(sheet, rowNumber, "Right2", row.Right2);
+        SetCell(sheet, rowNumber, "Left3", row.Left3);
+        SetCell(sheet, rowNumber, "Right3", row.Right3);
+        SetCell(sheet, rowNumber, "Left4", row.Left4);
+        SetCell(sheet, rowNumber, "Right4", row.Right4);
+        SetCell(sheet, rowNumber, "Left5", row.Left5);
+        SetCell(sheet, rowNumber, "Right5", row.Right5);
+        SetCell(sheet, rowNumber, "SortOrder", row.SourceQuestionNo);
+        SetCell(sheet, rowNumber, "IsActive", true);
+    }
+
+    private static void WriteEssayRow(IXLWorksheet sheet, int rowNumber, QuestionPdfStagingRowDto row)
+    {
+        SetCell(sheet, rowNumber, "Title", row.Title);
+        SetCell(sheet, rowNumber, "Content", row.Content);
+        SetCell(sheet, rowNumber, "Difficulty", row.Difficulty);
+        SetCell(sheet, rowNumber, "Score", row.Score);
+        SetCell(sheet, rowNumber, "Explanation", row.Explanation);
+        SetCell(sheet, rowNumber, "SampleAnswer", row.SampleAnswer);
+        SetCell(sheet, rowNumber, "Rubric", row.Rubric);
+        SetCell(sheet, rowNumber, "SortOrder", row.SourceQuestionNo);
+        SetCell(sheet, rowNumber, "IsActive", true);
+    }
+
+    private static void WriteReviewQueueRow(IXLWorksheet sheet, int rowNumber, QuestionPdfStagingRowDto row)
+    {
+        SetCell(sheet, rowNumber, "SourceFileName", row.SourceFileName);
+        SetCell(sheet, rowNumber, "SourceQuestionNo", row.SourceQuestionNo);
+        SetCell(sheet, rowNumber, "ParseStatus", row.ParseStatus.ToString());
+        SetCell(sheet, rowNumber, "DetectedType", row.DetectedType);
+        SetCell(sheet, rowNumber, "ParseMessage", row.ParseMessage);
+        SetCell(sheet, rowNumber, "Title", row.Title);
+        SetCell(sheet, rowNumber, "Content", row.Content);
+        SetCell(sheet, rowNumber, "Explanation", row.Explanation);
+        SetCell(sheet, rowNumber, "Option1", row.Option1);
+        SetCell(sheet, rowNumber, "Option2", row.Option2);
+        SetCell(sheet, rowNumber, "Option3", row.Option3);
+        SetCell(sheet, rowNumber, "Option4", row.Option4);
+        SetCell(sheet, rowNumber, "Option5", row.Option5);
+        SetCell(sheet, rowNumber, "Option6", row.Option6);
+        SetCell(sheet, rowNumber, "CorrectAnswers", row.CorrectAnswers);
+        SetCell(sheet, rowNumber, "RawSourceText", row.RawSourceText);
+    }
+
+    private static void SetCell<T>(IXLWorksheet sheet, int rowNumber, string columnName, T value)
+    {
+        var columnNumber = GetColumnNumber(sheet, columnName);
+        if (columnNumber.HasValue)
+        {
+            sheet.Cell(rowNumber, columnNumber.Value).Value = value?.ToString() ?? string.Empty;
+        }
+    }
+
+    private sealed record PdfChoiceOption(string Letter, string Text);
 
     private async Task<Dictionary<string, QuestionTypeDto>> LoadQuestionTypesByCodeAsync()
     {

@@ -1,6 +1,7 @@
 @page "/admin/questions/import"
 @model Elearning.Web.Pages.Admin.Questions.ImportModel
 @using Elearning.Localization
+@using Elearning.Questions
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
 
@@ -19,6 +20,143 @@
         <p class="mb-0">@L["Questions:Import:TemplateDescription"]</p>
     </div>
 </div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <span class="fw-semibold">@L["Questions:Import:PdfTitle"]</span>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">@L["Questions:Import:PdfDescription"]</p>
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+            <abp-validation-summary />
+
+            <div class="col-12">
+                <label asp-for="PdfFile" class="form-label">@L["Questions:Import:PdfFile"]</label>
+                <input asp-for="PdfFile" type="file" accept=".pdf" class="form-control" />
+                <span asp-validation-for="PdfFile" class="text-danger"></span>
+                <div class="form-text">@L["Questions:Import:PdfFileHelp"]</div>
+            </div>
+
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-outline-primary" asp-page-handler="PreviewPdf">
+                    @L["Questions:Import:PreviewPdf"]
+                </button>
+                <button type="submit" class="btn btn-primary" asp-page-handler="DownloadPdfExcel">
+                    @L["Questions:Import:DownloadPdfExcel"]
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.PdfResult != null)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <span class="fw-semibold">@L["Questions:Import:PdfResultTitle"]</span>
+        </div>
+        <div class="card-body">
+            @if (Model.PdfResult.HasErrors)
+            {
+                <div class="alert alert-warning">
+                    @foreach (var error in Model.PdfResult.Errors)
+                    {
+                        <div>@error</div>
+                    }
+                </div>
+            }
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-2">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted">@L["Questions:Import:PdfPages"]</div>
+                        <div class="fs-4 fw-bold">@Model.PdfResult.PageCount</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted">@L["Questions:Import:PdfDetected"]</div>
+                        <div class="fs-4 fw-bold">@Model.PdfResult.TotalRows</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted">@L["Questions:Import:PdfReady"]</div>
+                        <div class="fs-4 fw-bold">@Model.PdfResult.ReadyCount</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted">@L["Questions:Import:PdfNeedsReview"]</div>
+                        <div class="fs-4 fw-bold">@Model.PdfResult.NeedsReviewCount</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted">@L["Questions:Import:PdfUnsupported"]</div>
+                        <div class="fs-4 fw-bold">@Model.PdfResult.UnsupportedCount</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted">@L["Questions:Import:PdfInvalid"]</div>
+                        <div class="fs-4 fw-bold">@Model.PdfResult.InvalidCount</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-muted">@L["Questions:Import:PdfReviewHint"]</p>
+
+            @if (Model.PdfResult.Rows.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>@L["Questions:Import:QuestionNo"]</th>
+                                <th>@L["Questions:Import:Status"]</th>
+                                <th>@L["Questions:Import:Type"]</th>
+                                <th>@L["Questions:TitleColumn"]</th>
+                                <th>@L["Questions:Import:Message"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.PdfResult.Rows.Take(100))
+                            {
+                                var badgeClass = row.ParseStatus switch
+                                {
+                                    QuestionPdfParseStatus.Ready => "bg-success",
+                                    QuestionPdfParseStatus.NeedsReview => "bg-warning text-dark",
+                                    QuestionPdfParseStatus.Unsupported => "bg-secondary",
+                                    QuestionPdfParseStatus.Invalid => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                                var title = row.Title;
+                                if (title.Length > 160)
+                                {
+                                    title = title.Substring(0, 160) + "...";
+                                }
+
+                                <tr>
+                                    <td>@row.SourceQuestionNo</td>
+                                    <td><span class="badge @badgeClass">@row.ParseStatus</span></td>
+                                    <td>@row.DetectedType</td>
+                                    <td>@title</td>
+                                    <td>@row.ParseMessage</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (Model.PdfResult.Rows.Count > 100)
+                {
+                    <p class="text-muted">@L["Questions:Import:PdfPreviewLimit", 100, Model.PdfResult.Rows.Count]</p>
+                }
+            }
+        </div>
+    </div>
+}
 
 <div class="card">
     <div class="card-header">

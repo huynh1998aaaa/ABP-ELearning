@@ -41,6 +41,13 @@ public class EditModel : ElearningAdminPageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnGetModalAsync()
+    {
+        LoadOptions();
+        await LoadQuestionTypeAsync();
+        return Partial("_EditForm", this);
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
@@ -52,6 +59,27 @@ public class EditModel : ElearningAdminPageModel
 
         await _questionTypeAppService.UpdateAsync(Id, Input);
         return RedirectToPage("./Index");
+    }
+
+    public async Task<IActionResult> OnPostModalAsync()
+    {
+        if (!ModelState.IsValid)
+        {
+            LoadOptions();
+            await LoadFlagsAsync();
+            Response.StatusCode = 400;
+            return Partial("_EditForm", this);
+        }
+
+        try
+        {
+            await _questionTypeAppService.UpdateAsync(Id, Input);
+            return AjaxSuccess();
+        }
+        catch (System.Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
     }
 
     private async Task LoadQuestionTypeAsync()

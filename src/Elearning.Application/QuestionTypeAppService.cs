@@ -8,7 +8,6 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
-using Volo.Abp.Validation;
 
 namespace Elearning.QuestionTypes;
 
@@ -100,8 +99,7 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
 
         if (!string.Equals(questionType.Code, code, StringComparison.Ordinal))
         {
-            throw new BusinessException(ElearningDomainErrorCodes.QuestionTypeCodeCannotBeChanged)
-                .WithData(nameof(QuestionType.Code), questionType.Code);
+            throw new UserFriendlyException(L["QuestionTypes:CodeCannotBeChanged"]);
         }
 
         ValidateOptionRules(input.SupportsOptions, input.MinimumOptions, input.MaximumOptions);
@@ -130,8 +128,7 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
 
         if (questionType.IsSystem)
         {
-            throw new BusinessException(ElearningDomainErrorCodes.SystemQuestionTypeCannotBeDeleted)
-                .WithData(nameof(QuestionType.Code), questionType.Code);
+            throw new UserFriendlyException(L["QuestionTypes:SystemCannotBeDeleted"]);
         }
 
         await _questionTypeRepository.DeleteAsync(questionType, autoSave: true);
@@ -170,14 +167,12 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
     {
         if (!CodeRegex.IsMatch(code))
         {
-            throw new BusinessException(ElearningDomainErrorCodes.InvalidQuestionTypeCode)
-                .WithData(nameof(QuestionType.Code), code);
+            throw new UserFriendlyException(L["QuestionTypes:CodeInvalid"]);
         }
 
         if (await _questionTypeRepository.FindAsync(x => x.Code == code) != null)
         {
-            throw new BusinessException(ElearningDomainErrorCodes.QuestionTypeCodeAlreadyExists)
-                .WithData(nameof(QuestionType.Code), code);
+            throw new UserFriendlyException(L["QuestionTypes:CodeAlreadyExists", code]);
         }
     }
 
@@ -186,7 +181,7 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
         return code.Trim().ToLowerInvariant();
     }
 
-    private static void ValidateOptionRules(bool supportsOptions, int? minimumOptions, int? maximumOptions)
+    private void ValidateOptionRules(bool supportsOptions, int? minimumOptions, int? maximumOptions)
     {
         if (!supportsOptions)
         {
@@ -195,7 +190,7 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
 
         if (minimumOptions.HasValue && maximumOptions.HasValue && maximumOptions < minimumOptions)
         {
-            throw new AbpValidationException("Maximum options must be greater than or equal to minimum options.");
+            throw new UserFriendlyException(L["QuestionTypes:MaximumOptionsMustBeGreaterOrEqualMinimum"]);
         }
     }
 

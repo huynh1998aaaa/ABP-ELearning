@@ -21,7 +21,12 @@ public class ImportModel : ElearningAdminPageModel
     [BindProperty]
     public IFormFile? ImportFile { get; set; }
 
+    [BindProperty]
+    public IFormFile? PdfFile { get; set; }
+
     public QuestionImportResultDto? Result { get; private set; }
+
+    public QuestionPdfParseResultDto? PdfResult { get; private set; }
 
     public async Task<IActionResult> OnGetDownloadTemplateAsync()
     {
@@ -47,5 +52,46 @@ public class ImportModel : ElearningAdminPageModel
         });
 
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostPreviewPdfAsync()
+    {
+        if (PdfFile == null || PdfFile.Length == 0)
+        {
+            ModelState.AddModelError(nameof(PdfFile), L["Questions:Import:PdfFileRequired"]);
+            return Page();
+        }
+
+        PdfResult = await _questionImportAppService.PreviewPdfAsync(new QuestionImportFileDto
+        {
+            FileName = PdfFile.FileName,
+            Content = await ReadFileContentAsync(PdfFile)
+        });
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostDownloadPdfExcelAsync()
+    {
+        if (PdfFile == null || PdfFile.Length == 0)
+        {
+            ModelState.AddModelError(nameof(PdfFile), L["Questions:Import:PdfFileRequired"]);
+            return Page();
+        }
+
+        var template = await _questionImportAppService.ConvertPdfToExcelAsync(new QuestionImportFileDto
+        {
+            FileName = PdfFile.FileName,
+            Content = await ReadFileContentAsync(PdfFile)
+        });
+
+        return File(template.Content, template.ContentType, template.FileName);
+    }
+
+    private static async Task<byte[]> ReadFileContentAsync(IFormFile file)
+    {
+        await using var stream = new MemoryStream();
+        await file.CopyToAsync(stream);
+        return stream.ToArray();
     }
 }

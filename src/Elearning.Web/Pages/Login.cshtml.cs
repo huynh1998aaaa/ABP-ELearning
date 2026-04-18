@@ -6,7 +6,7 @@ namespace Elearning.Web.Pages;
 public class LoginModel : ElearningPageModel
 {
     [BindProperty(SupportsGet = true)]
-    public string ReturnUrl { get; set; } = "/client";
+    public string ReturnUrl { get; set; } = "/";
 
     public IActionResult OnGet()
     {
