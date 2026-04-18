@@ -266,3 +266,10 @@ src/Elearning.Blazor.Server.Tiered/Logs/*
 /.cursor
 /docs
 /Logs
+/AGENT_FLOW.md
+/AGENTS.md
+/ARCHITECTURE.md
+/.codex-kit
+/.cursor
+/.agents
+/.codex
