@@ -1,0 +1,66 @@
+@page "/admin/practices/preview/{id:guid}"
+@model Elearning.Web.Pages.Admin.Practices.PreviewModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin/practices">@L["Practices:BackToList"]</a>
+    <h1 class="h3 mb-1">@L["Practices:PreviewTitle"]</h1>
+    <p class="text-muted mb-0">@L["Practices:PreviewDescription"]</p>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">@Model.Preview.PracticeSet.Title</span>
+        <a class="btn btn-sm btn-outline-primary" href="/admin/practices/edit/@Model.Preview.PracticeSet.Id">@L["Practices:Edit"]</a>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <span class="badge bg-primary-subtle text-primary-emphasis">@Model.Preview.PracticeSet.Code</span>
+            <span class="badge bg-info-subtle text-info-emphasis">@L[$"Enum:PracticeAccessLevel:{Model.Preview.PracticeSet.AccessLevel}"]</span>
+            <span class="badge bg-secondary-subtle text-secondary-emphasis">@L[$"Enum:PracticeSelectionMode:{Model.Preview.PracticeSet.SelectionMode}"]</span>
+            <span class="badge bg-success-subtle text-success-emphasis">@L[$"Enum:PracticeStatus:{Model.Preview.PracticeSet.Status}"]</span>
+        </div>
+
+        <dl class="row">
+            <dt class="col-sm-3">@L["Practices:TotalQuestionCount"]</dt>
+            <dd class="col-sm-9">@Model.Preview.PracticeSet.TotalQuestionCount</dd>
+            <dt class="col-sm-3">@L["Practices:AssignedQuestionCount"]</dt>
+            <dd class="col-sm-9">@Model.Preview.PracticeSet.AssignedQuestionCount</dd>
+            <dt class="col-sm-3">@L["Practices:ShowExplanation"]</dt>
+            <dd class="col-sm-9">@(Model.Preview.PracticeSet.ShowExplanation ? L["Practices:Yes"] : L["Practices:No"])</dd>
+        </dl>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Preview.PracticeSet.Description))
+        {
+            <div class="alert alert-light border">@Model.Preview.PracticeSet.Description</div>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">@L["Practices:Questions"]</span>
+        <a class="btn btn-sm btn-outline-secondary" href="/admin/practices/questions/@Model.Preview.PracticeSet.Id">@L["Practices:ManageQuestions"]</a>
+    </div>
+    <div class="card-body">
+        @if (Model.Preview.Questions.Count == 0)
+        {
+            <div class="alert alert-light border mb-0">@L["Practices:NoQuestions"]</div>
+        }
+        else
+        {
+            @foreach (var question in Model.Preview.Questions)
+            {
+                <div class="border rounded p-3 mb-2">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong>@question.SortOrder. @question.QuestionTitle</strong>
+                        <span class="badge bg-light text-dark">@question.QuestionTypeName</span>
+                    </div>
+                    <div class="text-muted small">@question.QuestionContent</div>
+                </div>
+            }
+        }
+    </div>
+</div>

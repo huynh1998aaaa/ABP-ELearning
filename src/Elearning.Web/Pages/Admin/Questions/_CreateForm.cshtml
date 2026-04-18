@@ -1,0 +1,129 @@
+@model Elearning.Web.Pages.Admin.Questions.CreateModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<form method="post" asp-page-handler="Modal" class="row g-3" data-admin-ajax-form="true" data-admin-refresh-target="#questionsTable">
+    <abp-validation-summary />
+
+    <div class="col-md-6">
+        <label asp-for="Input.QuestionTypeId" class="form-label">@L["Questions:QuestionType"]</label>
+        <select asp-for="Input.QuestionTypeId" class="form-select" data-question-type-select>
+            @foreach (var questionType in Model.AvailableQuestionTypes)
+            {
+                <option value="@questionType.Id" data-input-kind="@questionType.InputKind">@questionType.DisplayName</option>
+            }
+        </select>
+        <span asp-validation-for="Input.QuestionTypeId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Input.Title" class="form-label">@L["Questions:TitleColumn"]</label>
+        <input asp-for="Input.Title" class="form-control" />
+        <span asp-validation-for="Input.Title" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Input.Content" class="form-label">@L["Questions:Content"]</label>
+        <textarea asp-for="Input.Content" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Input.Content" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Input.Explanation" class="form-label">@L["Questions:Explanation"]</label>
+        <textarea asp-for="Input.Explanation" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Input.Explanation" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Input.Difficulty" class="form-label">@L["Questions:Difficulty"]</label>
+        <select asp-for="Input.Difficulty" asp-items="Model.DifficultyOptions" class="form-select"></select>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Input.Score" class="form-label">@L["Questions:Score"]</label>
+        <input asp-for="Input.Score" class="form-control" />
+        <span asp-validation-for="Input.Score" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Input.SortOrder" class="form-label">@L["Questions:SortOrder"]</label>
+        <input asp-for="Input.SortOrder" class="form-control" />
+        <span asp-validation-for="Input.SortOrder" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="Input.IsActive" class="form-check-input" />
+            <label asp-for="Input.IsActive" class="form-check-label">@L["Questions:IsActive"]</label>
+        </div>
+    </div>
+
+    <div class="col-12" data-answer-section="SingleChoice MultipleChoice">
+        <div class="border rounded p-3">
+            <h2 class="h5">@L["Questions:Options"]</h2>
+            <p class="text-muted">@L["Questions:OptionsHelp"]</p>
+            @for (var i = 0; i < Model.Input.Options.Count; i++)
+            {
+                <div class="row g-2 align-items-center mb-2">
+                    <div class="col-md-8">
+                        <input asp-for="Input.Options[i].Text" class="form-control" placeholder="@L["Questions:OptionText"]" />
+                    </div>
+                    <div class="col-md-2">
+                        <input asp-for="Input.Options[i].SortOrder" class="form-control" />
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input asp-for="Input.Options[i].IsCorrect" class="form-check-input" />
+                            <label asp-for="Input.Options[i].IsCorrect" class="form-check-label">@L["Questions:IsCorrect"]</label>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-12" data-answer-section="Matching">
+        <div class="border rounded p-3">
+            <h2 class="h5">@L["Questions:MatchingPairs"]</h2>
+            <p class="text-muted">@L["Questions:MatchingPairsHelp"]</p>
+            @for (var i = 0; i < Model.Input.MatchingPairs.Count; i++)
+            {
+                <div class="row g-2 align-items-center mb-2">
+                    <div class="col-md-5">
+                        <input asp-for="Input.MatchingPairs[i].LeftText" class="form-control" placeholder="@L["Questions:LeftText"]" />
+                    </div>
+                    <div class="col-md-5">
+                        <input asp-for="Input.MatchingPairs[i].RightText" class="form-control" placeholder="@L["Questions:RightText"]" />
+                    </div>
+                    <div class="col-md-2">
+                        <input asp-for="Input.MatchingPairs[i].SortOrder" class="form-control" />
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-12" data-answer-section="Essay">
+        <div class="border rounded p-3">
+            <h2 class="h5">@L["Questions:EssayAnswer"]</h2>
+            <div class="mb-3">
+                <label asp-for="Input.EssayAnswer.SampleAnswer" class="form-label">@L["Questions:SampleAnswer"]</label>
+                <textarea asp-for="Input.EssayAnswer.SampleAnswer" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.EssayAnswer.Rubric" class="form-label">@L["Questions:Rubric"]</label>
+                <textarea asp-for="Input.EssayAnswer.Rubric" class="form-control" rows="3"></textarea>
+            </div>
+            <div>
+                <label asp-for="Input.EssayAnswer.MaxWords" class="form-label">@L["Questions:MaxWords"]</label>
+                <input asp-for="Input.EssayAnswer.MaxWords" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@L["Questions:Save"]</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Questions:Cancel"]</button>
+    </div>
+</form>

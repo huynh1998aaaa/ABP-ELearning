@@ -1,0 +1,40 @@
+@model Elearning.Web.Pages.Admin.PremiumSubscriptions.CreateModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<form method="post" asp-page-handler="Modal" class="row g-3" data-admin-ajax-form="true" data-admin-refresh-target="#premiumSubscriptionsTable">
+    <abp-validation-summary />
+
+    <div class="col-md-6">
+        <label asp-for="Input.UserId" class="form-label">@L["PremiumSubscriptions:User"]</label>
+        <select asp-for="Input.UserId" asp-items="Model.UserOptions" class="form-select">
+            <option value="">@L["PremiumSubscriptions:SelectUser"]</option>
+        </select>
+        <span asp-validation-for="Input.UserId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Input.PremiumPlanId" class="form-label">@L["PremiumSubscriptions:Plan"]</label>
+        <select asp-for="Input.PremiumPlanId" asp-items="Model.PlanOptions" class="form-select"></select>
+        <span asp-validation-for="Input.PremiumPlanId" class="text-danger"></span>
+        <div class="form-text">@L["PremiumSubscriptions:SixMonthsHelp"]</div>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Input.Note" class="form-label">@L["PremiumSubscriptions:Note"]</label>
+        <textarea asp-for="Input.Note" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Input.Note" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <div class="alert alert-info mb-0">
+            @L["PremiumSubscriptions:ActivationRule"]
+        </div>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@L["PremiumSubscriptions:ActivatePremium"]</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["PremiumSubscriptions:Cancel"]</button>
+    </div>
+</form>

@@ -1,0 +1,69 @@
+@page "/admin/subjects"
+@model Elearning.Web.Pages.Admin.Subjects.IndexModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin">@L["Subjects:BackToAdmin"]</a>
+    <h1 class="h3 mb-1">@L["Subjects:ListTitle"]</h1>
+    <p class="text-muted mb-0">@L["Subjects:ListSubtitle"]</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <span>@L["Subjects:Stats:Total"]</span>
+                <div class="fs-2 fw-bold">@Model.TotalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <span>@L["Subjects:Stats:Active"]</span>
+                <div class="fs-2 fw-bold">@Model.ActiveCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <span>@L["Subjects:Stats:Inactive"]</span>
+                <div class="fs-2 fw-bold">@Model.InactiveCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <span class="fw-semibold">@L["Subjects:Title"]</span>
+        @if (Model.CanCreate)
+        {
+            <a class="btn btn-primary btn-sm"
+               href="/admin/subjects/create"
+               data-admin-modal-url="/admin/subjects/create?handler=Modal"
+               data-admin-modal-title="@L["Subjects:CreateTitle"]">@L["Subjects:Create"]</a>
+        }
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <input asp-for="Filter" class="form-control" placeholder="@L["Subjects:SearchPlaceholder"]" />
+            </div>
+            <div class="col-lg-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">@L["Subjects:Search"]</button>
+                <a class="btn btn-outline-secondary" href="/admin/subjects">@L["Subjects:Reset"]</a>
+            </div>
+        </form>
+
+        <div id="subjectsTable" data-admin-refresh-url="@Model.BuildTableUrl()">
+            <partial name="_Table" model="Model" />
+        </div>
+    </div>
+</div>
+
+<partial name="~/Pages/Shared/Admin/_AdminAjaxModal.cshtml" />
+<script src="/js/admin/admin-crud-modal.js"></script>

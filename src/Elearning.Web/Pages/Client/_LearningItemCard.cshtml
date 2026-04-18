@@ -1,0 +1,31 @@
+@model Elearning.ClientContent.ClientLearningItemDto
+@using Elearning.ClientContent
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+@if (Model.IsLocked)
+{
+    <article class="learning-card learning-card-locked">
+        <div class="learning-card-main">
+            <h3>@Model.Title</h3>
+            @if (Model.AccessLevel == ClientLearningAccessLevel.Premium)
+            {
+                <span class="learning-card-gem" aria-hidden="true"></span>
+            }
+        </div>
+    </article>
+}
+else
+{
+    <a class="learning-card learning-card-link @(Model.AccessLevel == ClientLearningAccessLevel.Premium ? "learning-card-premium" : null)"
+       href="/client/launch/@Model.Kind/@Model.Id">
+        <div class="learning-card-main">
+            <h3>@Model.Title</h3>
+            @if (Model.AccessLevel == ClientLearningAccessLevel.Premium)
+            {
+                <span class="learning-card-gem" aria-hidden="true"></span>
+            }
+        </div>
+    </a>
+}

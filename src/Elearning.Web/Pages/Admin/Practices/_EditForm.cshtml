@@ -1,0 +1,58 @@
+@model Elearning.Web.Pages.Admin.Practices.EditModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<form method="post" asp-page-handler="Modal" class="row g-3" data-admin-ajax-form="true" data-admin-refresh-target="#practiceSetsTable">
+    <abp-validation-summary />
+
+    <div class="col-md-4">
+        <label asp-for="Input.Code" class="form-label">@L["Practices:Code"]</label>
+        <input asp-for="Input.Code" class="form-control" />
+        <span asp-validation-for="Input.Code" class="text-danger"></span>
+    </div>
+    <div class="col-md-8">
+        <label asp-for="Input.Title" class="form-label">@L["Practices:TitleColumn"]</label>
+        <input asp-for="Input.Title" class="form-control" />
+        <span asp-validation-for="Input.Title" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Input.Description" class="form-label">@L["Practices:Description"]</label>
+        <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Input.Description" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Input.AccessLevel" class="form-label">@L["Practices:AccessLevel"]</label>
+        <select asp-for="Input.AccessLevel" asp-items="Model.AccessLevelOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Input.SelectionMode" class="form-label">@L["Practices:SelectionMode"]</label>
+        <select asp-for="Input.SelectionMode" asp-items="Model.SelectionModeOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Input.TotalQuestionCount" class="form-label">@L["Practices:TotalQuestionCount"]</label>
+        <input asp-for="Input.TotalQuestionCount" class="form-control" />
+        <span asp-validation-for="Input.TotalQuestionCount" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Input.SortOrder" class="form-label">@L["Practices:SortOrder"]</label>
+        <input asp-for="Input.SortOrder" class="form-control" />
+        <span asp-validation-for="Input.SortOrder" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <div class="form-check">
+            <input asp-for="Input.ShuffleQuestions" class="form-check-input" />
+            <label asp-for="Input.ShuffleQuestions" class="form-check-label">@L["Practices:ShuffleQuestions"]</label>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-check">
+            <input asp-for="Input.ShowExplanation" class="form-check-input" />
+            <label asp-for="Input.ShowExplanation" class="form-check-label">@L["Practices:ShowExplanation"]</label>
+        </div>
+    </div>
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@L["Practices:Save"]</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Practices:Cancel"]</button>
+    </div>
+</form>

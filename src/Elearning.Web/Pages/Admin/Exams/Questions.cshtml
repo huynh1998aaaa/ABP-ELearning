@@ -1,0 +1,33 @@
+@page "/admin/exams/questions/{id:guid}"
+@model Elearning.Web.Pages.Admin.Exams.QuestionsModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin/exams">@L["Exams:BackToList"]</a>
+    <h1 class="h3 mb-1">@L["Exams:ManageQuestionsTitle"]</h1>
+    <p class="text-muted mb-0">@Model.Exam.Title</p>
+</div>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <input type="hidden" asp-for="Id" />
+        @if (Model.ShowAutoPreview)
+        {
+            <input type="hidden" asp-for="ShowAutoPreview" />
+        }
+        <input asp-for="QuestionFilter" class="form-control" placeholder="@L["Exams:QuestionSearchPlaceholder"]" />
+    </div>
+    <div class="col-lg-6 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@L["Exams:Search"]</button>
+        <a class="btn btn-outline-secondary" href="/admin/exams/questions/@Model.Id">@L["Exams:Reset"]</a>
+        <a class="btn btn-outline-secondary" href="/admin/exams/preview/@Model.Id">@L["Exams:Preview"]</a>
+    </div>
+</form>
+
+<div id="examQuestionsWorkspace" data-admin-refresh-url="@Model.BuildWorkspaceUrl()">
+    <partial name="_QuestionsWorkspace" model="Model" />
+</div>
+
+<script src="/js/admin/admin-crud-modal.js"></script>

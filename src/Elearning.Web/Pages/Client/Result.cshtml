@@ -1,0 +1,144 @@
+@page "/client/session/{id:guid}/result"
+@model Elearning.Web.Pages.Client.ResultModel
+@using System
+@using Elearning.Localization
+@using Elearning.QuestionTypes
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<section class="client-shell result-shell">
+    <div class="portal-header result-hero">
+        <div class="result-hero-copy">
+            <span class="portal-pill">@L["Client:ResultLabel"]</span>
+            <h1>@L["Client:ResultTitle", Model.Result.Title]</h1>
+            <p class="lead">@L["Client:ResultSubtitle"]</p>
+        </div>
+        <div class="result-hero-summary">
+            <span>@L["Client:ScoreLabel"]</span>
+            <strong>@Model.Result.Score</strong>
+        </div>
+    </div>
+
+    <div class="result-stats">
+        <div class="result-stat-card">
+            <span>@L["Client:CorrectCount"]</span>
+            <strong>@Model.Result.CorrectCount / @Model.Result.TotalQuestionCount</strong>
+        </div>
+        <div class="result-stat-card">
+            <span>@L["Client:AnsweredCount"]</span>
+            <strong>@Model.Result.AnsweredCount / @Model.Result.TotalQuestionCount</strong>
+        </div>
+        <div class="result-stat-card">
+            <span>@L["Client:ScoreLabel"]</span>
+            <strong>@Model.Result.Score</strong>
+        </div>
+        <div class="result-stat-card">
+            <span>@L["Client:PendingManualGradingCount"]</span>
+            <strong>@Model.Result.PendingManualGradingCount</strong>
+        </div>
+    </div>
+
+    @if (Model.Result.PendingManualGradingCount > 0)
+    {
+        <div class="result-note">
+            @L["Client:AutoGradedScoreNotice"]
+        </div>
+    }
+
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        <a class="btn btn-outline-secondary" href="/client">@L["Client:BackToPortal"]</a>
+    </div>
+
+    <div class="result-question-list">
+        @foreach (var question in Model.Result.Questions)
+        {
+            var isEssay = string.Equals(question.QuestionTypeCode, QuestionTypeCodes.Essay, StringComparison.Ordinal);
+            var isMatching = string.Equals(question.QuestionTypeCode, QuestionTypeCodes.Matching, StringComparison.Ordinal);
+            var badgeClass = isEssay
+                ? question.IsAnswered
+                    ? "bg-warning-subtle text-warning-emphasis"
+                    : "bg-secondary-subtle text-secondary-emphasis"
+                : question.IsCorrect
+                    ? "bg-success-subtle text-success-emphasis"
+                    : "bg-danger-subtle text-danger-emphasis";
+            var badgeText = isEssay
+                ? question.IsAnswered
+                    ? L["Client:EssayPendingManualGrading"]
+                    : L["Client:EssayNotAnswered"]
+                : question.IsCorrect
+                    ? L["Client:AnswerCorrect"]
+                    : L["Client:AnswerIncorrect"];
+
+            <article class="result-question-card">
+                <div class="result-question-head">
+                    <div>
+                        <div class="result-question-chip">@question.QuestionTypeName</div>
+                        <h2>@L["Client:QuestionHeading", question.SortOrder, question.Title, question.OriginalQuestionId.ToString("N")[..4]]</h2>
+                    </div>
+                    <span class="badge @badgeClass">
+                        @badgeText
+                    </span>
+                </div>
+
+                @if (isEssay)
+                {
+                    <div class="result-essay-answer">
+                        <strong>@L["Client:EssayYourAnswer"]</strong>
+                        <div class="result-essay-content">
+                            @if (string.IsNullOrWhiteSpace(question.EssayAnswerText))
+                            {
+                                @L["Client:EssayNotAnswered"]
+                            }
+                            else
+                            {
+                                @question.EssayAnswerText
+                            }
+                        </div>
+                    </div>
+                }
+                else if (isMatching)
+                {
+                    <div class="result-option-list">
+                        @foreach (var pair in question.MatchingPairs)
+                        {
+                            var pairClass = pair.IsCorrect
+                                ? "result-option-correct"
+                                : "result-option-selected";
+
+                            <div class="result-option-item @pairClass">
+                                <div><strong>@pair.LeftText</strong></div>
+                                <div>@L["Client:MatchingSelectedValue", pair.SelectedRightText ?? L["Client:MatchingNotAnswered"]]</div>
+                                <div>@L["Client:MatchingCorrectValue", pair.CorrectRightText]</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="result-option-list">
+                        @foreach (var option in question.Options)
+                        {
+                            var optionClass = option.IsCorrect
+                                ? "result-option-correct"
+                                : option.IsSelected
+                                    ? "result-option-selected"
+                                    : string.Empty;
+
+                            <div class="result-option-item @optionClass">
+                                <span>@option.Text</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Model.Result.ShowExplanation && !string.IsNullOrWhiteSpace(question.Explanation))
+                {
+                    <div class="result-explanation">
+                        <strong>@L["Client:ExplanationLabel"]</strong>
+                        <p>@question.Explanation</p>
+                    </div>
+                }
+            </article>
+        }
+    </div>
+</section>

@@ -1,0 +1,61 @@
+@model Elearning.Web.Pages.Admin.Accounts.CreateModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<form method="post" asp-page-handler="Modal" class="row g-3" data-admin-ajax-form="true" data-admin-refresh-target="#accountsTable">
+    <abp-validation-summary />
+
+    <div class="col-md-6">
+        <label asp-for="Input.UserName" class="form-label">@L["Accounts:UserName"]</label>
+        <input asp-for="Input.UserName" class="form-control" />
+        <span asp-validation-for="Input.UserName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Input.Email" class="form-label">@L["Accounts:Email"]</label>
+        <input asp-for="Input.Email" class="form-control" />
+        <span asp-validation-for="Input.Email" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Input.Name" class="form-label">@L["Accounts:Name"]</label>
+        <input asp-for="Input.Name" class="form-control" />
+        <span asp-validation-for="Input.Name" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Input.Surname" class="form-label">@L["Accounts:Surname"]</label>
+        <input asp-for="Input.Surname" class="form-control" />
+        <span asp-validation-for="Input.Surname" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Input.PhoneNumber" class="form-label">@L["Accounts:Phone"]</label>
+        <input asp-for="Input.PhoneNumber" class="form-control" />
+        <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Input.Password" class="form-label">@L["Accounts:Password"]</label>
+        <input asp-for="Input.Password" class="form-control" />
+        <span asp-validation-for="Input.Password" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Input.RoleNames" class="form-label">@L["Accounts:Roles"]</label>
+        <select asp-for="Input.RoleNames" asp-items="Model.AvailableRoles" class="form-select" multiple></select>
+    </div>
+
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="Input.IsActive" class="form-check-input" />
+            <label asp-for="Input.IsActive" class="form-check-label">@L["Accounts:IsActive"]</label>
+        </div>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@L["Accounts:Save"]</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Accounts:Cancel"]</button>
+    </div>
+</form>

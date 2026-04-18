@@ -1,0 +1,126 @@
+@model Elearning.Web.Pages.Admin.Exams.IndexModel
+@using Elearning.Exams
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+@if (Model.Exams.Count == 0)
+{
+    <div class="alert alert-light border">@L["Exams:NoItems"]</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>@L["Exams:TitleColumn"]</th>
+                    <th>@L["Exams:AccessLevel"]</th>
+                    <th>@L["Exams:SelectionMode"]</th>
+                    <th>@L["Exams:QuestionCount"]</th>
+                    <th>@L["Exams:Status"]</th>
+                    <th class="text-end">@L["Exams:Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var exam in Model.Exams)
+                {
+                    <tr>
+                        <td>
+                            <strong>@exam.Title</strong>
+                            <div class="text-muted small">@exam.Code</div>
+                        </td>
+                        <td>@L[$"Enum:ExamAccessLevel:{exam.AccessLevel}"]</td>
+                        <td>@L[$"Enum:ExamSelectionMode:{exam.SelectionMode}"]</td>
+                        <td>@exam.AssignedQuestionCount / @exam.TotalQuestionCount</td>
+                        <td>
+                            <span class="badge @GetStatusBadge(exam.Status)">@L[$"Enum:ExamStatus:{exam.Status}"]</span>
+                            <span class="badge @(exam.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                                @(exam.IsActive ? L["Exams:IsActive"] : L["Exams:Inactive"])
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                <a class="btn btn-sm btn-outline-secondary" href="/admin/exams/preview/@exam.Id">@L["Exams:Preview"]</a>
+                                @if (Model.CanManageQuestions)
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary" href="/admin/exams/questions/@exam.Id">@L["Exams:ManageQuestions"]</a>
+                                }
+                                @if (Model.CanUpdate)
+                                {
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       href="/admin/exams/edit/@exam.Id"
+                                       data-admin-modal-url="/admin/exams/edit/@exam.Id?handler=Modal"
+                                       data-admin-modal-title="@L["Exams:EditTitle"]"
+                                       data-admin-modal-size="lg">@L["Exams:Edit"]</a>
+                                    @if (exam.IsActive)
+                                    {
+                                        <form method="post" asp-page-handler="Deactivate" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">@L["Exams:Deactivate"]</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="Activate" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Exams:Activate"]</button>
+                                        </form>
+                                    }
+                                }
+                                @if (Model.CanPublish)
+                                {
+                                    @if (exam.Status != ExamStatus.Published)
+                                    {
+                                        <form method="post" asp-page-handler="Publish" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Exams:Publish"]</button>
+                                        </form>
+                                    }
+                                    @if (exam.Status != ExamStatus.Archived)
+                                    {
+                                        <form method="post" asp-page-handler="Archive" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">@L["Exams:Archive"]</button>
+                                        </form>
+                                    }
+                                }
+                                @if (Model.CanDelete)
+                                {
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable" onsubmit="return confirm('@L["Exams:ConfirmDelete"]');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">@L["Exams:Delete"]</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Exams pagination" class="d-flex justify-content-between align-items-center mt-3">
+        <span>@L["Exams:Page"] @Model.CurrentPage / @Model.TotalPages</span>
+        <div class="d-flex gap-2">
+            @if (Model.CurrentPage > 1)
+            {
+                <a class="btn btn-outline-secondary btn-sm" href="@Model.BuildPageUrl(Model.CurrentPage - 1)">Prev</a>
+            }
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a class="btn btn-outline-secondary btn-sm" href="@Model.BuildPageUrl(Model.CurrentPage + 1)">Next</a>
+            }
+        </div>
+    </nav>
+}
+
+@functions {
+    private static string GetStatusBadge(ExamStatus status)
+    {
+        return status switch
+        {
+            ExamStatus.Published => "bg-success-subtle text-success-emphasis",
+            ExamStatus.Archived => "bg-secondary-subtle text-secondary-emphasis",
+            _ => "bg-info-subtle text-info-emphasis"
+        };
+    }
+}

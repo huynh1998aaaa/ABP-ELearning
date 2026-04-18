@@ -1,0 +1,158 @@
+@page "/client/session/{id:guid}"
+@model Elearning.Web.Pages.Client.SessionModel
+@using System
+@using Elearning.Localization
+@using Elearning.QuestionTypes
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<section class="session-shell"
+         data-session-root="true"
+         data-submit-url="@Url.Page("/Client/Session", new { id = Model.Session.Id, handler = "Submit" })"
+         data-result-url="@Url.Page("/Client/Result", new { id = Model.Session.Id })"
+         data-submit-confirm="@L["Client:SubmitConfirm"]"
+         data-essay-saving-text="@L["Client:EssayAutosaving"]"
+         data-essay-saved-text="@L["Client:EssayAutosaved"]"
+         data-essay-save-failed-text="@L["Client:EssayAutosaveFailed"]"
+         data-end-time="@(Model.Session.EndsAt?.ToString("O") ?? string.Empty)">
+    <div class="session-stage">
+        <div class="session-header">
+            <div class="session-title-row">
+                <span class="session-title-icon" aria-hidden="true"></span>
+                <h1>@L["Client:RuntimeTitle", Model.Session.Title]</h1>
+            </div>
+            <div class="session-progress">
+                <div class="session-progress-bar">
+                    <div class="session-progress-fill" style="width:@(Model.Session.TotalQuestionCount == 0 ? 0 : (Model.Session.AnsweredCount * 100 / Model.Session.TotalQuestionCount))%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="session-layout">
+            <aside class="session-sidebar">
+                <div class="session-sidebar-card">
+                    <div class="session-timer-card">
+                        <span class="session-sidebar-label">@L["Client:TimeRemaining"]</span>
+                        <strong data-session-timer>
+                            @(Model.Session.EndsAt.HasValue ? "--:--" : L["Client:NoTimeLimit"])
+                        </strong>
+                    </div>
+
+                    <a class="session-action session-action-leave" href="/client">
+                        @L["Client:LeaveSession"]
+                    </a>
+
+                    <button type="button" class="session-action session-action-submit" data-session-submit>
+                        @L["Client:SubmitSession"]
+                    </button>
+
+                    <div class="session-sidebar-divider"></div>
+                    <div class="session-sidebar-label">@L["Client:QuestionNavigator"]</div>
+                    <div class="session-nav-grid">
+                        @foreach (var question in Model.Session.Questions)
+                        {
+                            <button type="button"
+                                    class="session-nav-item @(question.IsAnswered ? "session-nav-answered" : "session-nav-unanswered") @(question.SortOrder == 1 ? "session-nav-current" : string.Empty)"
+                                    data-session-nav
+                                    data-question-target="question-@question.Id"
+                                    data-question-id="@question.Id">
+                                @question.SortOrder
+                            </button>
+                        }
+                    </div>
+                </div>
+            </aside>
+
+            <main class="session-questions">
+                @foreach (var question in Model.Session.Questions)
+                {
+                    var isEssay = string.Equals(question.QuestionTypeCode, QuestionTypeCodes.Essay, StringComparison.Ordinal);
+                    var isMatching = string.Equals(question.QuestionTypeCode, QuestionTypeCodes.Matching, StringComparison.Ordinal);
+                    var inputType = string.Equals(question.QuestionTypeCode, QuestionTypeCodes.MultipleChoice, StringComparison.Ordinal)
+                        ? "checkbox"
+                        : "radio";
+
+                    <section id="question-@question.Id" class="question-runtime-card" data-question-panel="@question.Id">
+                        <div class="question-runtime-accent"></div>
+                        <div class="question-runtime-body">
+                            <h2>@L["Client:QuestionHeading", question.SortOrder, question.Title, question.OriginalQuestionId.ToString("N")[..4]]</h2>
+
+                            <form method="post"
+                                  asp-page-handler="SaveAnswer"
+                                  asp-route-id="@Model.Session.Id"
+                                  class="question-answer-form"
+                                  data-answer-form="true"
+                                  data-question-id="@question.Id">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="questionId" value="@question.Id" />
+
+                                @if (isEssay)
+                                {
+                                    <div class="essay-answer-panel">
+                                        <textarea name="EssayAnswerText"
+                                                  rows="10"
+                                                  class="form-control essay-textarea"
+                                                  data-essay-input="true"
+                                                  data-max-words="@(question.EssayMaxWords?.ToString() ?? string.Empty)">@question.EssayAnswerText</textarea>
+
+                                        <div class="essay-meta">
+                                            @if (question.EssayMaxWords.HasValue)
+                                            {
+                                                <span class="essay-counter">
+                                                    <span>@L["Client:EssayWordCount"]</span>
+                                                    <strong data-essay-counter="true">@($"0 / {question.EssayMaxWords.Value}")</strong>
+                                                </span>
+                                            }
+
+                                            <span class="essay-status" data-essay-status="true">@L["Client:EssayAutosaved"]</span>
+                                        </div>
+                                    </div>
+                                }
+                                else if (isMatching)
+                                {
+                                    <div class="matching-answer-list">
+                                        @for (var index = 0; index < question.MatchingPairs.Count; index++)
+                                        {
+                                            var pair = question.MatchingPairs[index];
+                                            <div class="matching-answer-item">
+                                                <div class="matching-left">@pair.LeftText</div>
+                                                <input type="hidden" name="MatchingAnswers[@index].PairId" value="@pair.Id" />
+                                                <select name="MatchingAnswers[@index].SelectedRightText" class="form-select matching-select">
+                                                    <option value="">@L["Client:MatchingSelectPlaceholder"]</option>
+                                                    @foreach (var choice in question.MatchingChoices)
+                                                    {
+                                                        <option value="@choice" selected="@(string.Equals(choice, pair.SelectedRightText, StringComparison.Ordinal) ? "selected" : null)">
+                                                            @choice
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="question-option-list">
+                                        @foreach (var option in question.Options)
+                                        {
+                                            var isChecked = question.SelectedOptionIds.Contains(option.Id);
+                                            <label class="question-option-item">
+                                                <input type="@inputType"
+                                                       name="SelectedOptionIds"
+                                                       value="@option.Id"
+                                                       @(isChecked ? "checked" : null) />
+                                                <span>@option.Text</span>
+                                            </label>
+                                        }
+                                    </div>
+                                }
+                            </form>
+                        </div>
+                    </section>
+                }
+            </main>
+        </div>
+    </div>
+</section>
+
+<script src="/js/client/client-learning-session.js"></script>

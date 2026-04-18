@@ -1,0 +1,72 @@
+@page "/admin/practices"
+@model Elearning.Web.Pages.Admin.Practices.IndexModel
+@using Elearning.Localization
+@using Elearning.Practices
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin">@L["Practices:BackToAdmin"]</a>
+    <h1 class="h3 mb-1">@L["Practices:ListTitle"]</h1>
+    <p class="text-muted mb-0">@L["Practices:ListSubtitle"]</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Total"]</span><div class="fs-2 fw-bold">@Model.TotalCount</div></div></div></div>
+    <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Published"]</span><div class="fs-2 fw-bold">@Model.PublishedCount</div></div></div></div>
+    <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Draft"]</span><div class="fs-2 fw-bold">@Model.DraftCount</div></div></div></div>
+    <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Archived"]</span><div class="fs-2 fw-bold">@Model.ArchivedCount</div></div></div></div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <span class="fw-semibold">@L["Practices:Title"]</span>
+        @if (Model.CanCreate)
+        {
+            <a class="btn btn-primary btn-sm" href="/admin/practices/create" data-admin-modal-url="/admin/practices/create?handler=Modal" data-admin-modal-title="@L["Practices:CreateTitle"]" data-admin-modal-size="lg">@L["Practices:Create"]</a>
+        }
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-lg-3"><input asp-for="Filter" class="form-control" placeholder="@L["Practices:SearchPlaceholder"]" /></div>
+            <div class="col-lg-2">
+                <select asp-for="Status" class="form-select">
+                    <option value="">@L["Practices:AllStatuses"]</option>
+                    @foreach (var status in Enum.GetValues<PracticeStatus>())
+                    {
+                        <option value="@status">@L[$"Enum:PracticeStatus:{status}"]</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-2">
+                <select asp-for="AccessLevel" class="form-select">
+                    <option value="">@L["Practices:AllAccessLevels"]</option>
+                    @foreach (var accessLevel in Enum.GetValues<PracticeAccessLevel>())
+                    {
+                        <option value="@accessLevel">@L[$"Enum:PracticeAccessLevel:{accessLevel}"]</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-2">
+                <select asp-for="SelectionMode" class="form-select">
+                    <option value="">@L["Practices:AllSelectionModes"]</option>
+                    @foreach (var selectionMode in Enum.GetValues<PracticeSelectionMode>())
+                    {
+                        <option value="@selectionMode">@L[$"Enum:PracticeSelectionMode:{selectionMode}"]</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">@L["Practices:Search"]</button>
+                <a class="btn btn-outline-secondary" href="/admin/practices">@L["Practices:Reset"]</a>
+            </div>
+        </form>
+
+        <div id="practiceSetsTable" data-admin-refresh-url="@Model.BuildTableUrl()">
+            <partial name="_Table" model="Model" />
+        </div>
+    </div>
+</div>
+
+<partial name="~/Pages/Shared/Admin/_AdminAjaxModal.cshtml" />
+<script src="/js/admin/admin-crud-modal.js"></script>

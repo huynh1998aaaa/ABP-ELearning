@@ -1,0 +1,72 @@
+@page "/admin/exams/preview/{id:guid}"
+@model Elearning.Web.Pages.Admin.Exams.PreviewModel
+@using Elearning.Exams
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin/exams">@L["Exams:BackToList"]</a>
+    <h1 class="h3 mb-1">@L["Exams:PreviewTitle"]</h1>
+    <p class="text-muted mb-0">@L["Exams:PreviewDescription"]</p>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">@Model.Preview.Exam.Title</span>
+        <a class="btn btn-sm btn-outline-primary" href="/admin/exams/edit/@Model.Preview.Exam.Id">@L["Exams:Edit"]</a>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <span class="badge bg-primary-subtle text-primary-emphasis">@Model.Preview.Exam.Code</span>
+            <span class="badge bg-info-subtle text-info-emphasis">@L[$"Enum:ExamAccessLevel:{Model.Preview.Exam.AccessLevel}"]</span>
+            <span class="badge bg-secondary-subtle text-secondary-emphasis">@L[$"Enum:ExamSelectionMode:{Model.Preview.Exam.SelectionMode}"]</span>
+            <span class="badge bg-success-subtle text-success-emphasis">@L[$"Enum:ExamStatus:{Model.Preview.Exam.Status}"]</span>
+        </div>
+
+        <dl class="row">
+            <dt class="col-sm-3">@L["Exams:DurationMinutes"]</dt>
+            <dd class="col-sm-9">@Model.Preview.Exam.DurationMinutes</dd>
+            <dt class="col-sm-3">@L["Exams:TotalQuestionCount"]</dt>
+            <dd class="col-sm-9">@Model.Preview.Exam.TotalQuestionCount</dd>
+            <dt class="col-sm-3">@L["Exams:AssignedQuestionCount"]</dt>
+            <dd class="col-sm-9">@Model.Preview.Exam.AssignedQuestionCount</dd>
+            <dt class="col-sm-3">@L["Exams:PassingScore"]</dt>
+            <dd class="col-sm-9">@Model.Preview.Exam.PassingScore</dd>
+        </dl>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Preview.Exam.Description))
+        {
+            <div class="alert alert-light border">@Model.Preview.Exam.Description</div>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">@L["Exams:Questions"]</span>
+        <a class="btn btn-sm btn-outline-secondary" href="/admin/exams/questions/@Model.Preview.Exam.Id">@L["Exams:ManageQuestions"]</a>
+    </div>
+    <div class="card-body">
+        @if (Model.Preview.Questions.Count == 0)
+        {
+            <div class="alert alert-light border mb-0">@L["Exams:NoQuestions"]</div>
+        }
+        else
+        {
+            @foreach (var question in Model.Preview.Questions)
+            {
+                <div class="border rounded p-3 mb-2">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong>@question.SortOrder. @question.QuestionTitle</strong>
+                        <span class="badge bg-light text-dark">@question.QuestionTypeName</span>
+                    </div>
+                    <div class="text-muted small">@question.QuestionContent</div>
+                    <div class="small mt-2">
+                        @L["Exams:Score"]: @(question.ScoreOverride ?? question.QuestionScore)
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

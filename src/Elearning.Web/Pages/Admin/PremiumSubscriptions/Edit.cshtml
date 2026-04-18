@@ -1,0 +1,116 @@
+@page "/admin/premiumsubscriptions/edit/{id:guid}"
+@model Elearning.Web.Pages.Admin.PremiumSubscriptions.EditModel
+@using Elearning.Localization
+@using Elearning.PremiumSubscriptions
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+
+<div class="mb-3">
+    <a class="btn btn-link px-0" href="/admin/premiumsubscriptions">@L["PremiumSubscriptions:BackToList"]</a>
+    <h1 class="h3 mb-1">@L["PremiumSubscriptions:EditTitle"]</h1>
+    <p class="text-muted mb-0">@L["PremiumSubscriptions:EditDescription"]</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <span class="fw-semibold">@L["PremiumSubscriptions:Details"]</span>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">@L["PremiumSubscriptions:User"]</dt>
+            <dd class="col-sm-9">@Model.Subscription.UserName <span class="text-muted">(@Model.Subscription.Email)</span></dd>
+
+            <dt class="col-sm-3">@L["PremiumSubscriptions:Plan"]</dt>
+            <dd class="col-sm-9">@Model.Subscription.PremiumPlanName</dd>
+
+            <dt class="col-sm-3">@L["PremiumSubscriptions:ActivatedTime"]</dt>
+            <dd class="col-sm-9">@Model.Subscription.ActivatedTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3">@L["PremiumSubscriptions:ActivationNumber"]</dt>
+            <dd class="col-sm-9">@Model.Subscription.ActivationNumber</dd>
+
+            <dt class="col-sm-3">@L["PremiumSubscriptions:StartTime"]</dt>
+            <dd class="col-sm-9">@Model.Subscription.StartTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3">@L["PremiumSubscriptions:EndTime"]</dt>
+            <dd class="col-sm-9">@Model.Subscription.EndTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3">@L["PremiumSubscriptions:Status"]</dt>
+            <dd class="col-sm-9">
+                <span class="badge @GetStatusBadge(Model.Subscription.Status)">
+                    @L[$"Enum:PremiumSubscriptionStatus:{Model.Subscription.Status}"]
+                </span>
+            </dd>
+
+            <dt class="col-sm-3">@L["PremiumSubscriptions:Note"]</dt>
+            <dd class="col-sm-9">@(Model.Subscription.Note ?? "-")</dd>
+
+            @if (Model.Subscription.CancelledTime.HasValue)
+            {
+                <dt class="col-sm-3">@L["PremiumSubscriptions:CancelledTime"]</dt>
+                <dd class="col-sm-9">@Model.Subscription.CancelledTime.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">@L["PremiumSubscriptions:CancellationReason"]</dt>
+                <dd class="col-sm-9">@(Model.Subscription.CancellationReason ?? "-")</dd>
+            }
+        </dl>
+    </div>
+</div>
+
+@if (Model.Subscription.IsCurrentlyActive)
+{
+    <div class="row g-4">
+        @if (Model.CanUpdate)
+        {
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span class="fw-semibold">@L["PremiumSubscriptions:ExtendTitle"]</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">@L["PremiumSubscriptions:ExtendDescription"]</p>
+                        <form method="post" asp-page-handler="Extend">
+                            <button type="submit" class="btn btn-success">@L["PremiumSubscriptions:Extend"]</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.CanCancel)
+        {
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span class="fw-semibold">@L["PremiumSubscriptions:CancelTitle"]</span>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" asp-page-handler="Cancel" class="row g-3" onsubmit="return confirm('@L["PremiumSubscriptions:ConfirmCancel"]');">
+                            <div class="col-12">
+                                <label asp-for="CancelInput.Reason" class="form-label">@L["PremiumSubscriptions:CancellationReason"]</label>
+                                <textarea asp-for="CancelInput.Reason" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="CancelInput.Reason" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger">@L["PremiumSubscriptions:CancelPremium"]</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@functions {
+    private static string GetStatusBadge(PremiumSubscriptionStatus status)
+    {
+        return status switch
+        {
+            PremiumSubscriptionStatus.Active => "bg-success-subtle text-success-emphasis",
+            PremiumSubscriptionStatus.Expired => "bg-warning-subtle text-warning-emphasis",
+            PremiumSubscriptionStatus.Cancelled => "bg-secondary-subtle text-secondary-emphasis",
+            _ => "bg-light text-dark"
+        };
+    }
+}
