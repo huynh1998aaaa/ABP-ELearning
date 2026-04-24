@@ -17,6 +17,73 @@ body {
     color: var(--elearning-text);
 }
 
+body.elearning-client-mode,
+body:has(.client-shell),
+body:has(.session-shell),
+body:has(.result-shell) {
+    --lpx-side-menu-width: 0 !important;
+}
+
+body.elearning-client-mode aside,
+body:has(.client-shell) aside,
+body:has(.session-shell) aside,
+body:has(.result-shell) aside,
+body.elearning-client-mode .lpx-sidebar-container,
+body:has(.client-shell) .lpx-sidebar-container,
+body:has(.session-shell) .lpx-sidebar-container,
+body:has(.result-shell) .lpx-sidebar-container,
+body.elearning-client-mode .lpx-menu-container,
+body:has(.client-shell) .lpx-menu-container,
+body:has(.session-shell) .lpx-menu-container,
+body:has(.result-shell) .lpx-menu-container,
+body.elearning-client-mode .lpx-main-menu-container,
+body:has(.client-shell) .lpx-main-menu-container,
+body:has(.session-shell) .lpx-main-menu-container,
+body:has(.result-shell) .lpx-main-menu-container,
+body.elearning-client-mode .lpx-sider,
+body:has(.client-shell) .lpx-sider,
+body:has(.session-shell) .lpx-sider,
+body:has(.result-shell) .lpx-sider,
+body.elearning-client-mode .lpx-layout-sider,
+body:has(.client-shell) .lpx-layout-sider,
+body:has(.session-shell) .lpx-layout-sider,
+body:has(.result-shell) .lpx-layout-sider {
+    display: none !important;
+}
+
+body.elearning-client-mode .lpx-content-container,
+body:has(.client-shell) .lpx-content-container,
+body:has(.session-shell) .lpx-content-container,
+body:has(.result-shell) .lpx-content-container,
+body.elearning-client-mode .lpx-content,
+body:has(.client-shell) .lpx-content,
+body:has(.session-shell) .lpx-content,
+body:has(.result-shell) .lpx-content,
+body.elearning-client-mode .lpx-page-container,
+body:has(.client-shell) .lpx-page-container,
+body:has(.session-shell) .lpx-page-container,
+body:has(.result-shell) .lpx-page-container,
+body.elearning-client-mode main,
+body:has(.client-shell) main,
+body:has(.session-shell) main,
+body:has(.result-shell) main {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+body.elearning-client-mode .lpx-content-container > .container,
+body:has(.client-shell) .lpx-content-container > .container,
+body:has(.session-shell) .lpx-content-container > .container,
+body:has(.result-shell) .lpx-content-container > .container,
+body.elearning-client-mode .lpx-page-container > .container,
+body:has(.client-shell) .lpx-page-container > .container,
+body:has(.session-shell) .lpx-page-container > .container,
+body:has(.result-shell) .lpx-page-container > .container {
+    max-width: 100% !important;
+}
+
 .card,
 .portal-card,
 .section-panel {

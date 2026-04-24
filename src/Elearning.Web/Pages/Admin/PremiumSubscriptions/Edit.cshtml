@@ -101,6 +101,20 @@
         }
     </div>
 }
+else if (Model.Subscription.Status == PremiumSubscriptionStatus.Expired && Model.CanCreate)
+{
+    <div class="card">
+        <div class="card-header">
+            <span class="fw-semibold">@L["PremiumSubscriptions:RenewTitle"]</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">@L["PremiumSubscriptions:RenewDescription"]</p>
+            <form method="post" asp-page-handler="Renew" onsubmit="return confirm('@L["PremiumSubscriptions:ConfirmRenew"]');">
+                <button type="submit" class="btn btn-success">@L["PremiumSubscriptions:Renew"]</button>
+            </form>
+        </div>
+    </div>
+}
 
 @functions {
     private static string GetStatusBadge(PremiumSubscriptionStatus status)

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Elearning.Web.Pages.Client;
 
-[Authorize]
+[AllowAnonymous]
 public class LogoutModel : ElearningClientPageModel
 {
     private readonly SignInManager<Volo.Abp.Identity.IdentityUser> _signInManager;

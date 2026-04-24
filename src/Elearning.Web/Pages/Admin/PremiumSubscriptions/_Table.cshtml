@@ -55,6 +55,12 @@ else
                                         <button type="submit" class="btn btn-sm btn-outline-success">@L["PremiumSubscriptions:Extend"]</button>
                                     </form>
                                 }
+                                @if (Model.CanCreate && subscription.Status == PremiumSubscriptionStatus.Expired)
+                                {
+                                    <form method="post" asp-page-handler="Renew" asp-route-id="@subscription.Id" data-admin-ajax-form="true" data-admin-refresh-target="#premiumSubscriptionsTable" onsubmit="return confirm('@L["PremiumSubscriptions:ConfirmRenew"]');">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">@L["PremiumSubscriptions:Renew"]</button>
+                                    </form>
+                                }
                                 @if (Model.CanCancel && subscription.IsCurrentlyActive)
                                 {
                                     <form method="post" asp-page-handler="Cancel" asp-route-id="@subscription.Id" data-admin-ajax-form="true" data-admin-refresh-target="#premiumSubscriptionsTable" onsubmit="return confirm('@L["PremiumSubscriptions:ConfirmCancel"]');">

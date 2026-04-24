@@ -4,198 +4,206 @@
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
 
-<section class="section-panel admin-shell">
-    <div class="portal-header">
-        <span class="portal-pill">@L["Menu:Admin"]</span>
-        <h1>@L["Admin:HeroTitle"]</h1>
-        <p class="lead">@L["Admin:HeroSubtitle"]</p>
-    </div>
+@{
+    var hasUserPremium = Model.CanManageAccounts || Model.CanManagePremium;
+    var hasContentBank = Model.CanManageQuestionTypes || Model.CanManageSubjects || Model.CanManageQuestions;
+    var hasDelivery = Model.CanManageExams || Model.CanManagePractices;
+    var hasAnyModule = hasUserPremium || hasContentBank || hasDelivery;
+    var currentUserName = User.Identity?.Name ?? L["Menu:Admin"].Value;
+}
 
-    <div class="admin-workflow mb-4">
-        <div>
-            <span class="portal-pill">@L["Admin:Dashboard:WorkflowPill"]</span>
-            <h2>@L["Admin:Dashboard:WorkflowTitle"]</h2>
-            <p>@L["Admin:Dashboard:WorkflowDescription"]</p>
+<section class="section-panel admin-simple-shell">
+    <header class="admin-simple-topbar">
+        <a class="admin-simple-brand" href="/admin">
+            <span>OMD.TestGo</span>
+            <strong>Admin</strong>
+        </a>
+
+        <nav class="admin-simple-nav" aria-label="@L["Admin:Dashboard:Simple:Overview"]">
+            @if (hasUserPremium)
+            {
+                <a href="#admin-accounts">@L["Admin:Dashboard:Simple:AccountsNav"]</a>
+            }
+            @if (hasContentBank)
+            {
+                <a href="#admin-content">@L["Admin:Dashboard:Simple:ContentNav"]</a>
+            }
+            @if (hasDelivery)
+            {
+                <a href="#admin-delivery">@L["Admin:Dashboard:Simple:DeliveryNav"]</a>
+            }
+        </nav>
+
+        <div class="admin-simple-user">
+            <span>@currentUserName</span>
+            <a href="/Account/Logout">@L["Admin:Dashboard:Simple:SignOut"]</a>
         </div>
-        <div class="admin-flow">
-            <span>@L["Menu:Accounts"]</span>
-            <span>@L["Menu:QuestionTypes"]</span>
-            <span>@L["Menu:Subjects"]</span>
-            <span>@L["Menu:Questions"]</span>
-            <span>@L["Menu:Exams"]</span>
-            <span>@L["Menu:Practices"]</span>
-            <span>@L["Menu:PremiumSubscriptions"]</span>
-        </div>
-    </div>
+    </header>
 
-    <div class="admin-section-title">
-        <span>@L["Admin:Dashboard:Operations"]</span>
-    </div>
-    <div class="row g-4 mb-4">
-        @if (Model.CanManageAccounts)
-        {
-            <div class="col-xl-6 col-md-6">
-                <article class="portal-panel portal-panel-highlight">
-                    <div class="module-icon">A</div>
-                    <h2>@L["Accounts:Title"]</h2>
-                    <p>@L["Accounts:Summary"]</p>
-                    <div class="module-actions">
-                        <a class="btn btn-primary" href="/admin/accounts">@L["Accounts:OpenManagement"]</a>
-                        <a class="btn btn-outline-secondary" href="/admin/accounts/create">@L["Accounts:Create"]</a>
-                    </div>
-                </article>
-            </div>
-        }
-        @if (Model.CanManagePremium)
-        {
-            <div class="col-xl-6 col-md-6">
-                <article class="portal-panel">
-                    <div class="module-icon">P</div>
-                    <h2>@L["PremiumSubscriptions:Title"]</h2>
-                    <p>@L["PremiumSubscriptions:ListSubtitle"]</p>
-                    <div class="module-actions">
-                        <a class="btn btn-primary" href="/admin/premiumsubscriptions">@L["PremiumSubscriptions:Title"]</a>
-                        <a class="btn btn-outline-secondary" href="/admin/premiumsubscriptions/create">@L["PremiumSubscriptions:Create"]</a>
-                    </div>
-                </article>
-            </div>
-        }
-    </div>
+    <div class="admin-simple-layout">
+        <div class="admin-simple-hero">
+            <span class="admin-simple-eyebrow">@L["Admin:Dashboard:Simple:HeroEyebrow"]</span>
+            <h1>@L["Admin:Dashboard:Simple:HeroTitle"]</h1>
+            <p>@L["Admin:Dashboard:Simple:HeroSubtitle"]</p>
 
-    <div class="admin-section-title">
-        <span>@L["Admin:Dashboard:Content"]</span>
-    </div>
-    <div class="row g-4 mb-4">
-        @if (Model.CanManageQuestionTypes)
-        {
-            <div class="col-xl-6 col-md-6">
-                <article class="portal-panel">
-                    <div class="module-icon">T</div>
-                    <h2>@L["QuestionTypes:Title"]</h2>
-                    <p>@L["QuestionTypes:ListSubtitle"]</p>
-                    <div class="module-actions">
-                        <a class="btn btn-primary" href="/admin/questiontypes">@L["QuestionTypes:Title"]</a>
-                        <a class="btn btn-outline-secondary" href="/admin/questiontypes/create">@L["QuestionTypes:Create"]</a>
-                    </div>
-                </article>
-            </div>
-        }
-        @if (Model.CanManageSubjects)
-        {
-            <div class="col-xl-6 col-md-6">
-                <article class="portal-panel">
-                    <div class="module-icon">S</div>
-                    <h2>@L["Subjects:Title"]</h2>
-                    <p>@L["Subjects:ListSubtitle"]</p>
-                    <div class="module-actions">
-                        <a class="btn btn-primary" href="/admin/subjects">@L["Subjects:Title"]</a>
-                        <a class="btn btn-outline-secondary" href="/admin/subjects/create">@L["Subjects:Create"]</a>
-                    </div>
-                </article>
-            </div>
-        }
-        @if (Model.CanManageQuestions)
-        {
-            <div class="col-xl-6 col-md-6">
-                <article class="portal-panel">
-                    <div class="module-icon">Q</div>
-                    <h2>@L["Questions:Title"]</h2>
-                    <p>@L["Questions:ListSubtitle"]</p>
-                    <div class="module-actions">
-                        <a class="btn btn-primary" href="/admin/questions">@L["Questions:Title"]</a>
-                        @if (Model.CanImportQuestions)
-                        {
-                            <a class="btn btn-outline-secondary" href="/admin/questions/import">@L["Questions:Import:Title"]</a>
-                        }
-                    </div>
-                </article>
-            </div>
-        }
-    </div>
-
-    <div class="admin-section-title">
-        <span>@L["Admin:Dashboard:Delivery"]</span>
-    </div>
-    <div class="row g-4 mb-4">
-        @if (Model.CanManageExams)
-        {
-            <div class="col-xl-6 col-md-6">
-                <article class="portal-panel">
-                    <div class="module-icon">E</div>
-                    <h2>@L["Exams:Title"]</h2>
-                    <p>@L["Exams:ListSubtitle"]</p>
-                    <div class="module-actions">
-                        <a class="btn btn-primary" href="/admin/exams">@L["Exams:Title"]</a>
-                        @if (Model.CanManageExamQuestions)
-                        {
-                            <a class="btn btn-outline-secondary" href="/admin/exams">@L["Exams:ManageQuestions"]</a>
-                        }
-                    </div>
-                </article>
-            </div>
-        }
-        @if (Model.CanManagePractices)
-        {
-            <div class="col-xl-6 col-md-6">
-                <article class="portal-panel">
-                    <div class="module-icon">R</div>
-                    <h2>@L["Practices:Title"]</h2>
-                    <p>@L["Practices:ListSubtitle"]</p>
-                    <div class="module-actions">
-                        <a class="btn btn-primary" href="/admin/practices">@L["Practices:Title"]</a>
-                        @if (Model.CanManagePracticeQuestions)
-                        {
-                            <a class="btn btn-outline-secondary" href="/admin/practices">@L["Practices:ManageQuestions"]</a>
-                        }
-                    </div>
-                </article>
-            </div>
-        }
-    </div>
-
-    <div class="card admin-checklist">
-        <div class="card-header">
-            <strong>@L["Admin:Dashboard:ManualTestTitle"]</strong>
-        </div>
-        <div class="card-body">
-            <p class="text-muted">@L["Admin:Dashboard:ManualTestDescription"]</p>
-            <div class="row g-3">
-                <div class="col-lg-4">
-                    <h3>@L["Admin:Dashboard:ManualTest:Accounts"]</h3>
-                    <ul>
-                        <li>@L["Admin:Dashboard:ManualTest:Accounts1"]</li>
-                        <li>@L["Admin:Dashboard:ManualTest:Accounts2"]</li>
-                        <li>@L["Admin:Dashboard:ManualTest:Accounts3"]</li>
-                    </ul>
+            @if (Model.CanImportQuestions || Model.CanManageExams || Model.CanManagePremium)
+            {
+                <div class="admin-simple-actions">
+                    @if (Model.CanImportQuestions)
+                    {
+                        <a class="btn btn-primary" href="/admin/questions/import">@L["Admin:Dashboard:Simple:ImportQuestions"]</a>
+                    }
+                    @if (Model.CanManageExams)
+                    {
+                        <a class="btn btn-outline-dark" href="/admin/exams/create">@L["Admin:Dashboard:Simple:CreateExam"]</a>
+                    }
+                    @if (Model.CanManagePremium)
+                    {
+                        <a class="btn btn-outline-dark" href="/admin/premiumsubscriptions">@L["Admin:Dashboard:Simple:ManagePremium"]</a>
+                    }
                 </div>
-                <div class="col-lg-4">
-                    <h3>@L["Admin:Dashboard:ManualTest:Catalog"]</h3>
-                    <ul>
-                        <li>@L["Admin:Dashboard:ManualTest:Catalog1"]</li>
-                        <li>@L["Admin:Dashboard:ManualTest:Catalog2"]</li>
-                        <li>@L["Admin:Dashboard:ManualTest:Catalog3"]</li>
-                        <li>@L["Admin:Dashboard:ManualTest:Catalog4"]</li>
-                    </ul>
-                </div>
-                <div class="col-lg-4">
-                    <h3>@L["Admin:Dashboard:ManualTest:Delivery"]</h3>
-                    <ul>
-                        <li>@L["Admin:Dashboard:ManualTest:Delivery1"]</li>
-                        <li>@L["Admin:Dashboard:ManualTest:Delivery2"]</li>
-                        <li>@L["Admin:Dashboard:ManualTest:Delivery3"]</li>
-                    </ul>
-                </div>
-            </div>
+            }
         </div>
+
+        <aside class="admin-simple-attention">
+            <span>@L["Admin:Dashboard:Simple:AttentionTitle"]</span>
+            <h2>@L["Admin:Dashboard:Simple:AttentionSubtitle"]</h2>
+            <div class="admin-simple-attention-list">
+                @if (Model.CanManageQuestions)
+                {
+                    <a href="/admin/questions?status=Draft">@L["Admin:Dashboard:Simple:AttentionQuestions"]</a>
+                }
+                @if (Model.CanManagePremium)
+                {
+                    <a href="/admin/premiumsubscriptions">@L["Admin:Dashboard:Simple:AttentionPremium"]</a>
+                }
+                @if (Model.CanManageExams)
+                {
+                    <a href="/admin/exams">@L["Admin:Dashboard:Simple:AttentionExams"]</a>
+                }
+                @if (!Model.CanManageQuestions && !Model.CanManagePremium && !Model.CanManageExams)
+                {
+                    <p>@L["Admin:Dashboard:NoPermission"]</p>
+                }
+            </div>
+        </aside>
     </div>
 
-    @if (!Model.CanManageAccounts &&
-         !Model.CanManagePremium &&
-         !Model.CanManageQuestionTypes &&
-         !Model.CanManageSubjects &&
-         !Model.CanManageQuestions &&
-         !Model.CanManageExams &&
-         !Model.CanManagePractices)
+    <div class="admin-simple-kpis" aria-label="@L["Admin:Dashboard:Simple:Overview"]">
+        <article>
+            <span>@L["Admin:Dashboard:Simple:KpiAccounts"]</span>
+            <strong>@L["Admin:Dashboard:Simple:KpiAccountsValue"]</strong>
+            <p>@L["Admin:Dashboard:Simple:KpiAccountsHint"]</p>
+        </article>
+        <article>
+            <span>@L["Admin:Dashboard:Simple:KpiPremium"]</span>
+            <strong>@L["Admin:Dashboard:Simple:KpiPremiumValue"]</strong>
+            <p>@L["Admin:Dashboard:Simple:KpiPremiumHint"]</p>
+        </article>
+        <article>
+            <span>@L["Admin:Dashboard:Simple:KpiQuestions"]</span>
+            <strong>@L["Admin:Dashboard:Simple:KpiQuestionsValue"]</strong>
+            <p>@L["Admin:Dashboard:Simple:KpiQuestionsHint"]</p>
+        </article>
+        <article>
+            <span>@L["Admin:Dashboard:Simple:KpiDelivery"]</span>
+            <strong>@L["Admin:Dashboard:Simple:KpiDeliveryValue"]</strong>
+            <p>@L["Admin:Dashboard:Simple:KpiDeliveryHint"]</p>
+        </article>
+    </div>
+
+    <div class="admin-simple-heading">
+        <span>@L["Admin:Dashboard:Simple:ModulesTitle"]</span>
+        <p>@L["Admin:Dashboard:Simple:ModulesSubtitle"]</p>
+    </div>
+
+    <div class="admin-simple-modules">
+        @if (hasUserPremium)
+        {
+            <article class="admin-simple-card" id="admin-accounts">
+                <div>
+                    <span class="admin-simple-icon">A</span>
+                    <h2>@L["Admin:Dashboard:Simple:UserPremiumTitle"]</h2>
+                    <p>@L["Admin:Dashboard:Simple:UserPremiumDescription"]</p>
+                </div>
+                <div class="admin-simple-links">
+                    @if (Model.CanManageAccounts)
+                    {
+                        <a href="/admin/accounts">@L["Accounts:OpenManagement"]</a>
+                        <a href="/admin/accounts/create">@L["Accounts:Create"]</a>
+                    }
+                    @if (Model.CanManagePremium)
+                    {
+                        <a href="/admin/premiumsubscriptions">@L["PremiumSubscriptions:Title"]</a>
+                        <a href="/admin/premiumsubscriptions/create">@L["PremiumSubscriptions:Create"]</a>
+                    }
+                </div>
+            </article>
+        }
+
+        @if (hasContentBank)
+        {
+            <article class="admin-simple-card" id="admin-content">
+                <div>
+                    <span class="admin-simple-icon">Q</span>
+                    <h2>@L["Admin:Dashboard:Simple:QuestionBankTitle"]</h2>
+                    <p>@L["Admin:Dashboard:Simple:QuestionBankDescription"]</p>
+                </div>
+                <div class="admin-simple-links">
+                    @if (Model.CanManageQuestionTypes)
+                    {
+                        <a href="/admin/questiontypes">@L["QuestionTypes:Title"]</a>
+                        <a href="/admin/questiontypes/create">@L["QuestionTypes:Create"]</a>
+                    }
+                    @if (Model.CanManageSubjects)
+                    {
+                        <a href="/admin/subjects">@L["Subjects:Title"]</a>
+                        <a href="/admin/subjects/create">@L["Subjects:Create"]</a>
+                    }
+                    @if (Model.CanManageQuestions)
+                    {
+                        <a href="/admin/questions">@L["Questions:Title"]</a>
+                    }
+                    @if (Model.CanImportQuestions)
+                    {
+                        <a href="/admin/questions/import">@L["Admin:Dashboard:Simple:ImportNow"]</a>
+                    }
+                </div>
+            </article>
+        }
+
+        @if (hasDelivery)
+        {
+            <article class="admin-simple-card" id="admin-delivery">
+                <div>
+                    <span class="admin-simple-icon">E</span>
+                    <h2>@L["Admin:Dashboard:Simple:DeliveryTitle"]</h2>
+                    <p>@L["Admin:Dashboard:Simple:DeliveryDescription"]</p>
+                </div>
+                <div class="admin-simple-links">
+                    @if (Model.CanManageExams)
+                    {
+                        <a href="/admin/exams">@L["Exams:Title"]</a>
+                        <a href="/admin/exams/create">@L["Admin:Dashboard:Simple:CreateExamNow"]</a>
+                    }
+                    @if (Model.CanManageExamQuestions)
+                    {
+                        <a href="/admin/exams">@L["Exams:ManageQuestions"]</a>
+                    }
+                    @if (Model.CanManagePractices)
+                    {
+                        <a href="/admin/practices">@L["Practices:Title"]</a>
+                    }
+                    @if (Model.CanManagePracticeQuestions)
+                    {
+                        <a href="/admin/practices">@L["Practices:ManageQuestions"]</a>
+                    }
+                </div>
+            </article>
+        }
+    </div>
+
+    @if (!hasAnyModule)
     {
         <div class="alert alert-light border mt-4">
             @L["Admin:Dashboard:NoPermission"]

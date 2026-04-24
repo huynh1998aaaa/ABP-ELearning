@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Elearning.Exams;
 using Elearning.Permissions;
+using Elearning.Practices;
 using Elearning.QuestionTypes;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 
@@ -21,6 +24,9 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
     private readonly IRepository<QuestionMatchingPair, Guid> _matchingPairRepository;
     private readonly IRepository<QuestionOption, Guid> _optionRepository;
     private readonly IRepository<QuestionType, Guid> _questionTypeRepository;
+    private readonly IRepository<ExamQuestion, Guid> _examQuestionRepository;
+    private readonly IRepository<PracticeQuestion, Guid> _practiceQuestionRepository;
+    private readonly IDataFilter<ISoftDelete> _softDeleteFilter;
 
     public QuestionAppService(
         IRepository<Question, Guid> questionRepository,
@@ -28,6 +34,9 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
         IRepository<QuestionMatchingPair, Guid> matchingPairRepository,
         IRepository<QuestionEssayAnswer, Guid> essayAnswerRepository,
         IRepository<QuestionType, Guid> questionTypeRepository,
+        IRepository<ExamQuestion, Guid> examQuestionRepository,
+        IRepository<PracticeQuestion, Guid> practiceQuestionRepository,
+        IDataFilter<ISoftDelete> softDeleteFilter,
         IGuidGenerator guidGenerator)
     {
         _questionRepository = questionRepository;
@@ -35,6 +44,9 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
         _matchingPairRepository = matchingPairRepository;
         _essayAnswerRepository = essayAnswerRepository;
         _questionTypeRepository = questionTypeRepository;
+        _examQuestionRepository = examQuestionRepository;
+        _practiceQuestionRepository = practiceQuestionRepository;
+        _softDeleteFilter = softDeleteFilter;
         _guidGenerator = guidGenerator;
     }
 
@@ -209,6 +221,22 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
         var question = await _questionRepository.GetAsync(id);
         question.Archive();
         await _questionRepository.UpdateAsync(question, autoSave: true);
+    }
+
+    [Authorize(ElearningPermissions.Questions.Delete)]
+    public async Task DeleteAsync(Guid id)
+    {
+        var question = await _questionRepository.GetAsync(id);
+        await EnsureCanHardDeleteAsync(question);
+
+        try
+        {
+            await _questionRepository.HardDeleteAsync(question, autoSave: true);
+        }
+        catch (Exception ex) when (IsReferentialIntegrityException(ex))
+        {
+            throw new UserFriendlyException(L["Questions:CannotHardDeleteInUse"]);
+        }
     }
 
     [Authorize(ElearningPermissions.Questions.Publish)]
@@ -457,6 +485,37 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
         {
             throw new UserFriendlyException(L["Questions:InactiveCannotBePublished"]);
         }
+    }
+
+    private async Task EnsureCanHardDeleteAsync(Question question)
+    {
+        if (question.Status != QuestionStatus.Archived)
+        {
+            throw new UserFriendlyException(L["Questions:OnlyArchivedCanBeDeleted"]);
+        }
+
+        using (_softDeleteFilter.Disable())
+        {
+            var examQuestionQuery = await _examQuestionRepository.GetQueryableAsync();
+            if (await AsyncExecuter.AnyAsync(examQuestionQuery.Where(x => x.QuestionId == question.Id)))
+            {
+                throw new UserFriendlyException(L["Questions:CannotHardDeleteInUse"]);
+            }
+
+            var practiceQuestionQuery = await _practiceQuestionRepository.GetQueryableAsync();
+            if (await AsyncExecuter.AnyAsync(practiceQuestionQuery.Where(x => x.QuestionId == question.Id)))
+            {
+                throw new UserFriendlyException(L["Questions:CannotHardDeleteInUse"]);
+            }
+        }
+    }
+
+    private static bool IsReferentialIntegrityException(Exception exception)
+    {
+        var message = exception.GetBaseException().Message;
+        return message.Contains("REFERENCE constraint", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("FOREIGN KEY constraint", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("conflicted with the DELETE", StringComparison.OrdinalIgnoreCase);
     }
 
     private static List<Guid> NormalizeQuestionIds(BulkQuestionActionInput? input)

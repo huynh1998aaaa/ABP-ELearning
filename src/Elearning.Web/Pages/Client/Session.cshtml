@@ -28,16 +28,16 @@
             </div>
         </div>
 
-        <div class="session-layout">
-            <aside class="session-sidebar">
-                <div class="session-sidebar-card">
-                    <div class="session-timer-card">
-                        <span class="session-sidebar-label">@L["Client:TimeRemaining"]</span>
-                        <strong data-session-timer>
-                            @(Model.Session.EndsAt.HasValue ? "--:--" : L["Client:NoTimeLimit"])
-                        </strong>
-                    </div>
+        <div class="session-control-panel">
+            <div class="session-control-main">
+                <div class="session-timer-card">
+                    <span class="session-control-label">@L["Client:TimeRemaining"]</span>
+                    <strong data-session-timer>
+                        @(Model.Session.EndsAt.HasValue ? "--:--" : L["Client:NoTimeLimit"])
+                    </strong>
+                </div>
 
+                <div class="session-action-row">
                     <a class="session-action session-action-leave" href="/client">
                         @L["Client:LeaveSession"]
                     </a>
@@ -45,24 +45,27 @@
                     <button type="button" class="session-action session-action-submit" data-session-submit>
                         @L["Client:SubmitSession"]
                     </button>
-
-                    <div class="session-sidebar-divider"></div>
-                    <div class="session-sidebar-label">@L["Client:QuestionNavigator"]</div>
-                    <div class="session-nav-grid">
-                        @foreach (var question in Model.Session.Questions)
-                        {
-                            <button type="button"
-                                    class="session-nav-item @(question.IsAnswered ? "session-nav-answered" : "session-nav-unanswered") @(question.SortOrder == 1 ? "session-nav-current" : string.Empty)"
-                                    data-session-nav
-                                    data-question-target="question-@question.Id"
-                                    data-question-id="@question.Id">
-                                @question.SortOrder
-                            </button>
-                        }
-                    </div>
                 </div>
-            </aside>
+            </div>
 
+            <div class="session-nav-panel">
+                <div class="session-control-label">@L["Client:QuestionNavigator"]</div>
+                <div class="session-nav-grid">
+                    @foreach (var question in Model.Session.Questions)
+                    {
+                        <button type="button"
+                                class="session-nav-item @(question.IsAnswered ? "session-nav-answered" : "session-nav-unanswered") @(question.SortOrder == 1 ? "session-nav-current" : string.Empty)"
+                                data-session-nav
+                                data-question-target="question-@question.Id"
+                                data-question-id="@question.Id">
+                            @question.SortOrder
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="session-layout">
             <main class="session-questions">
                 @foreach (var question in Model.Session.Questions)
                 {

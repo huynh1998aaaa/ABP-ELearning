@@ -1,10 +1,13 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -126,12 +129,68 @@ public class ElearningWebModule : AbpModule
         {
             options.IsDynamicClaimsEnabled = true;
         });
+
+        context.Services.ConfigureApplicationCookie(options =>
+        {
+            options.Events.OnRedirectToLogin = context =>
+            {
+                if (IsApiOrAjaxRequest(context))
+                {
+                    context.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                }
+
+                var returnUrl = GetCurrentLocalUrl(context);
+                if (context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.Redirect($"/admin/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+                    return Task.CompletedTask;
+                }
+
+                if (context.Request.Path.StartsWithSegments("/client", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.Redirect($"/client/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+                    return Task.CompletedTask;
+                }
+
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
+
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                if (IsApiOrAjaxRequest(context))
+                {
+                    context.Response.StatusCode = 403;
+                    return Task.CompletedTask;
+                }
+
+                if (context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    var returnUrl = GetCurrentLocalUrl(context);
+                    context.Response.Redirect($"/admin/login?returnUrl={Uri.EscapeDataString(returnUrl)}&accessDenied=true");
+                    return Task.CompletedTask;
+                }
+
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
+        });
     }
 
     private void ConfigureExternalProviders(IServiceCollection services, IConfiguration configuration)
     {
-        var clientId = configuration["Authentication:Google:ClientId"];
-        var clientSecret = configuration["Authentication:Google:ClientSecret"];
+        var clientId = GetGoogleSetting(
+            configuration,
+            "Authentication:Google:ClientId",
+            "Authentication__Google__ClientId",
+            "GOOGLE_AUTH_CLIENT_ID");
+
+        var clientSecret = GetGoogleSetting(
+            configuration,
+            "Authentication:Google:ClientSecret",
+            "Authentication__Google__ClientSecret",
+            "GOOGLE_AUTH_CLIENT_SECRET");
 
         if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
         {
@@ -144,8 +203,32 @@ public class ElearningWebModule : AbpModule
                 options.ClientId = clientId;
                 options.ClientSecret = clientSecret;
                 options.ClaimActions.MapJsonKey(AbpClaimTypes.Picture, "picture");
+                options.ClaimActions.MapJsonKey("email_verified", "email_verified");
                 options.SaveTokens = true;
             });
+    }
+
+    private static string? GetGoogleSetting(
+        IConfiguration configuration,
+        string configurationKey,
+        string environmentKey,
+        string aliasEnvironmentKey)
+    {
+        return Environment.GetEnvironmentVariable(environmentKey)
+            ?? Environment.GetEnvironmentVariable(aliasEnvironmentKey)
+            ?? configuration[configurationKey];
+    }
+
+    private static bool IsApiOrAjaxRequest(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        return string.Equals(context.Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase) ||
+               context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GetCurrentLocalUrl(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        var returnUrl = $"{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
+        return string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl;
     }
 
     private void ConfigureUrls(IConfiguration configuration)
@@ -178,7 +261,17 @@ public class ElearningWebModule : AbpModule
                 bundle =>
                 {
                     bundle.AddFiles("/global-styles.css");
+                    bundle.AddFiles("/css/home/home.css");
+                    bundle.AddFiles("/css/admin/admin.css");
                     bundle.AddFiles("/css/client/client.css");
+                }
+            );
+
+            options.ScriptBundles.Configure(
+                LeptonXLiteThemeBundles.Scripts.Global,
+                bundle =>
+                {
+                    bundle.AddFiles("/global-scripts.js");
                 }
             );
         });

@@ -273,3 +273,5 @@ src/Elearning.Blazor.Server.Tiered/Logs/*
 /.cursor
 /.agents
 /.codex
+/deploy/*.local.ps1
+/deploy/*.local.env

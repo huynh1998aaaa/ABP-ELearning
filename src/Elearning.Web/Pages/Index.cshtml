@@ -3,91 +3,73 @@
 @using Elearning.Localization
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OMD.TestGo</title>
+    <link rel="stylesheet" href="/global-styles.css" />
+    <link rel="stylesheet" href="/css/home/home.css" />
+</head>
+<body>
+    <main class="client-entry-shell">
+        <section class="client-entry-stage">
+            <header class="client-entry-topbar">
+                <a class="client-entry-brand" href="/">
+                    <span class="client-entry-brand-mark">O</span>
+                    <span>OMD.TestGo</span>
+                </a>
 
-<section class="learning-shell">
-    <div class="landing-auth-bar">
-        @if (Model.IsAuthenticated)
-        {
-            <div class="landing-auth-card">
-                <span class="text-muted">@L["Auth:SignedInAs"]</span>
-                <strong>@Model.UserName</strong>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a class="btn btn-sm btn-primary" href="/client">@L["Auth:OpenClient"]</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="/client/logout">@L["Auth:Logout"]</a>
-                </div>
-            </div>
-        }
-        else
-        {
-            <div class="landing-auth-card">
-                <span class="text-muted">@L["Auth:GuestMessage"]</span>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a class="btn btn-sm btn-primary" href="/login">@L["Auth:Login"]</a>
-                </div>
-            </div>
-        }
-    </div>
+                <span class="client-entry-admin-hint">/admin</span>
+            </header>
 
-    <div class="learning-hero">
-        <div class="learning-copy">
-            <span class="learning-eyebrow">@L["Landing:Eyebrow"]</span>
-            <h1>@L["Landing:Title"]</h1>
-            <p class="lead">@L["Landing:Subtitle"]</p>
-            <div class="learning-actions">
-                <a class="btn btn-primary" href="/client">@L["Landing:OpenClient"]</a>
-                <a class="btn btn-outline-primary" href="/login">@L["Auth:Login"]</a>
-            </div>
-        </div>
+            <div class="client-entry-grid">
+                <section class="client-entry-hero">
+                    <span class="client-entry-eyebrow">@L["Landing:Eyebrow"]</span>
+                    <h1>@L["Landing:Title"]</h1>
+                    <p>@L["Landing:Subtitle"]</p>
 
-        <div class="learning-hero-card">
-            <div class="learning-stat">
-                <strong>@L["Landing:ClientCardTitle"]</strong>
-                <span>@L["Landing:ClientCardDescription"]</span>
-            </div>
-            @if (Model.CanAccessAdmin)
-            {
-                <div class="learning-stat">
-                    <strong>@L["Landing:AdminCardTitle"]</strong>
-                    <span>@L["Landing:AdminCardDescription"]</span>
-                </div>
-            }
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-xl-6">
-            <article class="portal-card portal-card-client">
-                <div class="portal-card-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <h2>@L["Client:Title"]</h2>
-                <p>@L["Client:Description"]</p>
-                <ul class="portal-list">
-                    <li>@L["Client:Feature:Catalog"]</li>
-                    <li>@L["Client:Feature:LearningPath"]</li>
-                    <li>@L["Client:Feature:Progress"]</li>
-                </ul>
-                <a class="btn btn-primary" href="/client">@L["Client:OpenPortal"]</a>
-            </article>
-        </div>
-
-        @if (Model.CanAccessAdmin)
-        {
-            <div class="col-xl-6">
-                <article class="portal-card portal-card-admin">
-                    <div class="portal-card-icon">
-                        <i class="fas fa-chalkboard-teacher"></i>
+                    <div class="client-entry-actions">
+                        <a class="client-entry-google" href="/client/login">@L["Auth:LoginWithGoogle"]</a>
                     </div>
-                    <h2>@L["Admin:Title"]</h2>
-                    <p>@L["Admin:Description"]</p>
-                    <ul class="portal-list">
-                        <li>@L["Admin:Feature:Courses"]</li>
-                        <li>@L["Admin:Feature:Users"]</li>
-                        <li>@L["Admin:Feature:Reports"]</li>
-                    </ul>
-                    <a class="btn btn-outline-primary" href="/admin">@L["Admin:OpenPortal"]</a>
-                </article>
+
+                    <div class="client-entry-pills" aria-label="@L["Landing:TrustTitle"]">
+                        <span>@L["Landing:TrustExam"]</span>
+                        <span>@L["Landing:TrustPractice"]</span>
+                        <span>@L["Landing:TrustPremium"]</span>
+                    </div>
+                </section>
+
+                <aside class="client-entry-side" aria-label="@L["Landing:PreviewTitle"]">
+                    <div class="client-entry-side-head">
+                        <span>@L["Auth:ClientPortal"]</span>
+                        <strong>@L["Landing:PreviewTitle"]</strong>
+                    </div>
+
+                    <div class="client-entry-flow">
+                        <article>
+                            <span>01</span>
+                            <h2>@L["Landing:PreviewExamTitle"]</h2>
+                            <p>@L["Landing:PreviewExamDescription"]</p>
+                        </article>
+                        <article>
+                            <span>02</span>
+                            <h2>@L["Landing:PreviewPracticeTitle"]</h2>
+                            <p>@L["Landing:PreviewPracticeDescription"]</p>
+                        </article>
+                        <article>
+                            <span>03</span>
+                            <h2>@L["Landing:PreviewProgressTitle"]</h2>
+                            <p>@L["Landing:PreviewProgressDescription"]</p>
+                        </article>
+                    </div>
+                </aside>
             </div>
-        }
-    </div>
-</section>
+        </section>
+    </main>
+</body>
+</html>

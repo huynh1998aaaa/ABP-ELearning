@@ -64,6 +64,8 @@ public class IndexModel : ElearningAdminPageModel
 
     public bool CanImport { get; private set; }
 
+    public bool CanDelete { get; private set; }
+
     [BindProperty]
     public List<Guid> SelectedQuestionIds { get; set; } = new();
 
@@ -93,6 +95,7 @@ public class IndexModel : ElearningAdminPageModel
         CanUpdate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Update)).Succeeded;
         CanPublish = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Publish)).Succeeded;
         CanImport = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Import)).Succeeded;
+        CanDelete = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Questions.Delete)).Succeeded;
 
         var questionTypes = await _questionTypeAppService.GetListAsync(new GetQuestionTypeListInput
         {
@@ -177,6 +180,24 @@ public class IndexModel : ElearningAdminPageModel
         try
         {
             await _questionAppService.ArchiveAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
+        return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+    }
+
+    public async Task<IActionResult> OnPostDeleteAsync(Guid id)
+    {
+        try
+        {
+            await _questionAppService.DeleteAsync(id);
             if (IsAjaxRequest)
             {
                 return AjaxSuccess();

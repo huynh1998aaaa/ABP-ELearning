@@ -262,7 +262,7 @@ body:has(.result-shell) {
 }
 
 .session-stage {
-    max-width: 1550px;
+    max-width: 1240px;
     margin: 0 auto;
 }
 
@@ -312,40 +312,57 @@ body:has(.result-shell) {
 }
 
 .session-layout {
-    display: grid;
-    grid-template-columns: 314px minmax(0, 1fr);
-    gap: 2rem;
-    align-items: start;
-    margin-top: 0.75rem;
+    margin-top: 1.75rem;
 }
 
-.session-sidebar {
+.session-control-panel {
     position: sticky;
-    top: 1rem;
+    top: 0.75rem;
+    z-index: 20;
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #e7e7ea;
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
+    backdrop-filter: blur(10px);
 }
 
-.session-sidebar-card {
-    padding: 1.1rem;
-    border: 1px solid #e7e7ea;
-    border-radius: 1.2rem;
-    background: #fff;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
+.session-control-main {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.session-action-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.8rem;
+}
+
+.session-nav-panel {
+    display: grid;
+    gap: 0.65rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid #ececf0;
 }
 
 .session-timer-card {
     display: grid;
     gap: 0.3rem;
-    margin-bottom: 0.9rem;
-    padding: 1rem 1.1rem;
+    min-width: 15.5rem;
+    padding: 0.85rem 1.1rem;
     border-radius: 0.95rem;
     background: linear-gradient(90deg, #6272ed 0%, #8f56c6 100%);
     color: #fff;
     text-align: center;
 }
 
-.session-sidebar-label {
+.session-control-label {
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     color: #5d6575;
     font-size: 0.92rem;
     font-weight: 700;
@@ -353,7 +370,7 @@ body:has(.result-shell) {
     text-transform: uppercase;
 }
 
-.session-timer-card .session-sidebar-label {
+.session-timer-card .session-control-label {
     margin-bottom: 0;
     color: rgba(255, 255, 255, 0.95);
     font-size: 1rem;
@@ -362,7 +379,7 @@ body:has(.result-shell) {
 }
 
 .session-timer-card strong {
-    font-size: 1.7rem;
+    font-size: 1.45rem;
     line-height: 1.05;
 }
 
@@ -370,9 +387,9 @@ body:has(.result-shell) {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    min-height: 3.2rem;
-    margin-bottom: 0.7rem;
+    min-width: 11rem;
+    min-height: 100%;
+    margin-bottom: 0;
     border: 0;
     border-radius: 0.95rem;
     color: #fff;
@@ -396,23 +413,17 @@ body:has(.result-shell) {
     background: linear-gradient(90deg, #4aa8ff 0%, #12d7ea 100%);
 }
 
-.session-sidebar-divider {
-    height: 1px;
-    margin: 1rem -1.1rem 1rem;
-    background: #ececf0;
-}
-
 .session-nav-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.6rem;
-    max-height: 35rem;
-    overflow: auto;
-    padding-right: 0.15rem;
+    display: flex;
+    gap: 0.55rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.1rem 0.15rem 0.25rem 0;
+    scrollbar-width: thin;
 }
 
 .session-nav-grid::-webkit-scrollbar {
-    width: 0.45rem;
+    height: 0.45rem;
 }
 
 .session-nav-grid::-webkit-scrollbar-thumb {
@@ -421,6 +432,7 @@ body:has(.result-shell) {
 }
 
 .session-nav-item {
+    flex: 0 0 2.75rem;
     min-height: 2.75rem;
     border: 1px solid #dddddf;
     border-radius: 0.8rem;
@@ -751,16 +763,6 @@ body:has(.result-shell) {
     }
 }
 
-@media (max-width: 1200px) {
-    .session-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .session-sidebar {
-        position: static;
-    }
-}
-
 @media (max-width: 991.98px) {
     .client-topbar {
         flex-direction: column;
@@ -780,6 +782,24 @@ body:has(.result-shell) {
     .result-hero,
     .result-stats {
         grid-template-columns: 1fr;
+    }
+
+    .session-control-panel {
+        position: static;
+    }
+
+    .session-control-main {
+        flex-direction: column;
+    }
+
+    .session-action-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .session-timer-card,
+    .session-action {
+        min-width: 0;
     }
 }
 
@@ -822,9 +842,17 @@ body:has(.result-shell) {
         margin-inline: 0.5rem;
     }
 
-    .session-sidebar-card,
+    .session-control-panel,
     .question-runtime-body {
         padding-inline: 1rem;
+    }
+
+    .session-action-row {
+        grid-template-columns: 1fr;
+    }
+
+    .session-action {
+        min-height: 3rem;
     }
 
     .matching-answer-item {

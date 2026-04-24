@@ -32,6 +32,7 @@ public static class ElearningPermissions
         public const string Update = Default + ".Update";
         public const string Publish = Default + ".Publish";
         public const string Import = Default + ".Import";
+        public const string Delete = Default + ".Delete";
     }
 
     public static class PremiumSubscriptions

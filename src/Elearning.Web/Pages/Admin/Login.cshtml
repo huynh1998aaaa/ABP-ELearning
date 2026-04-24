@@ -1,0 +1,82 @@
+@page "/admin/login"
+@model Elearning.Web.Pages.Admin.LoginModel
+@using Elearning.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<ElearningResource> L
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@L["Auth:AdminLoginTitle"]</title>
+    <link rel="stylesheet" href="/global-styles.css" />
+    <link rel="stylesheet" href="/css/admin/admin.css" />
+</head>
+<body>
+    <main class="admin-login-shell">
+        <section class="admin-login-stage">
+            <div class="admin-login-panel">
+                <div class="admin-login-copy">
+                    <span class="admin-login-eyebrow">@L["Auth:AdminPortal"]</span>
+                    <h1>@L["Auth:AdminLoginTitle"]</h1>
+                    <p>@L["Auth:AdminLoginDescription"]</p>
+
+                    <div class="admin-login-notes">
+                        <div>
+                            <strong>01</strong>
+                            <span>@L["Accounts:Title"]</span>
+                        </div>
+                        <div>
+                            <strong>02</strong>
+                            <span>@L["Questions:Title"]</span>
+                        </div>
+                        <div>
+                            <strong>03</strong>
+                            <span>@L["Exams:Title"]</span>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="admin-login-card">
+                    <div class="admin-login-card-head">
+                        <span>OMD.TestGo</span>
+                        <strong>Admin</strong>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                    {
+                        <div class="admin-login-alert">@Model.ErrorMessage</div>
+                    }
+
+                    <form method="post" class="admin-login-form">
+                        <input type="hidden" asp-for="ReturnUrl" />
+                        <div asp-validation-summary="ModelOnly" class="admin-login-validation"></div>
+
+                        <div class="admin-login-field">
+                            <label asp-for="Input.UserNameOrEmailAddress">@L["Auth:UserNameOrEmail"]</label>
+                            <input asp-for="Input.UserNameOrEmailAddress" autocomplete="username" autofocus />
+                            <span asp-validation-for="Input.UserNameOrEmailAddress" class="admin-login-error"></span>
+                        </div>
+
+                        <div class="admin-login-field">
+                            <label asp-for="Input.Password">@L["Auth:Password"]</label>
+                            <input asp-for="Input.Password" autocomplete="current-password" />
+                            <span asp-validation-for="Input.Password" class="admin-login-error"></span>
+                        </div>
+
+                        <label class="admin-login-check">
+                            <input asp-for="Input.RememberMe" />
+                            <span>@L["Auth:RememberMe"]</span>
+                        </label>
+
+                        <button type="submit" class="admin-login-submit">@L["Auth:AdminLoginButton"]</button>
+                    </form>
+                </section>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

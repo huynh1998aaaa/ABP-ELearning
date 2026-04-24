@@ -10,6 +10,6 @@ public class LoginModel : ElearningPageModel
 
     public IActionResult OnGet()
     {
-        return Redirect($"/Account/Login?returnUrl={Uri.EscapeDataString(ReturnUrl)}");
+        return Redirect($"/admin/login?returnUrl={Uri.EscapeDataString(ReturnUrl)}");
     }
 }

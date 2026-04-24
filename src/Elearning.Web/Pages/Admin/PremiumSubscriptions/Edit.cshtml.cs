@@ -32,6 +32,8 @@ public class EditModel : ElearningAdminPageModel
 
     public bool CanUpdate { get; private set; }
 
+    public bool CanCreate { get; private set; }
+
     public bool CanCancel { get; private set; }
 
     public async Task OnGetAsync()
@@ -50,6 +52,24 @@ public class EditModel : ElearningAdminPageModel
         try
         {
             await _subscriptionAppService.ExtendAsync(Id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
+        return RedirectToPage(new { id = Id });
+    }
+
+    public async Task<IActionResult> OnPostRenewAsync()
+    {
+        try
+        {
+            await _subscriptionAppService.RenewAsync(Id);
             if (IsAjaxRequest)
             {
                 return AjaxSuccess();
@@ -99,6 +119,7 @@ public class EditModel : ElearningAdminPageModel
 
     private async Task LoadAsync()
     {
+        CanCreate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Create)).Succeeded;
         CanUpdate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Update)).Succeeded;
         CanCancel = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Cancel)).Succeeded;
         Subscription = await _subscriptionAppService.GetAsync(Id);

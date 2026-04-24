@@ -115,6 +115,24 @@ public class IndexModel : ElearningAdminPageModel
         return RedirectToPage(new { Filter, Status, CurrentPage });
     }
 
+    public async Task<IActionResult> OnPostRenewAsync(Guid id)
+    {
+        try
+        {
+            await _subscriptionAppService.RenewAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
+        return RedirectToPage(new { Filter, Status, CurrentPage });
+    }
+
     public async Task<IActionResult> OnPostCancelAsync(Guid id)
     {
         try

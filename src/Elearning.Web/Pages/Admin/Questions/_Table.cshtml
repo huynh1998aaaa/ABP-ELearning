@@ -126,6 +126,17 @@ else
                                         </form>
                                     }
                                 }
+                                @if (Model.CanDelete && question.Status == QuestionStatus.Archived)
+                                {
+                                    <form method="post"
+                                          asp-page-handler="Delete"
+                                          asp-route-id="@question.Id"
+                                          data-admin-ajax-form="true"
+                                          data-admin-refresh-target="#questionsTable"
+                                          data-admin-confirm-message="@L["Questions:ConfirmHardDelete"]">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">@L["Questions:HardDelete"]</button>
+                                    </form>
+                                }
                             </div>
                         </td>
                     </tr>

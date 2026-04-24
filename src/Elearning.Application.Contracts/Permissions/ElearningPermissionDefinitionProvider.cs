@@ -26,6 +26,7 @@ public class ElearningPermissionDefinitionProvider : PermissionDefinitionProvide
         questions.AddChild(ElearningPermissions.Questions.Update, L("Permission:Questions.Update"));
         questions.AddChild(ElearningPermissions.Questions.Publish, L("Permission:Questions.Publish"));
         questions.AddChild(ElearningPermissions.Questions.Import, L("Permission:Questions.Import"));
+        questions.AddChild(ElearningPermissions.Questions.Delete, L("Permission:Questions.Delete"));
 
         var premiumSubscriptions = myGroup.AddPermission(ElearningPermissions.PremiumSubscriptions.Default, L("Permission:PremiumSubscriptions"));
         premiumSubscriptions.AddChild(ElearningPermissions.PremiumSubscriptions.Create, L("Permission:PremiumSubscriptions.Create"));

@@ -174,6 +174,44 @@ public class UserPremiumSubscriptionAppService : ElearningAppService, IUserPremi
         return await GetAsync(id);
     }
 
+    [Authorize(ElearningPermissions.PremiumSubscriptions.Create)]
+    public async Task<UserPremiumSubscriptionDto> RenewAsync(Guid id)
+    {
+        var subscription = await _subscriptionRepository.GetAsync(id);
+        var plan = await _premiumPlanRepository.GetAsync(subscription.PremiumPlanId);
+        var now = Clock.Now;
+
+        if (!plan.IsActive)
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:InactivePlanCannotBeRenewed"]);
+        }
+
+        if (subscription.IsCurrentlyActive(now) || subscription.Status == PremiumSubscriptionStatus.Cancelled)
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:OnlyExpiredCanBeRenewed"]);
+        }
+
+        await EnsureUserHasNoActivePremiumAsync(subscription.UserId, now);
+
+        if (subscription.Status == PremiumSubscriptionStatus.Active)
+        {
+            subscription.MarkExpired();
+            await _subscriptionRepository.UpdateAsync(subscription, autoSave: true);
+        }
+
+        var renewedSubscription = new UserPremiumSubscription(
+            _guidGenerator.Create(),
+            subscription.UserId,
+            subscription.PremiumPlanId,
+            await GetNextActivationNumberAsync(subscription.UserId),
+            now,
+            plan.DurationMonths);
+
+        await _subscriptionRepository.InsertAsync(renewedSubscription, autoSave: true);
+
+        return (await MapToDtosAsync(new[] { renewedSubscription }, now)).Single();
+    }
+
     [Authorize(ElearningPermissions.PremiumSubscriptions.Cancel)]
     public async Task CancelAsync(Guid id, CancelPremiumSubscriptionDto input)
     {

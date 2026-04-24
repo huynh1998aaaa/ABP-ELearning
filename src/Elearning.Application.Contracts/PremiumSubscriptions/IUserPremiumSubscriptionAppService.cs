@@ -19,5 +19,7 @@ public interface IUserPremiumSubscriptionAppService : IApplicationService
 
     Task<UserPremiumSubscriptionDto> ExtendAsync(Guid id);
 
+    Task<UserPremiumSubscriptionDto> RenewAsync(Guid id);
+
     Task CancelAsync(Guid id, CancelPremiumSubscriptionDto input);
 }
