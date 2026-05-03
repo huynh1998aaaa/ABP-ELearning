@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +16,7 @@ using Elearning.EntityFrameworkCore;
 using Elearning.Localization;
 using Elearning.MultiTenancy;
 using Elearning.Web.Menus;
+using Elearning.Web.Security;
 using Microsoft.OpenApi;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
@@ -110,6 +112,7 @@ public class ElearningWebModule : AbpModule
         var configuration = context.Services.GetConfiguration();
 
         ConfigureAuthentication(context);
+        ConfigureAuthorization(context.Services);
         ConfigureExternalProviders(context.Services, configuration);
         ConfigureUrls(configuration);
         ConfigureRequestLocalization();
@@ -172,9 +175,29 @@ public class ElearningWebModule : AbpModule
                     return Task.CompletedTask;
                 }
 
+                if (context.Request.Path.StartsWithSegments("/client", StringComparison.OrdinalIgnoreCase))
+                {
+                    var returnUrl = GetCurrentLocalUrl(context);
+                    context.Response.Redirect($"/client/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+                    return Task.CompletedTask;
+                }
+
                 context.Response.Redirect(context.RedirectUri);
                 return Task.CompletedTask;
             };
+        });
+    }
+
+    private void ConfigureAuthorization(IServiceCollection services)
+    {
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("ClientGoogleOnly", policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.RequireClaim(ClientAuthenticationConstants.ClientAccessClaimType, bool.TrueString);
+                policy.RequireClaim(ClientAuthenticationConstants.LoginProviderClaimType, ClientAuthenticationConstants.GoogleLoginProvider);
+            });
         });
     }
 
@@ -261,7 +284,6 @@ public class ElearningWebModule : AbpModule
                 bundle =>
                 {
                     bundle.AddFiles("/global-styles.css");
-                    bundle.AddFiles("/css/home/home.css");
                     bundle.AddFiles("/css/admin/admin.css");
                     bundle.AddFiles("/css/client/client.css");
                 }

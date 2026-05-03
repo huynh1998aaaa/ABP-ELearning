@@ -4,297 +4,289 @@
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
 
-<div class="row g-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
-                <div>
-                    <div class="fw-semibold">@L["Exams:AutoAssignTitle"]</div>
-                    <div class="text-muted small">@L["Exams:AutoAssignDescription"]</div>
-                </div>
-                <div class="d-flex gap-2">
-                    <a class="btn btn-sm btn-outline-secondary" href="/admin/exams/questions/@Model.Id?showAutoPreview=true">@L["Exams:AutoAssignPreview"]</a>
-                    <a class="btn btn-sm btn-outline-light" href="/admin/exams/questions/@Model.Id">@L["Exams:AutoAssignHidePreview"]</a>
-                    <form method="post" asp-page-handler="ApplyAuto" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace">
-                        <button type="submit" class="btn btn-sm btn-primary">@L["Exams:AutoAssignApply"]</button>
+<div class="admin-question-workspace">
+    <section class="card admin-workspace-panel admin-workspace-panel-full">
+        <div class="card-header admin-workspace-panel-header">
+            <div>
+                <div class="fw-semibold">@L["Exams:AutoAssignTitle"]</div>
+                <div class="text-muted small">@L["Exams:AutoAssignDescription"]</div>
+            </div>
+            <div class="admin-workspace-header-actions">
+                <a class="btn btn-sm btn-outline-secondary" href="/admin/exams/questions/@Model.Id?showAutoPreview=true">@L["Exams:AutoAssignPreview"]</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/admin/exams/questions/@Model.Id">@L["Exams:AutoAssignHidePreview"]</a>
+                <form method="post" asp-page-handler="ApplyAuto" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace">
+                    <button type="submit" class="btn btn-sm btn-primary">@L["Exams:AutoAssignApply"]</button>
+                </form>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="admin-workspace-split">
+                <section class="admin-workspace-subpanel admin-auto-builder">
+                    <div class="admin-subpanel-title">@L["Exams:AutoRuleCreate"]</div>
+                    <form method="post"
+                          asp-page-handler="AddRule"
+                          data-admin-ajax-form="true"
+                          data-admin-refresh-target="#examQuestionsWorkspace"
+                          class="admin-auto-rule-create-form">
+                        <div class="admin-auto-rule-grid">
+                            <div class="admin-field-stack">
+                                <label class="form-label">@L["Questions:QuestionType"]</label>
+                                <select name="AutoRuleInput.QuestionTypeId" class="form-select form-select-sm">
+                                    @foreach (var questionType in Model.QuestionTypes)
+                                    {
+                                        <option value="@questionType.Id">@questionType.DisplayName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="admin-field-stack">
+                                <label class="form-label">@L["Questions:Difficulty"]</label>
+                                <select name="AutoRuleInput.Difficulty" class="form-select form-select-sm">
+                                    <option value="">@L["Exams:AutoRuleAllDifficulties"]</option>
+                                    @foreach (var difficulty in Enum.GetValues<QuestionDifficulty>())
+                                    {
+                                        <option value="@difficulty">@L[$"Enum:QuestionDifficulty:{difficulty}"]</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="admin-field-stack">
+                                <label class="form-label">@L["Exams:AutoRuleTargetCount"]</label>
+                                <input name="AutoRuleInput.TargetCount" type="number" min="1" class="form-control form-control-sm" value="@Model.AutoRuleInput.TargetCount" />
+                            </div>
+                            <div class="admin-field-stack">
+                                <label class="form-label">@L["Exams:SortOrder"]</label>
+                                <input name="AutoRuleInput.SortOrder" type="number" class="form-control form-control-sm" value="@Model.AutoRuleInput.SortOrder" />
+                            </div>
+                            <div class="admin-field-stack admin-field-stack-action">
+                                <button type="submit" class="btn btn-sm btn-outline-primary w-100">@L["Exams:AutoRuleAdd"]</button>
+                            </div>
+                        </div>
                     </form>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-xl-5">
-                        <form method="post" asp-page-handler="AddRule" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace" class="border rounded p-3 bg-light">
-                            <div class="fw-semibold mb-3">@L["Exams:AutoRuleCreate"]</div>
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <label class="form-label">@L["Questions:QuestionType"]</label>
-                                    <select name="AutoRuleInput.QuestionTypeId" class="form-select form-select-sm">
-                                        @foreach (var questionType in Model.QuestionTypes)
-                                        {
-                                            <option value="@questionType.Id">@questionType.DisplayName</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">@L["Questions:Difficulty"]</label>
-                                    <select name="AutoRuleInput.Difficulty" class="form-select form-select-sm">
-                                        <option value="">@L["Exams:AutoRuleAllDifficulties"]</option>
-                                        @foreach (var difficulty in Enum.GetValues<QuestionDifficulty>())
-                                        {
-                                            <option value="@difficulty">@L[$"Enum:QuestionDifficulty:{difficulty}"]</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">@L["Exams:AutoRuleTargetCount"]</label>
-                                    <input name="AutoRuleInput.TargetCount" type="number" min="1" class="form-control form-control-sm" value="@Model.AutoRuleInput.TargetCount" />
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">@L["Exams:SortOrder"]</label>
-                                    <input name="AutoRuleInput.SortOrder" type="number" class="form-control form-control-sm" value="@Model.AutoRuleInput.SortOrder" />
-                                </div>
-                                <div class="col-md-4 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">@L["Exams:AutoRuleAdd"]</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="col-xl-7">
-                        @if (Model.ShowAutoPreview && Model.AutoPreview != null)
-                        {
-                            <div class="border rounded p-3 mb-3">
-                                <div class="fw-semibold mb-2">@L["Exams:AutoAssignPreview"]</div>
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <div class="small text-muted">@L["Exams:AutoAssignRequested"]</div>
-                                        <div class="fw-semibold">@Model.AutoPreview.RequestedCount</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="small text-muted">@L["Exams:AutoAssignCoveredByManual"]</div>
-                                        <div class="fw-semibold">@Model.AutoPreview.FulfilledByManualCount</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="small text-muted">@L["Exams:AutoAssignWillAdd"]</div>
-                                        <div class="fw-semibold">@Model.AutoPreview.AutoAssignableCount</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="small text-muted">@L["Exams:AutoAssignShortage"]</div>
-                                        <div class="fw-semibold @(Model.AutoPreview.ShortageCount > 0 ? "text-warning" : null)">@Model.AutoPreview.ShortageCount</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="small text-muted">@L["Exams:AutoAssignPreservedManual"]</div>
-                                        <div class="fw-semibold">@Model.AutoPreview.PreservedManualCount</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="small text-muted">@L["Exams:AutoAssignReplaceAuto"]</div>
-                                        <div class="fw-semibold">@Model.AutoPreview.ExistingAutoAssignedCount</div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
+                </section>
 
-                        @if (Model.AutoQuestionRules.Count == 0)
-                        {
-                            <div class="alert alert-light border mb-0">@L["Exams:AutoRuleNoItems"]</div>
-                        }
-                        else
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>@L["Questions:QuestionType"]</th>
-                                            <th>@L["Questions:Difficulty"]</th>
-                                            <th>@L["Exams:AutoRuleTargetCount"]</th>
-                                            <th>@L["Exams:SortOrder"]</th>
-                                            @if (Model.ShowAutoPreview && Model.AutoPreview != null)
-                                            {
-                                                <th>@L["Exams:AutoAssignPreview"]</th>
-                                            }
-                                            <th class="text-end">@L["Exams:Actions"]</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var rule in Model.AutoQuestionRules)
-                                        {
-                                            var previewItem = Model.AutoPreview?.Items.FirstOrDefault(x => x.RuleId == rule.Id);
-                                            <tr>
-                                                <td colspan="@(Model.ShowAutoPreview && Model.AutoPreview != null ? 6 : 5)">
-                                                    <div class="row g-2 align-items-end">
-                                                        <form method="post" asp-page-handler="UpdateRule" asp-route-ruleId="@rule.Id" class="col-lg-10" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace">
-                                                            <div class="row g-2 align-items-end">
-                                                                <div class="col-md-3">
-                                                                    <select name="UpdateAutoRuleInput.QuestionTypeId" class="form-select form-select-sm">
-                                                                        @foreach (var questionType in Model.QuestionTypes)
-                                                                        {
-                                                                            if (questionType.Id == rule.QuestionTypeId)
-                                                                            {
-                                                                                <option value="@questionType.Id" selected>@questionType.DisplayName</option>
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                <option value="@questionType.Id">@questionType.DisplayName</option>
-                                                                            }
-                                                                        }
-                                                                    </select>
-                                                                </div>
-                                                                <div class="col-md-2">
-                                                                    <select name="UpdateAutoRuleInput.Difficulty" class="form-select form-select-sm">
-                                                                        @if (rule.Difficulty == null)
-                                                                        {
-                                                                            <option value="" selected>@L["Exams:AutoRuleAllDifficulties"]</option>
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <option value="">@L["Exams:AutoRuleAllDifficulties"]</option>
-                                                                        }
-                                                                        @foreach (var difficulty in Enum.GetValues<QuestionDifficulty>())
-                                                                        {
-                                                                            if (rule.Difficulty == difficulty)
-                                                                            {
-                                                                                <option value="@difficulty" selected>@L[$"Enum:QuestionDifficulty:{difficulty}"]</option>
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                <option value="@difficulty">@L[$"Enum:QuestionDifficulty:{difficulty}"]</option>
-                                                                            }
-                                                                        }
-                                                                    </select>
-                                                                </div>
-                                                                <div class="col-md-2">
-                                                                    <input name="UpdateAutoRuleInput.TargetCount" type="number" min="1" class="form-control form-control-sm" value="@rule.TargetCount" />
-                                                                </div>
-                                                                <div class="col-md-2">
-                                                                    <input name="UpdateAutoRuleInput.SortOrder" type="number" class="form-control form-control-sm" value="@rule.SortOrder" />
-                                                                </div>
-                                                                @if (Model.ShowAutoPreview && Model.AutoPreview != null)
-                                                                {
-                                                                    <div class="col-md-2 small text-muted">
-                                                                        @if (previewItem != null)
-                                                                        {
-                                                                            <div>@L["Exams:AutoAssignCoveredByManual"]: @previewItem.FulfilledByManualCount</div>
-                                                                            <div>@L["Exams:AutoAssignWillAdd"]: @previewItem.AutoAssignableCount</div>
-                                                                            <div>@L["Exams:AutoAssignShortage"]: @previewItem.ShortageCount</div>
-                                                                        }
-                                                                    </div>
-                                                                }
-                                                                <div class="col-md-1 text-end">
-                                                                    <button type="submit" class="btn btn-sm btn-outline-primary">@L["Exams:Save"]</button>
-                                                                </div>
-                                                            </div>
-                                                        </form>
-                                                        <form method="post" asp-page-handler="RemoveRule" asp-route-ruleId="@rule.Id" class="col-lg-2 text-end" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace" onsubmit="return confirm('@L["Exams:AutoRuleConfirmRemove"]');">
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger">@L["Exams:Remove"]</button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                <section class="admin-workspace-subpanel">
+                    @if (Model.ShowAutoPreview && Model.AutoPreview != null)
+                    {
+                        <div class="admin-auto-preview">
+                            <div class="admin-subpanel-title">@L["Exams:AutoAssignPreview"]</div>
+                            <div class="admin-auto-preview-grid">
+                                <article>
+                                    <span>@L["Exams:AutoAssignRequested"]</span>
+                                    <strong>@Model.AutoPreview.RequestedCount</strong>
+                                </article>
+                                <article>
+                                    <span>@L["Exams:AutoAssignCoveredByManual"]</span>
+                                    <strong>@Model.AutoPreview.FulfilledByManualCount</strong>
+                                </article>
+                                <article>
+                                    <span>@L["Exams:AutoAssignWillAdd"]</span>
+                                    <strong>@Model.AutoPreview.AutoAssignableCount</strong>
+                                </article>
+                                <article>
+                                    <span>@L["Exams:AutoAssignShortage"]</span>
+                                    <strong class="@(Model.AutoPreview.ShortageCount > 0 ? "text-warning" : string.Empty)">@Model.AutoPreview.ShortageCount</strong>
+                                </article>
+                                <article>
+                                    <span>@L["Exams:AutoAssignPreservedManual"]</span>
+                                    <strong>@Model.AutoPreview.PreservedManualCount</strong>
+                                </article>
+                                <article>
+                                    <span>@L["Exams:AutoAssignReplaceAuto"]</span>
+                                    <strong>@Model.AutoPreview.ExistingAutoAssignedCount</strong>
+                                </article>
                             </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-7">
-        <div class="card h-100">
-            <div class="card-header">
-                <span class="fw-semibold">@L["Exams:AssignedQuestions"]</span>
-            </div>
-            <div class="card-body">
-                @if (Model.ExamQuestions.Count == 0)
-                {
-                    <div class="alert alert-light border mb-0">@L["Exams:NoQuestions"]</div>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>@L["Exams:Question"]</th>
-                                    <th>@L["Exams:SortOrder"]</th>
-                                    <th>@L["Exams:ScoreOverride"]</th>
-                                    <th>@L["Exams:IsRequired"]</th>
-                                    <th class="text-end">@L["Exams:Actions"]</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var examQuestion in Model.ExamQuestions)
-                                {
-                                    <tr>
-                                        <td>
-                                            <strong>@examQuestion.QuestionTitle</strong>
-                                            <div class="text-muted small">@examQuestion.QuestionTypeName</div>
-                                            <span class="badge @(examQuestion.AssignmentSource == QuestionAssignmentSource.Auto ? "bg-info-subtle text-info-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
-                                                @L[$"Enum:QuestionAssignmentSource:{examQuestion.AssignmentSource}"]
-                                            </span>
-                                        </td>
-                                        <td colspan="4">
-                                            <div class="row g-2 align-items-center justify-content-end">
-                                                <form method="post" asp-page-handler="Update" asp-route-examQuestionId="@examQuestion.Id" class="col-md-9" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace">
-                                                    <div class="row g-2 align-items-center">
-                                                        <div class="col-md-4">
-                                                            <input name="UpdateInput.SortOrder" class="form-control form-control-sm" value="@examQuestion.SortOrder" />
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <input name="UpdateInput.ScoreOverride" class="form-control form-control-sm" value="@examQuestion.ScoreOverride" placeholder="@examQuestion.QuestionScore" />
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox" name="UpdateInput.IsRequired" value="true" @(examQuestion.IsRequired ? "checked" : null) />
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-2 text-end">
-                                                            <button type="submit" class="btn btn-sm btn-outline-primary">@L["Exams:Save"]</button>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                                <form method="post" asp-page-handler="Remove" asp-route-examQuestionId="@examQuestion.Id" class="col-md-3 text-end" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace" onsubmit="return confirm('@L["Exams:ConfirmRemoveQuestion"]');">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">@L["Exams:Remove"]</button>
-                                                </form>
+                        </div>
+                    }
+
+                    <div class="admin-subpanel-title">@L["Exams:AutoAssignTitle"]</div>
+                    @if (Model.AutoQuestionRules.Count == 0)
+                    {
+                        <div class="alert alert-light border mb-0">@L["Exams:AutoRuleNoItems"]</div>
+                    }
+                    else
+                    {
+                        <div class="admin-auto-rule-list">
+                            @foreach (var rule in Model.AutoQuestionRules)
+                            {
+                                var previewItem = Model.AutoPreview?.Items.FirstOrDefault(x => x.RuleId == rule.Id);
+                                <article class="admin-auto-rule-item">
+                                    <form method="post"
+                                          asp-page-handler="UpdateRule"
+                                          asp-route-ruleId="@rule.Id"
+                                          class="admin-auto-rule-item-form"
+                                          data-admin-ajax-form="true"
+                                          data-admin-refresh-target="#examQuestionsWorkspace">
+                                        <div class="admin-auto-rule-item-grid">
+                                            <div class="admin-field-stack">
+                                                <label class="form-label">@L["Questions:QuestionType"]</label>
+                                                <select name="UpdateAutoRuleInput.QuestionTypeId" class="form-select form-select-sm">
+                                                    @foreach (var questionType in Model.QuestionTypes)
+                                                    {
+                                                        if (questionType.Id == rule.QuestionTypeId)
+                                                        {
+                                                            <option value="@questionType.Id" selected>@questionType.DisplayName</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@questionType.Id">@questionType.DisplayName</option>
+                                                        }
+                                                    }
+                                                </select>
                                             </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
+                                            <div class="admin-field-stack">
+                                                <label class="form-label">@L["Questions:Difficulty"]</label>
+                                                <select name="UpdateAutoRuleInput.Difficulty" class="form-select form-select-sm">
+                                                    @if (rule.Difficulty == null)
+                                                    {
+                                                        <option value="" selected>@L["Exams:AutoRuleAllDifficulties"]</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="">@L["Exams:AutoRuleAllDifficulties"]</option>
+                                                    }
+                                                    @foreach (var difficulty in Enum.GetValues<QuestionDifficulty>())
+                                                    {
+                                                        if (rule.Difficulty == difficulty)
+                                                        {
+                                                            <option value="@difficulty" selected>@L[$"Enum:QuestionDifficulty:{difficulty}"]</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@difficulty">@L[$"Enum:QuestionDifficulty:{difficulty}"]</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="admin-field-stack admin-field-compact">
+                                                <label class="form-label">@L["Exams:AutoRuleTargetCount"]</label>
+                                                <input name="UpdateAutoRuleInput.TargetCount" type="number" min="1" class="form-control form-control-sm" value="@rule.TargetCount" />
+                                            </div>
+                                            <div class="admin-field-stack admin-field-compact">
+                                                <label class="form-label">@L["Exams:SortOrder"]</label>
+                                                <input name="UpdateAutoRuleInput.SortOrder" type="number" class="form-control form-control-sm" value="@rule.SortOrder" />
+                                            </div>
+                                            <div class="admin-auto-rule-item-actions">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">@L["Exams:Save"]</button>
+                                            </div>
+                                        </div>
+                                        @if (Model.ShowAutoPreview && Model.AutoPreview != null && previewItem != null)
+                                        {
+                                            <div class="admin-auto-rule-item-preview">
+                                                <span>@L["Exams:AutoAssignCoveredByManual"]: <strong>@previewItem.FulfilledByManualCount</strong></span>
+                                                <span>@L["Exams:AutoAssignWillAdd"]: <strong>@previewItem.AutoAssignableCount</strong></span>
+                                                <span>@L["Exams:AutoAssignShortage"]: <strong>@previewItem.ShortageCount</strong></span>
+                                            </div>
+                                        }
+                                    </form>
+                                    <form method="post"
+                                          asp-page-handler="RemoveRule"
+                                          asp-route-ruleId="@rule.Id"
+                                          class="admin-inline-danger-form"
+                                          data-admin-ajax-form="true"
+                                          data-admin-refresh-target="#examQuestionsWorkspace"
+                                          onsubmit="return confirm('@L["Exams:AutoRuleConfirmRemove"]');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">@L["Exams:Remove"]</button>
+                                    </form>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
             </div>
         </div>
-    </div>
-    <div class="col-xl-5">
-        <div class="card h-100">
-            <div class="card-header">
-                <span class="fw-semibold">@L["Exams:AvailableQuestions"]</span>
-            </div>
-            <div class="card-body">
-                @if (Model.AvailableQuestions.Count == 0)
-                {
-                    <div class="alert alert-light border mb-0">@L["Exams:NoAvailableQuestions"]</div>
-                }
-                else
-                {
+    </section>
+
+    <section class="card admin-workspace-panel">
+        <div class="card-header admin-workspace-panel-header">
+            <span class="fw-semibold">@L["Exams:AssignedQuestions"]</span>
+        </div>
+        <div class="card-body">
+            @if (Model.ExamQuestions.Count == 0)
+            {
+                <div class="alert alert-light border mb-0">@L["Exams:NoQuestions"]</div>
+            }
+            else
+            {
+                <div class="admin-assigned-list">
+                    @foreach (var examQuestion in Model.ExamQuestions)
+                    {
+                        <article class="admin-assigned-item">
+                            <div class="admin-assigned-copy">
+                                <strong>@examQuestion.QuestionTitle</strong>
+                                <div class="text-muted small">@examQuestion.QuestionTypeName</div>
+                                <span class="badge @(examQuestion.AssignmentSource == QuestionAssignmentSource.Auto ? "bg-info-subtle text-info-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                                    @L[$"Enum:QuestionAssignmentSource:{examQuestion.AssignmentSource}"]
+                                </span>
+                            </div>
+                            <div class="admin-assigned-controls">
+                                <form method="post"
+                                      asp-page-handler="Update"
+                                      asp-route-examQuestionId="@examQuestion.Id"
+                                      class="admin-assigned-form"
+                                      data-admin-ajax-form="true"
+                                      data-admin-refresh-target="#examQuestionsWorkspace">
+                                    <div class="admin-field-stack admin-field-compact">
+                                        <label class="form-label">@L["Exams:SortOrder"]</label>
+                                        <input name="UpdateInput.SortOrder" class="form-control form-control-sm" value="@examQuestion.SortOrder" />
+                                    </div>
+                                    <div class="admin-field-stack admin-field-compact">
+                                        <label class="form-label">@L["Exams:ScoreOverride"]</label>
+                                        <input name="UpdateInput.ScoreOverride" class="form-control form-control-sm" value="@examQuestion.ScoreOverride" placeholder="@examQuestion.QuestionScore" />
+                                    </div>
+                                    <label class="admin-inline-check">
+                                        <input class="form-check-input" type="checkbox" name="UpdateInput.IsRequired" value="true" @(examQuestion.IsRequired ? "checked" : null) />
+                                        <span>@L["Exams:IsRequired"]</span>
+                                    </label>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">@L["Exams:Save"]</button>
+                                </form>
+                                <form method="post"
+                                      asp-page-handler="Remove"
+                                      asp-route-examQuestionId="@examQuestion.Id"
+                                      class="admin-inline-danger-form"
+                                      data-admin-ajax-form="true"
+                                      data-admin-refresh-target="#examQuestionsWorkspace"
+                                      onsubmit="return confirm('@L["Exams:ConfirmRemoveQuestion"]');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">@L["Exams:Remove"]</button>
+                                </form>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="card admin-workspace-panel">
+        <div class="card-header admin-workspace-panel-header">
+            <span class="fw-semibold">@L["Exams:AvailableQuestions"]</span>
+        </div>
+        <div class="card-body">
+            @if (Model.AvailableQuestions.Count == 0)
+            {
+                <div class="alert alert-light border mb-0">@L["Exams:NoAvailableQuestions"]</div>
+            }
+            else
+            {
+                <div class="admin-bank-list">
                     @foreach (var question in Model.AvailableQuestions)
                     {
-                        <div class="border rounded p-3 mb-2">
-                            <div class="d-flex justify-content-between gap-2">
+                        <article class="admin-bank-item">
+                            <div class="admin-bank-head">
                                 <strong>@question.Title</strong>
                                 <span class="badge bg-light text-dark">@question.QuestionTypeName</span>
                             </div>
-                            <div class="text-muted small">@question.Content</div>
-                            <form method="post" asp-page-handler="Add" class="mt-2" data-admin-ajax-form="true" data-admin-refresh-target="#examQuestionsWorkspace">
+                            <p class="admin-bank-body text-muted">@question.Content</p>
+                            <form method="post"
+                                  asp-page-handler="Add"
+                                  class="admin-bank-add"
+                                  data-admin-ajax-form="true"
+                                  data-admin-refresh-target="#examQuestionsWorkspace">
                                 <input type="hidden" name="AddInput.QuestionId" value="@question.Id" />
                                 <button type="submit" class="btn btn-sm btn-outline-success">@L["Exams:AddQuestion"]</button>
                             </form>
-                        </div>
+                        </article>
                     }
-                }
-            </div>
+                </div>
+            }
         </div>
-    </div>
+    </section>
 </div>

@@ -5,6 +5,7 @@ using Elearning.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Volo.Abp.Identity;
 using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 
@@ -36,11 +37,17 @@ public class LoginModel : ElearningPageModel
     [BindProperty]
     public AdminLoginInputModel Input { get; set; } = new();
 
+    [TempData]
+    public string? FlashErrorMessage { get; set; }
+
     public string? ErrorMessage { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
         ReturnUrl = GetSafeReturnUrl(ReturnUrl);
+
+        ErrorMessage = FlashErrorMessage;
+        FlashErrorMessage = null;
 
         if (AccessDenied)
         {
@@ -59,8 +66,7 @@ public class LoginModel : ElearningPageModel
         }
 
         await _signInManager.SignOutAsync();
-        ErrorMessage = L["Auth:AdminAccessDenied"];
-        return Page();
+        return LocalRedirect(BuildLoginUrl(returnUrl: ReturnUrl, accessDenied: true));
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -96,8 +102,8 @@ public class LoginModel : ElearningPageModel
         if (!hasAdminAccess)
         {
             await _signInManager.SignOutAsync();
-            ErrorMessage = L["Auth:AdminAccessDenied"];
-            return Page();
+            FlashErrorMessage = L["Auth:AdminAccessDenied"];
+            return LocalRedirect(BuildLoginUrl(returnUrl: ReturnUrl, accessDenied: true));
         }
 
         return LocalRedirect(ReturnUrl);
@@ -117,6 +123,12 @@ public class LoginModel : ElearningPageModel
                returnUrl!.StartsWith("/admin", StringComparison.OrdinalIgnoreCase)
             ? returnUrl
             : "/admin";
+    }
+
+    private string BuildLoginUrl(string returnUrl, bool accessDenied = false)
+    {
+        var loginUrl = $"/admin/login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        return accessDenied ? $"{loginUrl}&accessDenied=true" : loginUrl;
     }
 
     private void AddInvalidLoginError()

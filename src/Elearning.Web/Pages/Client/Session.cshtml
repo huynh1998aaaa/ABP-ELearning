@@ -113,24 +113,110 @@
                                 }
                                 else if (isMatching)
                                 {
-                                    <div class="matching-answer-list">
-                                        @for (var index = 0; index < question.MatchingPairs.Count; index++)
-                                        {
-                                            var pair = question.MatchingPairs[index];
-                                            <div class="matching-answer-item">
-                                                <div class="matching-left">@pair.LeftText</div>
-                                                <input type="hidden" name="MatchingAnswers[@index].PairId" value="@pair.Id" />
-                                                <select name="MatchingAnswers[@index].SelectedRightText" class="form-select matching-select">
-                                                    <option value="">@L["Client:MatchingSelectPlaceholder"]</option>
+                                    <div class="matching-runtime-board"
+                                         data-matching-board="true"
+                                         data-matching-waiting-text="@L["Client:MatchingWaiting"]"
+                                         data-matching-active-prompt="@L["Client:MatchingActivePrompt"]"
+                                         data-matching-active-template="@L["Client:MatchingActivePair", "{0}"]"
+                                         data-matching-connected-template="@L["Client:MatchingConnectedTo", "{0}"]"
+                                         data-matching-choice-used-template="@L["Client:MatchingChoiceUsedBy", "{0}"]"
+                                         data-matching-summary-template="@L["Client:MatchingSummaryCount", "{0}", "{1}"]"
+                                         data-matching-no-connections="@L["Client:MatchingNoConnectionsYet"]"
+                                         data-matching-select-question-first="@L["Client:MatchingSelectQuestionFirst"]"
+                                         data-matching-choice-used-error="@L["Client:MatchingRightChoiceAlreadyUsed"]">
+                                        <div class="matching-runtime-intro">
+                                            <div class="matching-runtime-intro-copy">
+                                                <span class="matching-runtime-intro-title">@L["Client:MatchingSummaryTitle"]</span>
+                                                <p>@L["Client:MatchingInstruction"]</p>
+                                            </div>
+                                            <strong class="matching-runtime-progress" data-matching-progress="true">
+                                                @L["Client:MatchingSummaryCount", 0, question.MatchingPairs.Count]
+                                            </strong>
+                                        </div>
+
+                                        <div class="matching-runtime-layout" data-matching-layout="true">
+                                            <section class="matching-runtime-column">
+                                                <div class="matching-runtime-column-head">
+                                                    <span>@L["Client:MatchingQuestionsColumn"]</span>
+                                                </div>
+
+                                                <div class="matching-runtime-left-list">
+                                                    @for (var index = 0; index < question.MatchingPairs.Count; index++)
+                                                    {
+                                                        var pair = question.MatchingPairs[index];
+                                                        var selectedRightText = pair.SelectedRightText ?? string.Empty;
+
+                                                        <article class="matching-runtime-left-item @(string.IsNullOrEmpty(selectedRightText) ? string.Empty : "matching-runtime-left-item-connected")"
+                                                                 data-matching-left-item="true"
+                                                                 data-pair-id="@pair.Id"
+                                                                 data-pair-order="@(index + 1)">
+                                                            <input type="hidden" name="MatchingAnswers[@index].PairId" value="@pair.Id" />
+                                                            <input type="hidden"
+                                                                   name="MatchingAnswers[@index].SelectedRightText"
+                                                                   value="@selectedRightText"
+                                                                   data-matching-hidden="true" />
+
+                                                            <div class="matching-runtime-left-head">
+                                                                <span class="matching-runtime-order">@(index + 1)</span>
+                                                                <span class="matching-runtime-left-label">@question.QuestionTypeName</span>
+                                                            </div>
+                                                            <strong class="matching-runtime-left-text">@pair.LeftText</strong>
+                                                            <span class="matching-runtime-left-state" data-matching-left-state="true">
+                                                                @(string.IsNullOrWhiteSpace(selectedRightText)
+                                                                    ? L["Client:MatchingWaiting"]
+                                                                    : L["Client:MatchingConnectedTo", selectedRightText])
+                                                            </span>
+                                                            <span class="matching-runtime-left-selected"
+                                                                  data-matching-left-selected="true"
+                                                                  @(string.IsNullOrWhiteSpace(selectedRightText) ? "hidden" : null)>@selectedRightText</span>
+                                                        </article>
+                                                    }
+                                                </div>
+                                            </section>
+
+                                            <div class="matching-runtime-link-layer" aria-hidden="true">
+                                                <svg class="matching-runtime-link-svg" data-matching-svg="true"></svg>
+                                            </div>
+
+                                            <aside class="matching-runtime-center-panel">
+                                                <div class="matching-runtime-center-card">
+                                                    <span class="matching-runtime-center-label">@L["Client:MatchingSelectPlaceholder"]</span>
+                                                    <strong data-matching-active-label="true">@L["Client:MatchingActivePrompt"]</strong>
+                                                    <button type="button"
+                                                            class="matching-runtime-clear"
+                                                            data-matching-clear="true"
+                                                            disabled>
+                                                        @L["Client:MatchingClearCurrent"]
+                                                    </button>
+                                                </div>
+
+                                                <div class="matching-runtime-summary-list" data-matching-summary-list="true">
+                                                    <div class="matching-runtime-summary-empty">@L["Client:MatchingNoConnectionsYet"]</div>
+                                                </div>
+                                            </aside>
+
+                                            <section class="matching-runtime-column">
+                                                <div class="matching-runtime-column-head">
+                                                    <span>@L["Client:MatchingAnswersColumn"]</span>
+                                                </div>
+
+                                                <div class="matching-runtime-right-list" role="group" aria-label="@L["Client:MatchingAnswersColumn"]">
                                                     @foreach (var choice in question.MatchingChoices)
                                                     {
-                                                        <option value="@choice" selected="@(string.Equals(choice, pair.SelectedRightText, StringComparison.Ordinal) ? "selected" : null)">
-                                                            @choice
-                                                        </option>
+                                                        var isSelected = question.MatchingPairs.Any(x => string.Equals(x.SelectedRightText, choice, StringComparison.Ordinal));
+
+                                                        <button type="button"
+                                                                class="matching-bank-choice @(isSelected ? "matching-bank-choice-used" : string.Empty)"
+                                                                data-matching-choice="true"
+                                                                data-value="@choice">
+                                                            <span class="matching-bank-choice-dot" aria-hidden="true"></span>
+                                                            <span class="matching-bank-choice-text">@choice</span>
+                                                            <span class="matching-bank-choice-meta" data-matching-choice-meta="true"></span>
+                                                        </button>
                                                     }
-                                                </select>
-                                            </div>
-                                        }
+                                                </div>
+                                            </section>
+                                        </div>
                                     </div>
                                 }
                                 else

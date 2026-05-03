@@ -8,7 +8,7 @@ using Volo.Abp.Validation;
 
 namespace Elearning.Web.Pages.Client;
 
-[Authorize]
+[Authorize(Policy = "ClientGoogleOnly")]
 public abstract class ElearningClientPageModel : ElearningPageModel
 {
     protected bool IsAjaxRequest =>

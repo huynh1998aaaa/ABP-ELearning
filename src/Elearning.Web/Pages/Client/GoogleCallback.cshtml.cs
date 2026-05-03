@@ -3,6 +3,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Elearning.Identity;
+using Elearning.Web.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -63,6 +64,15 @@ public class GoogleCallbackModel : ElearningPageModel
 
         if (signInResult.Succeeded)
         {
+            var existingUser = await _identityUserManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (existingUser == null || !existingUser.IsActive)
+            {
+                ErrorMessage = L["Auth:GoogleAccountCannotSignIn"];
+                await _signInManager.SignOutAsync();
+                return Page();
+            }
+
+            await SignInClientUserAsync(existingUser, info.LoginProvider);
             return LocalRedirect(ReturnUrl);
         }
 
@@ -96,9 +106,21 @@ public class GoogleCallbackModel : ElearningPageModel
             return Page();
         }
 
-        await _signInManager.SignInAsync(user, isPersistent: true, info.LoginProvider);
+        await SignInClientUserAsync(user, info.LoginProvider);
 
         return LocalRedirect(ReturnUrl);
+    }
+
+    private async Task SignInClientUserAsync(AbpIdentityUser user, string loginProvider)
+    {
+        await _signInManager.SignInWithClaimsAsync(
+            user,
+            isPersistent: true,
+            new[]
+            {
+                new Claim(ClientAuthenticationConstants.ClientAccessClaimType, bool.TrueString),
+                new Claim(ClientAuthenticationConstants.LoginProviderClaimType, loginProvider)
+            });
     }
 
     private async Task<AbpIdentityUser?> FindOrCreateUserAsync(ExternalLoginInfo info)

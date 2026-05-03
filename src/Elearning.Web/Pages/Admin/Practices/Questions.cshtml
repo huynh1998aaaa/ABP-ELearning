@@ -4,30 +4,32 @@
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
 
-<div class="mb-3">
-    <a class="btn btn-link px-0" href="/admin/practices">@L["Practices:BackToList"]</a>
-    <h1 class="h3 mb-1">@L["Practices:ManageQuestionsTitle"]</h1>
-    <p class="text-muted mb-0">@Model.PracticeSet.Title</p>
-</div>
-
-<form method="get" class="row g-3 mb-4">
-    <div class="col-lg-6">
-        <input type="hidden" asp-for="Id" />
-        @if (Model.ShowAutoPreview)
-        {
-            <input type="hidden" asp-for="ShowAutoPreview" />
-        }
-        <input asp-for="QuestionFilter" class="form-control" placeholder="@L["Practices:QuestionSearchPlaceholder"]" />
+<section class="admin-workspace-page">
+    <div class="admin-workspace-header mb-3">
+        <a class="btn btn-link px-0" href="/admin/practices">@L["Practices:BackToList"]</a>
+        <h1 class="h3 mb-1">@L["Practices:ManageQuestionsTitle"]</h1>
+        <p class="text-muted mb-0">@Model.PracticeSet.Title</p>
     </div>
-    <div class="col-lg-6 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">@L["Practices:Search"]</button>
-        <a class="btn btn-outline-secondary" href="/admin/practices/questions/@Model.Id">@L["Practices:Reset"]</a>
-        <a class="btn btn-outline-secondary" href="/admin/practices/preview/@Model.Id">@L["Practices:Preview"]</a>
-    </div>
-</form>
 
-<div id="practiceQuestionsWorkspace" data-admin-refresh-url="@Model.BuildWorkspaceUrl()">
-    <partial name="_QuestionsWorkspace" model="Model" />
-</div>
+    <form method="get" class="admin-workspace-toolbar row g-3 mb-4">
+        <div class="col-lg-6">
+            <input type="hidden" asp-for="Id" />
+            @if (Model.ShowAutoPreview)
+            {
+                <input type="hidden" asp-for="ShowAutoPreview" />
+            }
+            <input asp-for="QuestionFilter" class="form-control" placeholder="@L["Practices:QuestionSearchPlaceholder"]" />
+        </div>
+        <div class="col-lg-6 d-flex gap-2 admin-workspace-toolbar-actions">
+            <button type="submit" class="btn btn-primary">@L["Practices:Search"]</button>
+            <a class="btn btn-outline-secondary" href="/admin/practices/questions/@Model.Id">@L["Practices:Reset"]</a>
+            <a class="btn btn-outline-secondary" href="/admin/practices/preview/@Model.Id">@L["Practices:Preview"]</a>
+        </div>
+    </form>
+
+    <div id="practiceQuestionsWorkspace" class="admin-question-workspace-shell" data-admin-refresh-url="@Model.BuildWorkspaceUrl()">
+        <partial name="_QuestionsWorkspace" model="Model" />
+    </div>
+</section>
 
 <script src="/js/admin/admin-crud-modal.js"></script>

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Elearning.Web.Security;
 using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace Elearning.Web.Pages.Client;
@@ -29,13 +30,18 @@ public class LoginModel : ElearningPageModel
     [BindProperty(SupportsGet = true)]
     public string? ErrorMessage { get; set; }
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
         ReturnUrl = GetSafeReturnUrl(ReturnUrl);
 
         if (CurrentUser.IsAuthenticated)
         {
-            return LocalRedirect(ReturnUrl);
+            if (ClientAuthenticationConstants.HasClientAccess(User))
+            {
+                return LocalRedirect(ReturnUrl);
+            }
+
+            await _signInManager.SignOutAsync();
         }
 
         if (!string.IsNullOrWhiteSpace(ErrorMessage))
