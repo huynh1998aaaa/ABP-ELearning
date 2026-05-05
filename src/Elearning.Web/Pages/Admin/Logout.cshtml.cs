@@ -4,17 +4,18 @@ using Elearning.Web.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 
-namespace Elearning.Web.Pages.Client;
+namespace Elearning.Web.Pages.Admin;
 
-[AllowAnonymous]
-public class LogoutModel : ElearningClientPageModel
+[Authorize]
+public class LogoutModel : ElearningPageModel
 {
-    private readonly SignInManager<Volo.Abp.Identity.IdentityUser> _signInManager;
+    private readonly SignInManager<AbpIdentityUser> _signInManager;
     private readonly UserLoginSessionManager _userLoginSessionManager;
 
     public LogoutModel(
-        SignInManager<Volo.Abp.Identity.IdentityUser> signInManager,
+        SignInManager<AbpIdentityUser> signInManager,
         UserLoginSessionManager userLoginSessionManager)
     {
         _signInManager = signInManager;

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Elearning.Identity;
+using Elearning.LoginSessions;
 using Elearning.Web.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,17 +22,20 @@ public class GoogleCallbackModel : ElearningPageModel
     private readonly IdentityRoleManager _identityRoleManager;
     private readonly IdentityUserManager _identityUserManager;
     private readonly SignInManager<AbpIdentityUser> _signInManager;
+    private readonly UserLoginSessionManager _userLoginSessionManager;
 
     public GoogleCallbackModel(
         IdentityUserManager identityUserManager,
         IdentityRoleManager identityRoleManager,
         SignInManager<AbpIdentityUser> signInManager,
-        IGuidGenerator guidGenerator)
+        IGuidGenerator guidGenerator,
+        UserLoginSessionManager userLoginSessionManager)
     {
         _identityUserManager = identityUserManager;
         _identityRoleManager = identityRoleManager;
         _signInManager = signInManager;
         _guidGenerator = guidGenerator;
+        _userLoginSessionManager = userLoginSessionManager;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -113,14 +117,22 @@ public class GoogleCallbackModel : ElearningPageModel
 
     private async Task SignInClientUserAsync(AbpIdentityUser user, string loginProvider)
     {
-        await _signInManager.SignInWithClaimsAsync(
+        var claims = await _userLoginSessionManager.BuildSignInClaimsAsync(
+            HttpContext,
             user,
-            isPersistent: true,
+            UserLoginSessionConsts.ChannelClient,
+            loginProvider,
             new[]
             {
                 new Claim(ClientAuthenticationConstants.ClientAccessClaimType, bool.TrueString),
                 new Claim(ClientAuthenticationConstants.LoginProviderClaimType, loginProvider)
             });
+
+        await _signInManager.SignOutAsync();
+        await _signInManager.SignInWithClaimsAsync(
+            user,
+            isPersistent: true,
+            claims);
     }
 
     private async Task<AbpIdentityUser?> FindOrCreateUserAsync(ExternalLoginInfo info)

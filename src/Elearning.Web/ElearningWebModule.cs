@@ -135,6 +135,7 @@ public class ElearningWebModule : AbpModule
 
         context.Services.ConfigureApplicationCookie(options =>
         {
+            options.EventsType = typeof(UserLoginCookieAuthenticationEvents);
             options.Events.OnRedirectToLogin = context =>
             {
                 if (IsApiOrAjaxRequest(context))
