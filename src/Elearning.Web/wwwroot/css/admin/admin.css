@@ -13,6 +13,7 @@
     border-radius: 1.5rem;
     background: var(--admin-bg);
     color: var(--admin-ink);
+    font-family: var(--elearning-font-sans);
 }
 
 .admin-simple-topbar {
@@ -34,7 +35,9 @@
     gap: 0.35rem;
     color: var(--admin-blue);
     font-size: 1.15rem;
-    font-weight: 800;
+    font-family: var(--elearning-font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
     text-decoration: none;
     white-space: nowrap;
 }
@@ -58,7 +61,7 @@
     border-radius: 999px;
     color: var(--admin-muted);
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 600;
     text-decoration: none;
 }
 
@@ -79,7 +82,7 @@
     gap: 0.75rem;
     min-width: 13rem;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .admin-simple-user span {
@@ -125,7 +128,7 @@
 .admin-simple-kpis span {
     color: var(--admin-accent);
     font-size: 0.78rem;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
@@ -135,8 +138,9 @@
     margin: 0.65rem 0 0.75rem;
     color: var(--admin-dark);
     font-size: clamp(2rem, 4vw, 3.4rem);
-    font-weight: 900;
-    letter-spacing: -0.05em;
+    font-family: var(--elearning-font-display);
+    font-weight: 760;
+    letter-spacing: -0.04em;
     line-height: 0.98;
 }
 
@@ -157,7 +161,7 @@
 
 .admin-simple-actions .btn {
     border-radius: 999px;
-    font-weight: 800;
+    font-weight: 700;
 }
 
 .admin-simple-attention {
@@ -168,7 +172,7 @@
     margin: 0.55rem 0 1rem;
     color: var(--admin-dark);
     font-size: 1.25rem;
-    font-weight: 850;
+    font-weight: 720;
     letter-spacing: -0.02em;
 }
 
@@ -189,7 +193,7 @@
     border-radius: 0.9rem;
     background: var(--admin-soft);
     color: var(--admin-dark);
-    font-weight: 750;
+    font-weight: 650;
     text-decoration: none;
 }
 
@@ -228,7 +232,7 @@
     margin-top: 0.35rem;
     color: var(--admin-dark);
     font-size: 1.45rem;
-    font-weight: 900;
+    font-weight: 760;
 }
 
 .admin-simple-kpis p {
@@ -282,7 +286,7 @@
     margin: 0 0 0.55rem;
     color: var(--admin-dark);
     font-size: 1.2rem;
-    font-weight: 850;
+    font-weight: 720;
     letter-spacing: -0.02em;
 }
 
@@ -321,7 +325,7 @@ body:has(.admin-login-shell) {
     min-height: 100vh;
     padding: 1rem;
     color: #101828;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--elearning-font-sans);
 }
 
 .admin-login-stage {
@@ -333,11 +337,12 @@ body:has(.admin-login-shell) {
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(340px, 390px);
     gap: 1.1rem;
-    align-items: center;
+    align-items: stretch;
 }
 
 .admin-login-copy,
 .admin-login-card {
+    height: 100%;
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 1.75rem;
     background: rgba(255, 255, 255, 0.92);
@@ -347,7 +352,7 @@ body:has(.admin-login-shell) {
 .admin-login-copy {
     display: grid;
     align-content: center;
-    min-height: 31rem;
+    min-height: 32rem;
     padding: clamp(1.5rem, 4vw, 2.75rem);
     background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.92)),
@@ -362,7 +367,7 @@ body:has(.admin-login-shell) {
     background: #fff7ed;
     color: #c2410c;
     font-size: 0.76rem;
-    font-weight: 900;
+    font-weight: 750;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
@@ -371,8 +376,9 @@ body:has(.admin-login-shell) {
     max-width: 28rem;
     margin: 0.8rem 0 0.6rem;
     font-size: clamp(1.85rem, 3.6vw, 3rem);
-    font-weight: 950;
-    letter-spacing: -0.06em;
+    font-family: var(--elearning-font-display);
+    font-weight: 760;
+    letter-spacing: -0.045em;
     line-height: 0.98;
     text-wrap: balance;
 }
@@ -405,16 +411,16 @@ body:has(.admin-login-shell) {
 .admin-login-notes strong {
     color: #f59e0b;
     font-size: 0.95rem;
-    font-weight: 900;
+    font-weight: 750;
 }
 
 .admin-login-notes span {
     color: #101828;
-    font-weight: 800;
+    font-weight: 700;
 }
 
 .admin-login-card {
-    min-height: 31rem;
+    min-height: 32rem;
     padding: 1.2rem;
 }
 
@@ -425,7 +431,9 @@ body:has(.admin-login-shell) {
     margin-bottom: 0.45rem;
     color: #2563eb;
     font-size: 1.15rem;
-    font-weight: 900;
+    font-family: var(--elearning-font-display);
+    font-weight: 760;
+    letter-spacing: -0.02em;
 }
 
 .admin-login-card-head strong {
@@ -466,7 +474,7 @@ body:has(.admin-login-shell) {
 .admin-login-field label {
     color: #344054;
     font-size: 0.9rem;
-    font-weight: 800;
+    font-weight: 700;
 }
 
 .admin-login-field input {
@@ -493,7 +501,7 @@ body:has(.admin-login-shell) {
     gap: 0.55rem;
     color: #475467;
     font-size: 0.92rem;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .admin-login-submit {
@@ -503,7 +511,7 @@ body:has(.admin-login-shell) {
     background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%);
     color: #ffffff;
     font-size: 1rem;
-    font-weight: 850;
+    font-weight: 700;
     box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
 }
 
@@ -948,5 +956,100 @@ body:has(.admin-login-shell) {
 
     .admin-bank-head {
         flex-direction: column;
+    }
+}
+
+.account-admin-form .form-label {
+    margin-bottom: 0.45rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.account-role-select {
+    width: min(100%, 21rem);
+    min-height: 5.75rem;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.94rem;
+    line-height: 1.35;
+}
+
+.account-role-select[multiple] option {
+    padding: 0.25rem 0.35rem;
+}
+
+.account-action-row {
+    align-items: center;
+    gap: 0.8rem !important;
+}
+
+.account-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.2rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: 0.65rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.admin-workspace-header {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: 1.75rem !important;
+}
+
+.admin-workspace-backlink {
+    width: fit-content;
+    padding: 0 !important;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #5d72c8;
+    font-size: 1.02rem;
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+}
+
+.admin-workspace-backlink:hover {
+    color: #405cc2;
+}
+
+.admin-workspace-page-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(2rem, 2.6vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 1.08;
+}
+
+.admin-workspace-page-subtitle {
+    margin: 0;
+    color: #98a2b3;
+    font-size: 1.22rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+@media (max-width: 767.98px) {
+    .account-role-select {
+        width: 100%;
+    }
+
+    .account-action-row {
+        flex-wrap: wrap;
+    }
+
+    .admin-workspace-page-title {
+        font-size: 1.7rem;
+        line-height: 1.15;
+    }
+
+    .admin-workspace-page-subtitle {
+        font-size: 1rem;
     }
 }

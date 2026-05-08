@@ -3,7 +3,7 @@
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
 
-<form method="post" asp-page-handler="Modal" class="row g-3" data-admin-ajax-form="true" data-admin-refresh-target="#accountsTable">
+<form method="post" asp-page-handler="Modal" class="row g-3 account-admin-form" data-admin-ajax-form="true" data-admin-refresh-target="#accountsTable">
     <abp-validation-summary />
 
     <div class="col-md-6">
@@ -44,7 +44,7 @@
 
     <div class="col-12">
         <label asp-for="Input.RoleNames" class="form-label">@L["Accounts:Roles"]</label>
-        <select asp-for="Input.RoleNames" asp-items="Model.AvailableRoles" class="form-select" multiple></select>
+        <select asp-for="Input.RoleNames" asp-items="Model.AvailableRoles" class="form-select account-role-select" multiple size="3"></select>
     </div>
 
     <div class="col-12">
@@ -54,8 +54,8 @@
         </div>
     </div>
 
-    <div class="col-12 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">@L["Accounts:Save"]</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Accounts:Cancel"]</button>
+    <div class="col-12 d-flex gap-2 account-action-row">
+        <button type="submit" class="btn btn-primary account-action-button">@L["Accounts:Save"]</button>
+        <button type="button" class="btn btn-outline-secondary account-action-button" data-bs-dismiss="modal">@L["Accounts:Cancel"]</button>
     </div>
 </form>

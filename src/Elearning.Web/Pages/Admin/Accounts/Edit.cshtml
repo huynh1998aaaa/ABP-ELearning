@@ -12,7 +12,7 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <form method="post" class="row g-3">
+        <form method="post" class="row g-3 account-admin-form">
             <abp-validation-summary />
             <input asp-for="Input.ConcurrencyStamp" type="hidden" />
 
@@ -48,7 +48,7 @@
 
             <div class="col-12">
                 <label asp-for="Input.RoleNames" class="form-label">@L["Accounts:Roles"]</label>
-                <select asp-for="Input.RoleNames" asp-items="Model.AvailableRoles" class="form-select" multiple></select>
+                <select asp-for="Input.RoleNames" asp-items="Model.AvailableRoles" class="form-select account-role-select" multiple size="3"></select>
             </div>
 
             <div class="col-12">
@@ -58,9 +58,9 @@
                 </div>
             </div>
 
-            <div class="col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">@L["Accounts:Save"]</button>
-                <a class="btn btn-outline-secondary" href="/admin/accounts">@L["Accounts:Cancel"]</a>
+            <div class="col-12 d-flex gap-2 account-action-row">
+                <button type="submit" class="btn btn-primary account-action-button">@L["Accounts:Save"]</button>
+                <a class="btn btn-outline-secondary account-action-button" href="/admin/accounts">@L["Accounts:Cancel"]</a>
             </div>
         </form>
     </div>
@@ -96,7 +96,7 @@
                         </dl>
                     </div>
                     <div class="col-md-4 text-md-end">
-                        <a class="btn btn-outline-primary" href="/admin/premiumsubscriptions/edit/@Model.PremiumStatus.SubscriptionId">@L["Accounts:ManagePremium"]</a>
+                        <a class="btn btn-outline-primary account-action-button" href="/admin/premiumsubscriptions/edit/@Model.PremiumStatus.SubscriptionId">@L["Accounts:ManagePremium"]</a>
                     </div>
                 </div>
             }
@@ -107,7 +107,7 @@
                         <span class="badge bg-secondary-subtle text-secondary-emphasis mb-2">@L["Accounts:PremiumFree"]</span>
                         <p class="text-muted mb-0">@L["Accounts:PremiumInactiveDescription"]</p>
                     </div>
-                    <a class="btn btn-primary" href="/admin/premiumsubscriptions/create?userId=@Model.Id">@L["Accounts:ActivatePremium"]</a>
+                    <a class="btn btn-primary account-action-button" href="/admin/premiumsubscriptions/create?userId=@Model.Id">@L["Accounts:ActivatePremium"]</a>
                 </div>
             }
         </div>
@@ -119,7 +119,7 @@
         <span class="fw-semibold">@L["Accounts:ResetPasswordTitle"]</span>
     </div>
     <div class="card-body">
-        <form method="post" asp-page-handler="ResetPassword" class="row g-3">
+        <form method="post" asp-page-handler="ResetPassword" class="row g-3 account-admin-form">
             <abp-validation-summary />
             <div class="col-md-6">
                 <label asp-for="ResetPassword.NewPassword" class="form-label">@L["Accounts:NewPassword"]</label>
@@ -132,7 +132,7 @@
                 <span asp-validation-for="ResetPassword.ConfirmPassword" class="text-danger"></span>
             </div>
             <div class="col-12">
-                <button type="submit" class="btn btn-warning">@L["Accounts:ResetPassword"]</button>
+                <button type="submit" class="btn btn-warning account-action-button">@L["Accounts:ResetPassword"]</button>
             </div>
         </form>
     </div>

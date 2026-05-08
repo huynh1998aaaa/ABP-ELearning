@@ -8,6 +8,8 @@
     --elearning-border: rgba(15, 23, 42, 0.08);
     --elearning-text: #0f172a;
     --elearning-muted: #475569;
+    --elearning-font-sans: "Segoe UI Variable Text", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    --elearning-font-display: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
@@ -15,6 +17,8 @@ body {
         radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 20%),
         linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%);
     color: var(--elearning-text);
+    font-family: var(--elearning-font-sans);
+    font-weight: 400;
 }
 
 body.elearning-client-mode,

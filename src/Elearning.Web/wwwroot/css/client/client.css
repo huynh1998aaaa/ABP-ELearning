@@ -8,7 +8,7 @@ body:has(.result-shell) {
 .session-shell,
 .result-shell {
     color: #101828;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: "Segoe UI Variable Text", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .client-shell {
@@ -35,7 +35,8 @@ body:has(.result-shell) {
 .client-brand {
     color: #6570d7;
     font-size: 1.05rem;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     text-decoration: none;
 }
 
@@ -62,7 +63,7 @@ body:has(.result-shell) {
     gap: 0.55rem;
     color: #202939;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .client-user-icon {
@@ -83,7 +84,7 @@ body:has(.result-shell) {
     padding: 0.24rem 0.78rem;
     border-radius: 999px;
     font-size: 0.76rem;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -109,10 +110,12 @@ body:has(.result-shell) {
     border-radius: 0.8rem;
     color: #fff;
     font-size: 0.95rem;
-    font-weight: 800;
+    font-weight: 700;
     text-decoration: none;
+    border: 0;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
     transition: transform 150ms ease, box-shadow 150ms ease;
+    cursor: pointer;
 }
 
 .client-action-button:hover {
@@ -129,6 +132,106 @@ body:has(.result-shell) {
     background: linear-gradient(90deg, #f19d9d 0%, #ff4e8f 100%);
 }
 
+.premium-contact-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.premium-contact-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(6px);
+}
+
+.premium-contact-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 460px);
+}
+
+.premium-contact-close {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    z-index: 2;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.12);
+    color: #fff;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+}
+
+.premium-contact-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    background: #ffffff;
+    box-shadow: 0 36px 90px rgba(15, 23, 42, 0.32);
+}
+
+.premium-contact-image-frame {
+    display: grid;
+    place-items: center;
+    padding: 0.9rem;
+}
+
+.premium-contact-full-image {
+    display: block;
+    width: min(100%, 380px);
+    max-height: min(78vh, 760px);
+    height: auto;
+    object-fit: contain;
+    border-radius: 1.25rem;
+}
+
+.premium-contact-qr-fallback {
+    display: grid;
+    gap: 0.7rem;
+    justify-items: center;
+    width: 100%;
+    padding: 1.4rem 1.25rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 1.2rem;
+    background: #f8fafc;
+    color: #475467;
+}
+
+.premium-contact-qr-fallback strong {
+    color: #111827;
+    font-size: 1rem;
+}
+
+.premium-contact-qr-fallback p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.premium-contact-qr-fallback code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: #0f67da;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+body.premium-contact-modal-open {
+    overflow: hidden;
+}
+
 .client-announcement,
 .learning-section {
     margin-inline: auto;
@@ -143,8 +246,8 @@ body:has(.result-shell) {
     border-radius: 1rem;
     background: #fff2dd;
     color: #dc5f0b;
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.94rem;
+    font-weight: 600;
     text-align: center;
 }
 
@@ -177,7 +280,8 @@ body:has(.result-shell) {
 .learning-section-header h2 {
     margin: 0;
     font-size: 1.08rem;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: #101828;
 }
 
@@ -234,8 +338,20 @@ body:has(.result-shell) {
     margin: 0;
     color: #101828;
     font-size: 0.98rem;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: -0.015em;
     line-height: 1.55;
+}
+
+.session-shell h1,
+.result-shell h1,
+.result-shell h2,
+.session-question-card h2,
+.session-mode-title,
+.result-hero h1 {
+    font-family: var(--elearning-font-display);
+    font-weight: 720;
+    letter-spacing: -0.03em;
 }
 
 .learning-card-gem {
@@ -1197,6 +1313,27 @@ body:has(.result-shell) {
 
     .client-action-button {
         width: 100%;
+    }
+
+    .premium-contact-modal {
+        padding: 0.75rem;
+    }
+
+    .premium-contact-dialog {
+        width: 100%;
+    }
+
+    .premium-contact-card {
+        border-radius: 1.5rem;
+    }
+
+    .premium-contact-image-frame {
+        padding: 0.55rem;
+    }
+
+    .premium-contact-full-image {
+        width: 100%;
+        max-height: 78vh;
     }
 
     .learning-grid {

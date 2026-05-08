@@ -21,9 +21,13 @@
             </div>
 
             <div class="client-toolbar-actions">
-                <a class="client-action-button client-action-premium" href="/">
+                <button type="button"
+                        class="client-action-button client-action-premium"
+                        data-premium-contact-open
+                        aria-haspopup="dialog"
+                        aria-controls="premium-contact-dialog">
                     @L["Client:UpgradePremium"]
-                </a>
+                </button>
                 <a class="client-action-button client-action-logout" href="/client/logout">
                     @L["Auth:Logout"]
                 </a>
@@ -88,3 +92,39 @@
         </div>
     </section>
 </section>
+
+<div class="premium-contact-modal"
+     id="premium-contact-dialog"
+     data-premium-contact-modal
+     hidden
+     aria-hidden="true">
+    <div class="premium-contact-backdrop" data-premium-contact-close></div>
+
+    <div class="premium-contact-dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-label="@L["Client:PremiumPopupQrAlt"]">
+        <button type="button"
+                class="premium-contact-close"
+                data-premium-contact-close
+                aria-label="@L["Client:PremiumPopupClose"]">
+            <span aria-hidden="true">&times;</span>
+        </button>
+
+        <div class="premium-contact-card">
+            <div class="premium-contact-image-frame">
+                <img src="/images/premium/QR.jpg"
+                     alt="@L["Client:PremiumPopupQrAlt"]"
+                     class="premium-contact-full-image"
+                     data-premium-qr-image />
+                <div class="premium-contact-qr-fallback"
+                     data-premium-qr-fallback
+                     hidden>
+                    <strong>@L["Client:PremiumPopupQrMissingTitle"]</strong>
+                    <p>@L["Client:PremiumPopupQrMissingDescription"]</p>
+                    <code>/wwwroot/images/premium/QR.jpg</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

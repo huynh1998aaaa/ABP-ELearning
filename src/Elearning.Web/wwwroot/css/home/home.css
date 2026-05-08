@@ -17,7 +17,7 @@ body:has(.client-entry-shell) {
     min-height: 100vh;
     padding: 1rem;
     color: #0f172a;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--elearning-font-sans);
 }
 
 .client-entry-stage {
@@ -28,7 +28,7 @@ body:has(.client-entry-shell) {
 .client-entry-topbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 1rem;
     padding: 0.9rem 1.1rem;
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -44,7 +44,9 @@ body:has(.client-entry-shell) {
     gap: 0.7rem;
     color: #0f172a;
     font-size: 1.1rem;
-    font-weight: 900;
+    font-family: var(--elearning-font-display);
+    font-weight: 700;
+    letter-spacing: -0.025em;
     text-decoration: none;
 }
 
@@ -61,19 +63,7 @@ body:has(.client-entry-shell) {
     border-radius: 999px;
     background: #0f172a;
     color: #ffffff;
-    font-weight: 900;
-}
-
-.client-entry-admin-hint {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.5rem;
-    padding: 0 0.9rem;
-    border-radius: 999px;
-    background: #eef2ff;
-    color: #4338ca;
-    font-size: 0.9rem;
-    font-weight: 800;
+    font-weight: 700;
 }
 
 .client-entry-grid {
@@ -107,31 +97,25 @@ body:has(.client-entry-shell) {
     background: #fff7ed;
     color: #c2410c;
     font-size: 0.76rem;
-    font-weight: 900;
+    font-weight: 750;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 
 .client-entry-hero h1 {
-    max-width: 31rem;
-    margin: 0.9rem 0 0.8rem;
+    max-width: none;
+    margin: 0.9rem 0 0;
     color: #0f172a;
-    font-size: clamp(2.1rem, 4.6vw, 4.1rem);
-    font-weight: 950;
-    letter-spacing: -0.07em;
-    line-height: 0.92;
-}
-
-.client-entry-hero p {
-    max-width: 29rem;
-    margin: 0;
-    color: #475467;
-    font-size: clamp(0.98rem, 1.45vw, 1.05rem);
-    line-height: 1.68;
+    font-size: clamp(1.65rem, 2.45vw, 2.55rem);
+    font-family: var(--elearning-font-display);
+    font-weight: 720;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    white-space: nowrap;
 }
 
 .client-entry-actions {
-    margin-top: 1.4rem;
+    margin-top: 1.2rem;
 }
 
 .client-entry-google {
@@ -144,7 +128,7 @@ body:has(.client-entry-shell) {
     background: #2563eb;
     color: #ffffff;
     font-size: 1rem;
-    font-weight: 850;
+    font-weight: 700;
     text-decoration: none;
     box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
 }
@@ -171,13 +155,14 @@ body:has(.client-entry-shell) {
     background: #ffffff;
     color: #344054;
     font-size: 0.82rem;
-    font-weight: 750;
+    font-weight: 650;
 }
 
 .client-entry-side {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 1rem;
     min-height: 29rem;
     padding: 1rem;
     background: linear-gradient(180deg, #101828 0%, #1f2937 100%);
@@ -205,6 +190,7 @@ body:has(.client-entry-shell) {
 .client-entry-flow {
     display: grid;
     gap: 0.65rem;
+    margin-top: 0.15rem;
 }
 
 .client-entry-flow article {
@@ -217,13 +203,14 @@ body:has(.client-entry-shell) {
 .client-entry-flow span {
     color: #f59e0b;
     font-size: 0.82rem;
-    font-weight: 900;
+    font-weight: 750;
 }
 
 .client-entry-flow h2 {
     margin: 0.35rem 0 0;
     font-size: 0.98rem;
-    font-weight: 850;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .client-entry-flow p {
@@ -244,7 +231,7 @@ body:has(.client-entry-shell) {
     }
 
     .client-entry-hero h1 {
-        font-size: clamp(1.95rem, 4vw, 3.55rem);
+        font-size: clamp(1.5rem, 2.2vw, 2.2rem);
     }
 }
 
@@ -252,7 +239,7 @@ body:has(.client-entry-shell) {
     width: min(1180px, calc(100% - 2rem));
     margin: 0 auto 4rem;
     color: #111827;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--elearning-font-sans);
 }
 
 .home-hero {
@@ -280,7 +267,9 @@ body:has(.client-entry-shell) {
     gap: 0.65rem;
     color: #111827;
     font-size: 1.05rem;
-    font-weight: 900;
+    font-family: var(--elearning-font-display);
+    font-weight: 700;
+    letter-spacing: -0.025em;
     text-decoration: none;
 }
 
@@ -297,7 +286,7 @@ body:has(.client-entry-shell) {
     border-radius: 999px;
     background: #111827;
     color: #ffffff;
-    font-weight: 900;
+    font-weight: 700;
 }
 
 .home-top-actions,
@@ -319,7 +308,7 @@ body:has(.client-entry-shell) {
     justify-content: center;
     min-height: 2.75rem;
     border-radius: 999px;
-    font-weight: 850;
+    font-weight: 700;
     text-decoration: none;
 }
 
@@ -404,7 +393,7 @@ body:has(.client-entry-shell) {
     background: #fff7ed;
     color: #c2410c;
     font-size: 0.76rem;
-    font-weight: 900;
+    font-weight: 750;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
@@ -414,8 +403,9 @@ body:has(.client-entry-shell) {
     margin: 1.2rem 0 1rem;
     color: #0f172a;
     font-size: clamp(2.65rem, 6vw, 5.4rem);
-    font-weight: 950;
-    letter-spacing: -0.07em;
+    font-family: var(--elearning-font-display);
+    font-weight: 760;
+    letter-spacing: -0.055em;
     line-height: 0.95;
 }
 
@@ -445,7 +435,7 @@ body:has(.client-entry-shell) {
     background: #ffffff;
     color: #344054;
     font-size: 0.92rem;
-    font-weight: 750;
+    font-weight: 650;
 }
 
 .home-preview-card {
@@ -493,7 +483,7 @@ body:has(.client-entry-shell) {
 .home-preview-list span {
     color: #f59e0b;
     font-size: 0.82rem;
-    font-weight: 900;
+    font-weight: 750;
 }
 
 .home-preview-list strong {
@@ -523,8 +513,9 @@ body:has(.client-entry-shell) {
     margin: 0;
     color: #111827;
     font-size: clamp(2rem, 4vw, 3.35rem);
-    font-weight: 950;
-    letter-spacing: -0.05em;
+    font-family: var(--elearning-font-display);
+    font-weight: 760;
+    letter-spacing: -0.04em;
 }
 
 .home-section-heading p {
@@ -568,8 +559,8 @@ body:has(.client-entry-shell) {
     margin: 0;
     color: #111827;
     font-size: 1.55rem;
-    font-weight: 900;
-    letter-spacing: -0.03em;
+    font-weight: 740;
+    letter-spacing: -0.025em;
 }
 
 .home-portal-card p {
@@ -650,6 +641,10 @@ body:has(.client-entry-shell) {
         align-items: stretch;
         flex-direction: column;
         border-radius: 1.25rem;
+    }
+
+    .client-entry-hero h1 {
+        white-space: normal;
     }
 
     .client-entry-google {
