@@ -13,6 +13,7 @@ using Volo.Abp.Guids;
 using Volo.Abp.Linq;
 using Volo.Abp.Security.Claims;
 using Volo.Abp.Timing;
+using Volo.Abp.Uow;
 using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace Elearning.Web.Security;
@@ -25,17 +26,20 @@ public class UserLoginSessionManager : ITransientDependency
     private readonly IClock _clock;
     private readonly IGuidGenerator _guidGenerator;
     private readonly IRepository<UserLoginSession, Guid> _userLoginSessionRepository;
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
 
     public UserLoginSessionManager(
         IRepository<UserLoginSession, Guid> userLoginSessionRepository,
         IGuidGenerator guidGenerator,
         IClock clock,
-        IAsyncQueryableExecuter asyncExecuter)
+        IAsyncQueryableExecuter asyncExecuter,
+        IUnitOfWorkManager unitOfWorkManager)
     {
         _userLoginSessionRepository = userLoginSessionRepository;
         _guidGenerator = guidGenerator;
         _clock = clock;
         _asyncExecuter = asyncExecuter;
+        _unitOfWorkManager = unitOfWorkManager;
     }
 
     public async Task<IReadOnlyList<Claim>> BuildSignInClaimsAsync(
@@ -45,126 +49,161 @@ public class UserLoginSessionManager : ITransientDependency
         string provider,
         IEnumerable<Claim>? extraClaims = null)
     {
-        var deviceId = EnsureDeviceId(httpContext);
-        var now = _clock.Now;
-        var sessionKey = CreateSessionKey();
-        var clientIp = GetClientIp(httpContext);
-        var userAgent = GetUserAgent(httpContext);
-        var currentSession = await FindCurrentSessionAsync(user.Id);
-
-        if (currentSession == null)
+        return await ExecuteInUnitOfWorkAsync(async () =>
         {
-            currentSession = new UserLoginSession(
-                _guidGenerator.Create(),
-                user.TenantId,
-                user.Id,
-                deviceId,
-                sessionKey,
-                channel,
-                provider,
-                now,
-                clientIp,
-                userAgent);
+            var deviceId = EnsureDeviceId(httpContext);
+            var now = _clock.Now;
+            var sessionKey = CreateSessionKey();
+            var clientIp = GetClientIp(httpContext);
+            var userAgent = GetUserAgent(httpContext);
+            var currentSession = await FindCurrentSessionAsync(user.Id);
 
-            await _userLoginSessionRepository.InsertAsync(currentSession, autoSave: true);
-        }
-        else if (string.Equals(currentSession.DeviceId, deviceId, StringComparison.Ordinal))
-        {
-            currentSession.Refresh(sessionKey, channel, provider, now, clientIp, userAgent);
-            await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
-        }
-        else
-        {
-            currentSession.Revoke(now, UserLoginSessionConsts.RevokedBecauseReplacedByAnotherDevice);
-            await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
+            if (currentSession == null)
+            {
+                currentSession = new UserLoginSession(
+                    _guidGenerator.Create(),
+                    user.TenantId,
+                    user.Id,
+                    deviceId,
+                    sessionKey,
+                    channel,
+                    provider,
+                    now,
+                    clientIp,
+                    userAgent);
 
-            var replacementSession = new UserLoginSession(
-                _guidGenerator.Create(),
-                user.TenantId,
-                user.Id,
-                deviceId,
-                sessionKey,
-                channel,
-                provider,
-                now,
-                clientIp,
-                userAgent);
+                await _userLoginSessionRepository.InsertAsync(currentSession, autoSave: true);
+            }
+            else if (string.Equals(currentSession.DeviceId, deviceId, StringComparison.Ordinal))
+            {
+                currentSession.Refresh(sessionKey, channel, provider, now, clientIp, userAgent);
+                await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
+            }
+            else
+            {
+                currentSession.Revoke(now, UserLoginSessionConsts.RevokedBecauseReplacedByAnotherDevice);
+                await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
 
-            await _userLoginSessionRepository.InsertAsync(replacementSession, autoSave: true);
-        }
+                var replacementSession = new UserLoginSession(
+                    _guidGenerator.Create(),
+                    user.TenantId,
+                    user.Id,
+                    deviceId,
+                    sessionKey,
+                    channel,
+                    provider,
+                    now,
+                    clientIp,
+                    userAgent);
 
-        var claims = new List<Claim>
-        {
-            new(LoginSessionConstants.SessionKeyClaimType, sessionKey),
-            new(LoginSessionConstants.DeviceIdClaimType, deviceId),
-            new(LoginSessionConstants.LoginChannelClaimType, channel)
-        };
+                await _userLoginSessionRepository.InsertAsync(replacementSession, autoSave: true);
+            }
 
-        if (extraClaims != null)
-        {
-            claims.AddRange(extraClaims);
-        }
+            var claims = new List<Claim>
+            {
+                new(LoginSessionConstants.SessionKeyClaimType, sessionKey),
+                new(LoginSessionConstants.DeviceIdClaimType, deviceId),
+                new(LoginSessionConstants.LoginChannelClaimType, channel)
+            };
 
-        return claims;
+            if (extraClaims != null)
+            {
+                claims.AddRange(extraClaims);
+            }
+
+            return (IReadOnlyList<Claim>)claims;
+        });
     }
 
     public async Task RevokeCurrentSessionAsync(HttpContext httpContext, ClaimsPrincipal principal, string reason)
     {
-        var userId = FindUserId(principal);
-        var sessionKey = principal.FindFirstValue(LoginSessionConstants.SessionKeyClaimType);
-        if (!userId.HasValue || string.IsNullOrWhiteSpace(sessionKey))
+        await ExecuteInUnitOfWorkAsync(async () =>
         {
-            return;
-        }
+            var userId = FindUserId(principal);
+            var sessionKey = principal.FindFirstValue(LoginSessionConstants.SessionKeyClaimType);
+            if (!userId.HasValue || string.IsNullOrWhiteSpace(sessionKey))
+            {
+                return;
+            }
 
-        var currentSession = await FindCurrentSessionAsync(userId.Value);
-        if (currentSession == null || !string.Equals(currentSession.SessionKey, sessionKey, StringComparison.Ordinal))
-        {
-            return;
-        }
+            var currentSession = await FindCurrentSessionAsync(userId.Value);
+            if (currentSession == null || !string.Equals(currentSession.SessionKey, sessionKey, StringComparison.Ordinal))
+            {
+                return;
+            }
 
-        currentSession.Revoke(_clock.Now, reason);
-        currentSession.Touch(_clock.Now, GetClientIp(httpContext), GetUserAgent(httpContext));
-        await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
+            currentSession.Revoke(_clock.Now, reason);
+            currentSession.Touch(_clock.Now, GetClientIp(httpContext), GetUserAgent(httpContext));
+            await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
+        });
     }
 
     public async Task<bool> ValidatePrincipalAsync(HttpContext httpContext, ClaimsPrincipal principal)
     {
-        if (principal.Identity?.IsAuthenticated != true)
+        return await ExecuteInUnitOfWorkAsync(async () =>
         {
+            if (principal.Identity?.IsAuthenticated != true)
+            {
+                return true;
+            }
+
+            var userId = FindUserId(principal);
+            var sessionKey = principal.FindFirstValue(LoginSessionConstants.SessionKeyClaimType);
+            var principalDeviceId = principal.FindFirstValue(LoginSessionConstants.DeviceIdClaimType);
+            var cookieDeviceId = TryGetDeviceId(httpContext);
+
+            if (!userId.HasValue ||
+                string.IsNullOrWhiteSpace(sessionKey) ||
+                string.IsNullOrWhiteSpace(principalDeviceId) ||
+                string.IsNullOrWhiteSpace(cookieDeviceId) ||
+                !string.Equals(principalDeviceId, cookieDeviceId, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var currentSession = await FindCurrentSessionAsync(userId.Value);
+            if (currentSession == null ||
+                !currentSession.IsCurrent ||
+                !string.Equals(currentSession.SessionKey, sessionKey, StringComparison.Ordinal) ||
+                !string.Equals(currentSession.DeviceId, principalDeviceId, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (_clock.Now - currentSession.LastSeenAt >= LastSeenThrottle)
+            {
+                currentSession.Touch(_clock.Now, GetClientIp(httpContext), GetUserAgent(httpContext));
+                await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
+            }
+
             return true;
-        }
+        });
+    }
 
-        var userId = FindUserId(principal);
-        var sessionKey = principal.FindFirstValue(LoginSessionConstants.SessionKeyClaimType);
-        var principalDeviceId = principal.FindFirstValue(LoginSessionConstants.DeviceIdClaimType);
-        var cookieDeviceId = TryGetDeviceId(httpContext);
-
-        if (!userId.HasValue ||
-            string.IsNullOrWhiteSpace(sessionKey) ||
-            string.IsNullOrWhiteSpace(principalDeviceId) ||
-            string.IsNullOrWhiteSpace(cookieDeviceId) ||
-            !string.Equals(principalDeviceId, cookieDeviceId, StringComparison.Ordinal))
+    private async Task ExecuteInUnitOfWorkAsync(Func<Task> action)
+    {
+        if (_unitOfWorkManager.Current != null)
         {
-            return false;
+            await action();
+            return;
         }
 
-        var currentSession = await FindCurrentSessionAsync(userId.Value);
-        if (currentSession == null ||
-            !currentSession.IsCurrent ||
-            !string.Equals(currentSession.SessionKey, sessionKey, StringComparison.Ordinal) ||
-            !string.Equals(currentSession.DeviceId, principalDeviceId, StringComparison.Ordinal))
+        using var unitOfWork = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: false);
+        await action();
+        await unitOfWork.CompleteAsync();
+    }
+
+    private async Task<T> ExecuteInUnitOfWorkAsync<T>(Func<Task<T>> action)
+    {
+        if (_unitOfWorkManager.Current != null)
         {
-            return false;
+            return await action();
         }
 
-        if (_clock.Now - currentSession.LastSeenAt >= LastSeenThrottle)
-        {
-            currentSession.Touch(_clock.Now, GetClientIp(httpContext), GetUserAgent(httpContext));
-            await _userLoginSessionRepository.UpdateAsync(currentSession, autoSave: true);
-        }
-
-        return true;
+        using var unitOfWork = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: false);
+        var result = await action();
+        await unitOfWork.CompleteAsync();
+        return result;
     }
 
     private async Task<UserLoginSession?> FindCurrentSessionAsync(Guid userId)

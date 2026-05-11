@@ -192,6 +192,54 @@ public class AdminModuleValidationTests : ElearningEntityFrameworkCoreTestBase
     }
 
     [Fact]
+    public async Task Premium_Delete_Should_Reject_Active_Subscription()
+    {
+        var userId = await GetAdminUserIdAsync();
+        var planId = await CreatePremiumPlanAsync();
+
+        var activeSubscription = new UserPremiumSubscription(
+            Guid.NewGuid(),
+            userId,
+            planId,
+            activationNumber: 1,
+            activatedTime: DateTime.UtcNow,
+            durationMonths: 6);
+
+        await _subscriptionRepository.InsertAsync(activeSubscription, autoSave: true);
+
+        await Assert.ThrowsAsync<UserFriendlyException>(() =>
+            _premiumSubscriptionAppService.DeleteAsync(activeSubscription.Id));
+    }
+
+    [Fact]
+    public async Task Premium_Delete_Should_SoftDelete_Cancelled_Subscription()
+    {
+        var userId = await GetAdminUserIdAsync();
+        var planId = await CreatePremiumPlanAsync();
+
+        var cancelledSubscription = new UserPremiumSubscription(
+            Guid.NewGuid(),
+            userId,
+            planId,
+            activationNumber: 1,
+            activatedTime: DateTime.UtcNow.AddMonths(-1),
+            durationMonths: 6);
+
+        cancelledSubscription.Cancel(DateTime.UtcNow, "cleanup");
+        await _subscriptionRepository.InsertAsync(cancelledSubscription, autoSave: true);
+
+        await _premiumSubscriptionAppService.DeleteAsync(cancelledSubscription.Id);
+
+        var visibleItems = await _premiumSubscriptionAppService.GetListAsync(new GetUserPremiumSubscriptionListInput
+        {
+            MaxResultCount = 50,
+            SkipCount = 0
+        });
+
+        Assert.DoesNotContain(visibleItems.Items, x => x.Id == cancelledSubscription.Id);
+    }
+
+    [Fact]
     public async Task Exam_AutoAssign_Should_Assign_Partial_And_Preserve_Manual()
     {
         var questionTypeId = await CreateChoiceQuestionTypeAsync();
@@ -367,6 +415,23 @@ public class AdminModuleValidationTests : ElearningEntityFrameworkCoreTestBase
             IsActive = true,
             ShowExplanation = true
         });
+    }
+
+    private async Task<Guid> CreatePremiumPlanAsync()
+    {
+        var planId = Guid.NewGuid();
+
+        await _premiumPlanRepository.InsertAsync(new PremiumPlan(
+            planId,
+            $"premium_{Guid.NewGuid():N}"[..18],
+            "Premium 6 months",
+            PremiumPlanType.SixMonths,
+            6,
+            0,
+            "VND",
+            100), autoSave: true);
+
+        return planId;
     }
 
     private async Task<Guid> GetAdminUserIdAsync()

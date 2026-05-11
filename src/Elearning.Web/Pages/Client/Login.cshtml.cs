@@ -65,8 +65,8 @@ public class LoginModel : ElearningPageModel
 
     private bool IsGoogleConfigured()
     {
-        return !string.IsNullOrWhiteSpace(_configuration["Authentication:Google:ClientId"]) &&
-               !string.IsNullOrWhiteSpace(_configuration["Authentication:Google:ClientSecret"]);
+        return !string.IsNullOrWhiteSpace(GoogleAuthenticationSettings.GetClientId(_configuration)) &&
+               !string.IsNullOrWhiteSpace(GoogleAuthenticationSettings.GetClientSecret(_configuration));
     }
 
     private string GetSafeReturnUrl(string? returnUrl)

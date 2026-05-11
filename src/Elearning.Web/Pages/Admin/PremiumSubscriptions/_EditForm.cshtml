@@ -83,6 +83,17 @@ else if (Model.Subscription.Status == PremiumSubscriptionStatus.Expired && Model
     </div>
 }
 
+@if (Model.CanDelete && (Model.Subscription.Status == PremiumSubscriptionStatus.Expired || Model.Subscription.Status == PremiumSubscriptionStatus.Cancelled))
+{
+    <div class="border rounded p-3 mt-4">
+        <h2 class="h6">@L["PremiumSubscriptions:DeleteTitle"]</h2>
+        <p class="text-muted">@L["PremiumSubscriptions:DeleteDescription"]</p>
+        <form method="post" asp-page-handler="Delete" data-admin-ajax-form="true" data-admin-refresh-target="#premiumSubscriptionsTable" onsubmit="return confirm('@L["PremiumSubscriptions:ConfirmDelete"]');">
+            <button type="submit" class="btn btn-danger">@L["PremiumSubscriptions:Delete"]</button>
+        </form>
+    </div>
+}
+
 @functions {
     private static string GetStatusBadge(PremiumSubscriptionStatus status)
     {

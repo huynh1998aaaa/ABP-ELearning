@@ -53,6 +53,8 @@ public class IndexModel : ElearningAdminPageModel
 
     public bool CanCancel { get; private set; }
 
+    public bool CanDelete { get; private set; }
+
     public int TotalPages => TotalCount == 0
         ? 1
         : (int)Math.Ceiling((double)TotalCount / PageSize);
@@ -151,6 +153,24 @@ public class IndexModel : ElearningAdminPageModel
         return RedirectToPage(new { Filter, Status, CurrentPage });
     }
 
+    public async Task<IActionResult> OnPostDeleteAsync(Guid id)
+    {
+        try
+        {
+            await _subscriptionAppService.DeleteAsync(id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
+        return RedirectToPage(new { Filter, Status, CurrentPage });
+    }
+
     public string BuildTableUrl()
     {
         var query = new List<string> { "handler=Table", $"currentPage={CurrentPage}" };
@@ -188,6 +208,7 @@ public class IndexModel : ElearningAdminPageModel
         CanCreate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Create)).Succeeded;
         CanUpdate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Update)).Succeeded;
         CanCancel = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Cancel)).Succeeded;
+        CanDelete = CanUpdate;
     }
 
     private void LoadStatusOptions()

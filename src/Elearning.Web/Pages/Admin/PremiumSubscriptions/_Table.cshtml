@@ -67,6 +67,12 @@ else
                                         <button type="submit" class="btn btn-sm btn-outline-danger">@L["PremiumSubscriptions:CancelPremium"]</button>
                                     </form>
                                 }
+                                @if (Model.CanDelete && (subscription.Status == PremiumSubscriptionStatus.Cancelled || subscription.Status == PremiumSubscriptionStatus.Expired))
+                                {
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@subscription.Id" data-admin-ajax-form="true" data-admin-refresh-target="#premiumSubscriptionsTable" onsubmit="return confirm('@L["PremiumSubscriptions:ConfirmDelete"]');">
+                                        <button type="submit" class="btn btn-sm btn-danger">@L["PremiumSubscriptions:Delete"]</button>
+                                    </form>
+                                }
                             </div>
                         </td>
                     </tr>

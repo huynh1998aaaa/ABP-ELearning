@@ -17,6 +17,30 @@
     const essaySaveFailedText = root.getAttribute("data-essay-save-failed-text") || "Save failed";
     const formStates = new WeakMap();
     const matchingRenderStates = new WeakMap();
+    const stickyStack = root.querySelector(".session-sticky-stack");
+
+    function updateStickyMetrics() {
+        if (!stickyStack) {
+            return;
+        }
+
+        root.style.setProperty("--session-sticky-height", `${stickyStack.offsetHeight || 0}px`);
+    }
+
+    function getStickyScrollOffset() {
+        if (!stickyStack) {
+            return 16;
+        }
+
+        const stickyStyle = window.getComputedStyle(stickyStack);
+        if (stickyStyle.position === "static") {
+            return 16;
+        }
+
+        const stickyTop = parseFloat(stickyStyle.top || "0") || 0;
+        const stickyHeight = stickyStack.offsetHeight || 0;
+        return stickyTop + stickyHeight + 16;
+    }
 
     function getFormState(form) {
         let state = formStates.get(form);
@@ -37,7 +61,14 @@
             return;
         }
 
-        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        const panelTop = panel.getBoundingClientRect().top + window.scrollY;
+        const scrollTarget = Math.max(0, panelTop - getStickyScrollOffset());
+
+        window.scrollTo({
+            top: scrollTarget,
+            behavior: "smooth"
+        });
+
         navItems.forEach((item) => {
             item.classList.toggle("session-nav-current", item.getAttribute("data-question-target") === questionId);
         });
@@ -542,6 +573,15 @@
             scrollToQuestion(item.getAttribute("data-question-target"));
         });
     });
+
+    updateStickyMetrics();
+
+    if (typeof ResizeObserver !== "undefined" && stickyStack) {
+        const resizeObserver = new ResizeObserver(() => updateStickyMetrics());
+        resizeObserver.observe(stickyStack);
+    } else {
+        window.addEventListener("resize", updateStickyMetrics);
+    }
 
     if (submitButton) {
         submitButton.addEventListener("click", async () => {

@@ -204,17 +204,8 @@ public class ElearningWebModule : AbpModule
 
     private void ConfigureExternalProviders(IServiceCollection services, IConfiguration configuration)
     {
-        var clientId = GetGoogleSetting(
-            configuration,
-            "Authentication:Google:ClientId",
-            "Authentication__Google__ClientId",
-            "GOOGLE_AUTH_CLIENT_ID");
-
-        var clientSecret = GetGoogleSetting(
-            configuration,
-            "Authentication:Google:ClientSecret",
-            "Authentication__Google__ClientSecret",
-            "GOOGLE_AUTH_CLIENT_SECRET");
+        var clientId = GoogleAuthenticationSettings.GetClientId(configuration);
+        var clientSecret = GoogleAuthenticationSettings.GetClientSecret(configuration);
 
         if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
         {
@@ -230,17 +221,6 @@ public class ElearningWebModule : AbpModule
                 options.ClaimActions.MapJsonKey("email_verified", "email_verified");
                 options.SaveTokens = true;
             });
-    }
-
-    private static string? GetGoogleSetting(
-        IConfiguration configuration,
-        string configurationKey,
-        string environmentKey,
-        string aliasEnvironmentKey)
-    {
-        return Environment.GetEnvironmentVariable(environmentKey)
-            ?? Environment.GetEnvironmentVariable(aliasEnvironmentKey)
-            ?? configuration[configurationKey];
     }
 
     private static bool IsApiOrAjaxRequest(RedirectContext<CookieAuthenticationOptions> context)

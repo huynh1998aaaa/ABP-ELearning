@@ -36,6 +36,8 @@ public class EditModel : ElearningAdminPageModel
 
     public bool CanCancel { get; private set; }
 
+    public bool CanDelete { get; private set; }
+
     public async Task OnGetAsync()
     {
         await LoadAsync();
@@ -117,11 +119,30 @@ public class EditModel : ElearningAdminPageModel
         return RedirectToPage(new { id = Id });
     }
 
+    public async Task<IActionResult> OnPostDeleteAsync()
+    {
+        try
+        {
+            await _subscriptionAppService.DeleteAsync(Id);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess();
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
+        return RedirectToPage("./Index");
+    }
+
     private async Task LoadAsync()
     {
         CanCreate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Create)).Succeeded;
         CanUpdate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Update)).Succeeded;
         CanCancel = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.PremiumSubscriptions.Cancel)).Succeeded;
+        CanDelete = CanUpdate;
         Subscription = await _subscriptionAppService.GetAsync(Id);
     }
 

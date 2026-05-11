@@ -232,6 +232,28 @@ public class UserPremiumSubscriptionAppService : ElearningAppService, IUserPremi
         await _subscriptionRepository.UpdateAsync(subscription, autoSave: true);
     }
 
+    [Authorize(ElearningPermissions.PremiumSubscriptions.Update)]
+    public async Task DeleteAsync(Guid id)
+    {
+        var subscription = await _subscriptionRepository.GetAsync(id);
+        var now = Clock.Now;
+
+        if (subscription.IsCurrentlyActive(now))
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:OnlyCancelledOrExpiredCanBeDeleted"]);
+        }
+
+        var isExpired = subscription.Status == PremiumSubscriptionStatus.Expired
+            || (subscription.Status == PremiumSubscriptionStatus.Active && subscription.EndTime <= now);
+
+        if (subscription.Status != PremiumSubscriptionStatus.Cancelled && !isExpired)
+        {
+            throw new UserFriendlyException(L["PremiumSubscriptions:OnlyCancelledOrExpiredCanBeDeleted"]);
+        }
+
+        await _subscriptionRepository.DeleteAsync(subscription, autoSave: true);
+    }
+
     private async Task EnsureUserHasNoActivePremiumAsync(Guid userId, DateTime now)
     {
         var query = await _subscriptionRepository.GetQueryableAsync();
