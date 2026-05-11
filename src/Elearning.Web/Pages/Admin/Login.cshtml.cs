@@ -1,7 +1,9 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using Elearning.LoginSessions;
 using Elearning.Permissions;
+using Elearning.Web.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,15 +19,18 @@ public class LoginModel : ElearningPageModel
     private readonly IAuthorizationService _authorizationService;
     private readonly IdentityUserManager _identityUserManager;
     private readonly SignInManager<AbpIdentityUser> _signInManager;
+    private readonly UserLoginSessionManager _userLoginSessionManager;
 
     public LoginModel(
         IdentityUserManager identityUserManager,
         SignInManager<AbpIdentityUser> signInManager,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        UserLoginSessionManager userLoginSessionManager)
     {
         _identityUserManager = identityUserManager;
         _signInManager = signInManager;
         _authorizationService = authorizationService;
+        _userLoginSessionManager = userLoginSessionManager;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -105,6 +110,15 @@ public class LoginModel : ElearningPageModel
             FlashErrorMessage = L["Auth:AdminAccessDenied"];
             return LocalRedirect(BuildLoginUrl(returnUrl: ReturnUrl, accessDenied: true));
         }
+
+        var claims = await _userLoginSessionManager.BuildSignInClaimsAsync(
+            HttpContext,
+            user,
+            UserLoginSessionConsts.ChannelAdmin,
+            UserLoginSessionConsts.ProviderPassword);
+
+        await _signInManager.SignOutAsync();
+        await _signInManager.SignInWithClaimsAsync(user, Input.RememberMe, claims);
 
         return LocalRedirect(ReturnUrl);
     }

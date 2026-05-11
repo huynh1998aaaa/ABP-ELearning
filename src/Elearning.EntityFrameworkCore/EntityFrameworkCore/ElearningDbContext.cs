@@ -20,6 +20,7 @@ using Elearning.Questions;
 using Elearning.QuestionTypes;
 using Elearning.PremiumSubscriptions;
 using Elearning.Subjects;
+using Elearning.UserLoginSessions;
 
 namespace Elearning.EntityFrameworkCore;
 
@@ -52,6 +53,7 @@ public class ElearningDbContext :
     public DbSet<PracticeSet> PracticeSets { get; set; }
     public DbSet<PracticeQuestion> PracticeQuestions { get; set; }
     public DbSet<PracticeAutoQuestionRule> PracticeAutoQuestionRules { get; set; }
+    public DbSet<UserLoginSession> UserLoginSessions { get; set; }
 
     #region Entities from the modules
 
@@ -336,6 +338,25 @@ public class ElearningDbContext :
             b.HasIndex(x => new { x.PracticeSetId, x.SortOrder });
             b.HasOne<PracticeSet>().WithMany().HasForeignKey(x => x.PracticeSetId).OnDelete(DeleteBehavior.Cascade);
             b.HasOne<QuestionType>().WithMany().HasForeignKey(x => x.QuestionTypeId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<UserLoginSession>(b =>
+        {
+            b.ToTable(ElearningConsts.DbTablePrefix + "UserLoginSessions", ElearningConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.DeviceId).IsRequired().HasMaxLength(LoginSessions.UserLoginSessionConsts.MaxDeviceIdLength);
+            b.Property(x => x.SessionKey).IsRequired().HasMaxLength(LoginSessions.UserLoginSessionConsts.MaxSessionKeyLength);
+            b.Property(x => x.Channel).IsRequired().HasMaxLength(LoginSessions.UserLoginSessionConsts.MaxChannelLength);
+            b.Property(x => x.Provider).IsRequired().HasMaxLength(LoginSessions.UserLoginSessionConsts.MaxProviderLength);
+            b.Property(x => x.RevokedReason).HasMaxLength(LoginSessions.UserLoginSessionConsts.MaxRevokedReasonLength);
+            b.Property(x => x.ClientIp).HasMaxLength(LoginSessions.UserLoginSessionConsts.MaxClientIpLength);
+            b.Property(x => x.UserAgent).HasMaxLength(LoginSessions.UserLoginSessionConsts.MaxUserAgentLength);
+            b.HasIndex(x => x.UserId);
+            b.HasIndex(x => x.DeviceId);
+            b.HasIndex(x => x.SessionKey).IsUnique();
+            b.HasIndex(x => new { x.TenantId, x.UserId, x.IsCurrent })
+                .HasFilter("[IsCurrent] = 1")
+                .IsUnique();
         });
     }
 }
