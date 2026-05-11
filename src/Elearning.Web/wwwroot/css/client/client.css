@@ -382,8 +382,17 @@ body.premium-contact-modal-open {
     margin: 0 auto;
 }
 
+.session-sticky-stack {
+    position: sticky;
+    top: 0.75rem;
+    z-index: 20;
+}
+
 .session-header {
     margin-bottom: 0.75rem;
+    padding: 0.25rem 0;
+    background: rgba(245, 245, 247, 0.94);
+    backdrop-filter: blur(10px);
 }
 
 .session-title-row {
@@ -432,9 +441,6 @@ body.premium-contact-modal-open {
 }
 
 .session-control-panel {
-    position: sticky;
-    top: 0.75rem;
-    z-index: 20;
     display: grid;
     gap: 0.75rem;
     padding: 0.8rem;
@@ -1252,7 +1258,7 @@ body.premium-contact-modal-open {
         grid-template-columns: 1fr;
     }
 
-    .session-control-panel {
+    .session-sticky-stack {
         position: static;
     }
 

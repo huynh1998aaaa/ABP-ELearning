@@ -16,51 +16,53 @@
          data-essay-save-failed-text="@L["Client:EssayAutosaveFailed"]"
          data-end-time="@(Model.Session.EndsAt?.ToString("O") ?? string.Empty)">
     <div class="session-stage">
-        <div class="session-header">
-            <div class="session-title-row">
-                <span class="session-title-icon" aria-hidden="true"></span>
-                <h1>@L["Client:RuntimeTitle", Model.Session.Title]</h1>
-            </div>
-            <div class="session-progress">
-                <div class="session-progress-bar">
-                    <div class="session-progress-fill" style="width:@(Model.Session.TotalQuestionCount == 0 ? 0 : (Model.Session.AnsweredCount * 100 / Model.Session.TotalQuestionCount))%"></div>
+        <div class="session-sticky-stack">
+            <div class="session-header">
+                <div class="session-title-row">
+                    <span class="session-title-icon" aria-hidden="true"></span>
+                    <h1>@L["Client:RuntimeTitle", Model.Session.Title]</h1>
                 </div>
-            </div>
-        </div>
-
-        <div class="session-control-panel">
-            <div class="session-control-main">
-                <div class="session-timer-card">
-                    <span class="session-control-label">@L["Client:TimeRemaining"]</span>
-                    <strong data-session-timer>
-                        @(Model.Session.EndsAt.HasValue ? "--:--" : L["Client:NoTimeLimit"])
-                    </strong>
-                </div>
-
-                <div class="session-action-row">
-                    <a class="session-action session-action-leave" href="/client">
-                        @L["Client:LeaveSession"]
-                    </a>
-
-                    <button type="button" class="session-action session-action-submit" data-session-submit>
-                        @L["Client:SubmitSession"]
-                    </button>
+                <div class="session-progress">
+                    <div class="session-progress-bar">
+                        <div class="session-progress-fill" style="width:@(Model.Session.TotalQuestionCount == 0 ? 0 : (Model.Session.AnsweredCount * 100 / Model.Session.TotalQuestionCount))%"></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="session-nav-panel">
-                <div class="session-control-label">@L["Client:QuestionNavigator"]</div>
-                <div class="session-nav-grid">
-                    @foreach (var question in Model.Session.Questions)
-                    {
-                        <button type="button"
-                                class="session-nav-item @(question.IsAnswered ? "session-nav-answered" : "session-nav-unanswered") @(question.SortOrder == 1 ? "session-nav-current" : string.Empty)"
-                                data-session-nav
-                                data-question-target="question-@question.Id"
-                                data-question-id="@question.Id">
-                            @question.SortOrder
+            <div class="session-control-panel">
+                <div class="session-control-main">
+                    <div class="session-timer-card">
+                        <span class="session-control-label">@L["Client:TimeRemaining"]</span>
+                        <strong data-session-timer>
+                            @(Model.Session.EndsAt.HasValue ? "--:--" : L["Client:NoTimeLimit"])
+                        </strong>
+                    </div>
+
+                    <div class="session-action-row">
+                        <a class="session-action session-action-leave" href="/client">
+                            @L["Client:LeaveSession"]
+                        </a>
+
+                        <button type="button" class="session-action session-action-submit" data-session-submit>
+                            @L["Client:SubmitSession"]
                         </button>
-                    }
+                    </div>
+                </div>
+
+                <div class="session-nav-panel">
+                    <div class="session-control-label">@L["Client:QuestionNavigator"]</div>
+                    <div class="session-nav-grid">
+                        @foreach (var question in Model.Session.Questions)
+                        {
+                            <button type="button"
+                                    class="session-nav-item @(question.IsAnswered ? "session-nav-answered" : "session-nav-unanswered") @(question.SortOrder == 1 ? "session-nav-current" : string.Empty)"
+                                    data-session-nav
+                                    data-question-target="question-@question.Id"
+                                    data-question-id="@question.Id">
+                                @question.SortOrder
+                            </button>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
