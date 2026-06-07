@@ -312,6 +312,7 @@ public class ElearningDbContext :
             b.Property(x => x.Code).IsRequired().HasMaxLength(PracticeSetConsts.MaxCodeLength);
             b.Property(x => x.Title).IsRequired().HasMaxLength(PracticeSetConsts.MaxTitleLength);
             b.Property(x => x.Description).HasMaxLength(PracticeSetConsts.MaxDescriptionLength);
+            b.Property(x => x.ShuffleOptions);
             b.HasIndex(x => x.Code).IsUnique();
             b.HasIndex(x => x.Status);
             b.HasIndex(x => x.AccessLevel);

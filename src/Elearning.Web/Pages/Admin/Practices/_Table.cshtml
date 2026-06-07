@@ -53,33 +53,6 @@ else
                                        data-admin-modal-url="/admin/practices/edit/@practiceSet.Id?handler=Modal"
                                        data-admin-modal-title="@L["Practices:EditTitle"]"
                                        data-admin-modal-size="lg">@L["Practices:Edit"]</a>
-                                    @if (practiceSet.IsActive)
-                                    {
-                                        <form method="post" asp-page-handler="Deactivate" asp-route-id="@practiceSet.Id" data-admin-ajax-form="true" data-admin-refresh-target="#practiceSetsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary">@L["Practices:Deactivate"]</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form method="post" asp-page-handler="Activate" asp-route-id="@practiceSet.Id" data-admin-ajax-form="true" data-admin-refresh-target="#practiceSetsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Practices:Activate"]</button>
-                                        </form>
-                                    }
-                                }
-                                @if (Model.CanPublish)
-                                {
-                                    @if (practiceSet.Status != PracticeStatus.Published)
-                                    {
-                                        <form method="post" asp-page-handler="Publish" asp-route-id="@practiceSet.Id" data-admin-ajax-form="true" data-admin-refresh-target="#practiceSetsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Practices:Publish"]</button>
-                                        </form>
-                                    }
-                                    @if (practiceSet.Status != PracticeStatus.Archived)
-                                    {
-                                        <form method="post" asp-page-handler="Archive" asp-route-id="@practiceSet.Id" data-admin-ajax-form="true" data-admin-refresh-target="#practiceSetsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-warning">@L["Practices:Archive"]</button>
-                                        </form>
-                                    }
                                 }
                                 @if (Model.CanDelete)
                                 {

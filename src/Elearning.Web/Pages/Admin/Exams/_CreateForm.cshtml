@@ -39,17 +39,13 @@
         <input asp-for="Input.TotalQuestionCount" class="form-control" />
         <span asp-validation-for="Input.TotalQuestionCount" class="text-danger"></span>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label asp-for="Input.PassingScore" class="form-label">@L["Exams:PassingScore"]</label>
         <input asp-for="Input.PassingScore" class="form-control" />
         <span asp-validation-for="Input.PassingScore" class="text-danger"></span>
     </div>
-    <div class="col-md-4">
-        <label asp-for="Input.SortOrder" class="form-label">@L["Exams:SortOrder"]</label>
-        <input asp-for="Input.SortOrder" class="form-control" />
-        <span asp-validation-for="Input.SortOrder" class="text-danger"></span>
-    </div>
-    <div class="col-md-4">
+    <input type="hidden" asp-for="Input.SortOrder" />
+    <div class="col-md-6">
         <div class="form-check mt-4">
             <input asp-for="Input.IsActive" class="form-check-input" />
             <label asp-for="Input.IsActive" class="form-check-label">@L["Exams:IsActive"]</label>

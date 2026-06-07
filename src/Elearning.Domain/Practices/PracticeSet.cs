@@ -22,6 +22,8 @@ public class PracticeSet : FullAuditedAggregateRoot<Guid>
 
     public bool ShuffleQuestions { get; private set; }
 
+    public bool ShuffleOptions { get; private set; }
+
     public bool ShowExplanation { get; private set; }
 
     public bool IsActive { get; private set; }
@@ -46,6 +48,7 @@ public class PracticeSet : FullAuditedAggregateRoot<Guid>
         int sortOrder,
         string? description = null,
         bool shuffleQuestions = false,
+        bool shuffleOptions = false,
         bool showExplanation = true)
         : base(id)
     {
@@ -59,6 +62,7 @@ public class PracticeSet : FullAuditedAggregateRoot<Guid>
             selectionMode,
             totalQuestionCount,
             shuffleQuestions,
+            shuffleOptions,
             showExplanation,
             sortOrder);
     }
@@ -71,6 +75,7 @@ public class PracticeSet : FullAuditedAggregateRoot<Guid>
         PracticeSelectionMode selectionMode,
         int totalQuestionCount,
         bool shuffleQuestions,
+        bool shuffleOptions,
         bool showExplanation,
         int sortOrder)
     {
@@ -81,6 +86,7 @@ public class PracticeSet : FullAuditedAggregateRoot<Guid>
         SelectionMode = selectionMode;
         TotalQuestionCount = Check.Range(totalQuestionCount, nameof(totalQuestionCount), PracticeSetConsts.MinQuestionCount, PracticeSetConsts.MaxQuestionCount);
         ShuffleQuestions = shuffleQuestions;
+        ShuffleOptions = shuffleOptions;
         ShowExplanation = showExplanation;
         SortOrder = sortOrder;
     }

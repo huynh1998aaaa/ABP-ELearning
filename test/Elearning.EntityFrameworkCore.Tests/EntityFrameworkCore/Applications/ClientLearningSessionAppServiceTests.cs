@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Elearning.ClientContent;
 using Elearning.Exams;
 using Elearning.LearningSessions;
+using Elearning.Practices;
 using Elearning.Questions;
 using Elearning.QuestionTypes;
 using Volo.Abp;
@@ -18,6 +19,7 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
 {
     private readonly IClientLearningSessionAppService _clientLearningSessionAppService;
     private readonly IExamAppService _examAppService;
+    private readonly IPracticeSetAppService _practiceSetAppService;
     private readonly IQuestionAppService _questionAppService;
     private readonly IRepository<QuestionType, Guid> _questionTypeRepository;
 
@@ -25,6 +27,7 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
     {
         _clientLearningSessionAppService = GetRequiredService<IClientLearningSessionAppService>();
         _examAppService = GetRequiredService<IExamAppService>();
+        _practiceSetAppService = GetRequiredService<IPracticeSetAppService>();
         _questionAppService = GetRequiredService<IQuestionAppService>();
         _questionTypeRepository = GetRequiredService<IRepository<QuestionType, Guid>>();
     }
@@ -62,6 +65,27 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
         Assert.Equal(1m, result.Score);
         Assert.Single(result.Questions);
         Assert.True(result.Questions[0].IsCorrect);
+    }
+
+    [Fact]
+    public async Task Submit_Should_Hide_Practice_Explanation_For_Free_User()
+    {
+        var practiceSet = await CreatePublishedPracticeAsync();
+        var launch = await _clientLearningSessionAppService.StartOrResumeAsync(ClientLearningItemKind.Practice, practiceSet.Id);
+        var session = await _clientLearningSessionAppService.GetAsync(launch.SessionId);
+        var firstQuestion = Assert.Single(session.Questions);
+        var correctOption = Assert.Single(firstQuestion.Options, x => x.Text == "Option A");
+
+        await _clientLearningSessionAppService.SaveAnswerAsync(session.Id, new SaveClientLearningAnswerDto
+        {
+            QuestionId = firstQuestion.Id,
+            SelectedOptionIds = new List<Guid> { correctOption.Id }
+        });
+
+        var result = await _clientLearningSessionAppService.SubmitAsync(session.Id);
+
+        Assert.False(result.ShowExplanation);
+        Assert.Null(Assert.Single(result.Questions).Explanation);
     }
 
     [Fact]
@@ -104,9 +128,9 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
     }
 
     [Fact]
-    public async Task Submit_Should_Keep_Essay_As_Pending_Manual_Grading()
+    public async Task Submit_Should_Auto_Grade_Essay_When_All_Rubric_Keywords_Match()
     {
-        var exam = await CreatePublishedExamAsync(QuestionTypeCodes.Essay);
+        var exam = await CreatePublishedExamAsync(QuestionTypeCodes.Essay, essayRubric: "router; network");
         var launch = await _clientLearningSessionAppService.StartOrResumeAsync(ClientLearningItemKind.Exam, exam.Id);
         var session = await _clientLearningSessionAppService.GetAsync(launch.SessionId);
         var firstQuestion = Assert.Single(session.Questions);
@@ -117,11 +141,36 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
         await _clientLearningSessionAppService.SaveAnswerAsync(session.Id, new SaveClientLearningAnswerDto
         {
             QuestionId = firstQuestion.Id,
-            EssayAnswerText = "This is the submitted essay answer."
+            EssayAnswerText = "This answer mentions the router and the network architecture."
         });
 
         var refreshedSession = await _clientLearningSessionAppService.GetAsync(session.Id);
-        Assert.Equal("This is the submitted essay answer.", Assert.Single(refreshedSession.Questions).EssayAnswerText);
+        Assert.Equal("This answer mentions the router and the network architecture.", Assert.Single(refreshedSession.Questions).EssayAnswerText);
+
+        var result = await _clientLearningSessionAppService.SubmitAsync(session.Id);
+
+        Assert.Equal(1, result.CorrectCount);
+        Assert.Equal(1, result.AnsweredCount);
+        Assert.Equal(1m, result.Score);
+        Assert.Equal(0, result.PendingManualGradingCount);
+        Assert.Single(result.Questions);
+        Assert.Equal("This answer mentions the router and the network architecture.", result.Questions[0].EssayAnswerText);
+        Assert.True(result.Questions[0].IsCorrect);
+    }
+
+    [Fact]
+    public async Task Submit_Should_Keep_Essay_Pending_When_Rubric_Has_No_Keywords()
+    {
+        var exam = await CreatePublishedExamAsync(QuestionTypeCodes.Essay, essayRubric: null);
+        var launch = await _clientLearningSessionAppService.StartOrResumeAsync(ClientLearningItemKind.Exam, exam.Id);
+        var session = await _clientLearningSessionAppService.GetAsync(launch.SessionId);
+        var firstQuestion = Assert.Single(session.Questions);
+
+        await _clientLearningSessionAppService.SaveAnswerAsync(session.Id, new SaveClientLearningAnswerDto
+        {
+            QuestionId = firstQuestion.Id,
+            EssayAnswerText = "This is the submitted essay answer."
+        });
 
         var result = await _clientLearningSessionAppService.SubmitAsync(session.Id);
 
@@ -129,8 +178,6 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
         Assert.Equal(1, result.AnsweredCount);
         Assert.Equal(0m, result.Score);
         Assert.Equal(1, result.PendingManualGradingCount);
-        Assert.Single(result.Questions);
-        Assert.Equal("This is the submitted essay answer.", result.Questions[0].EssayAnswerText);
         Assert.False(result.Questions[0].IsCorrect);
     }
 
@@ -150,7 +197,7 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
             }));
     }
 
-    private async Task<ExamDto> CreatePublishedExamAsync(string questionTypeCode)
+    private async Task<ExamDto> CreatePublishedExamAsync(string questionTypeCode, string? essayRubric = "Rubric")
     {
         var questionType = await _questionTypeRepository.GetAsync(x => x.Code == questionTypeCode);
         var question = questionTypeCode == QuestionTypeCodes.Matching
@@ -186,7 +233,7 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
                 EssayAnswer = new QuestionEssayAnswerInputDto
                 {
                     SampleAnswer = "Sample answer",
-                    Rubric = "Rubric",
+                    Rubric = essayRubric,
                     MaxWords = 500
                 }
             })
@@ -229,6 +276,51 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
 
         await _examAppService.PublishAsync(exam.Id);
         return exam;
+    }
+
+    private async Task<PracticeSetDto> CreatePublishedPracticeAsync()
+    {
+        var questionType = await _questionTypeRepository.GetAsync(x => x.Code == QuestionTypeCodes.SingleChoice);
+        var question = await _questionAppService.CreateAsync(new CreateQuestionDto
+        {
+            QuestionTypeId = questionType.Id,
+            Title = $"Practice {Guid.NewGuid():N}"[..18],
+            Content = "What is the correct practice answer?",
+            Explanation = "This explanation is reserved for Premium users.",
+            Difficulty = QuestionDifficulty.Medium,
+            Score = 1,
+            SortOrder = 100,
+            IsActive = true,
+            Options = new List<QuestionOptionInputDto>
+            {
+                new() { Text = "Option A", IsCorrect = true, SortOrder = 1 },
+                new() { Text = "Option B", IsCorrect = false, SortOrder = 2 }
+            },
+            MatchingPairs = new List<QuestionMatchingPairInputDto>(),
+            EssayAnswer = new QuestionEssayAnswerInputDto()
+        });
+
+        await _questionAppService.PublishAsync(question.Id);
+
+        var practiceSet = await _practiceSetAppService.CreateAsync(new CreatePracticeSetDto
+        {
+            Code = $"practice_{Guid.NewGuid():N}"[..20],
+            Title = "Practice with explanation",
+            AccessLevel = PracticeAccessLevel.Free,
+            SelectionMode = PracticeSelectionMode.Fixed,
+            TotalQuestionCount = 1,
+            SortOrder = 100,
+            IsActive = true,
+            ShowExplanation = true
+        });
+
+        await _practiceSetAppService.AddQuestionAsync(practiceSet.Id, new AddPracticeQuestionDto
+        {
+            QuestionId = question.Id
+        });
+
+        await _practiceSetAppService.PublishAsync(practiceSet.Id);
+        return practiceSet;
     }
 
     private static string CreateLongEssay(int wordCount)

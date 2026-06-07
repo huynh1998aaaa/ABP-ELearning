@@ -12,7 +12,8 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="post" class="row g-3">
+        <form method="post" class="row g-3" data-question-form="true" data-question-saving-text='@L["Questions:Saving"]'>
+            @Html.AntiForgeryToken()
             <abp-validation-summary />
             <input type="hidden" asp-for="Input.QuestionTypeId" />
 
@@ -45,22 +46,17 @@
                 <span asp-validation-for="Input.Explanation" class="text-danger"></span>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <label asp-for="Input.Difficulty" class="form-label">@L["Questions:Difficulty"]</label>
                 <select asp-for="Input.Difficulty" asp-items="Model.DifficultyOptions" class="form-select"></select>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <label asp-for="Input.Score" class="form-label">@L["Questions:Score"]</label>
                 <input asp-for="Input.Score" class="form-control" />
                 <span asp-validation-for="Input.Score" class="text-danger"></span>
             </div>
-
-            <div class="col-md-4">
-                <label asp-for="Input.SortOrder" class="form-label">@L["Questions:SortOrder"]</label>
-                <input asp-for="Input.SortOrder" class="form-control" />
-                <span asp-validation-for="Input.SortOrder" class="text-danger"></span>
-            </div>
+            <input type="hidden" asp-for="Input.SortOrder" />
 
             <div class="col-12">
                 <span class="badge bg-info-subtle text-info-emphasis">@L[$"Enum:QuestionStatus:{Model.Question.Status}"]</span>
@@ -76,12 +72,10 @@
                     @for (var i = 0; i < Model.Input.Options.Count; i++)
                     {
                         <div class="row g-2 align-items-center mb-2">
-                            <div class="col-md-8">
+                            <div class="col-md-10">
                                 <input asp-for="Input.Options[i].Text" class="form-control" placeholder="@L["Questions:OptionText"]" />
                             </div>
-                            <div class="col-md-2">
-                                <input asp-for="Input.Options[i].SortOrder" class="form-control" />
-                            </div>
+                            <input type="hidden" asp-for="Input.Options[i].SortOrder" />
                             <div class="col-md-2">
                                 <div class="form-check">
                                     <input asp-for="Input.Options[i].IsCorrect" class="form-check-input" />
@@ -100,15 +94,13 @@
                     @for (var i = 0; i < Model.Input.MatchingPairs.Count; i++)
                     {
                         <div class="row g-2 align-items-center mb-2">
-                            <div class="col-md-5">
+                            <div class="col-md-6">
                                 <input asp-for="Input.MatchingPairs[i].LeftText" class="form-control" placeholder="@L["Questions:LeftText"]" />
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-md-6">
                                 <input asp-for="Input.MatchingPairs[i].RightText" class="form-control" placeholder="@L["Questions:RightText"]" />
                             </div>
-                            <div class="col-md-2">
-                                <input asp-for="Input.MatchingPairs[i].SortOrder" class="form-control" />
-                            </div>
+                            <input type="hidden" asp-for="Input.MatchingPairs[i].SortOrder" />
                         </div>
                     }
                 </div>
@@ -133,26 +125,11 @@
             </div>
 
             <div class="col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">@L["Questions:Save"]</button>
+                <button type="submit" class="btn btn-primary" data-question-submit-button>@L["Questions:Save"]</button>
                 <a class="btn btn-outline-secondary" href="/admin/questions">@L["Questions:Cancel"]</a>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-    (() => {
-        const select = document.querySelector("[data-question-type-select]");
-        const sections = document.querySelectorAll("[data-answer-section]");
-
-        function syncAnswerSections() {
-            const inputKind = select?.selectedOptions[0]?.dataset.inputKind;
-            sections.forEach(section => {
-                const allowed = section.dataset.answerSection.split(" ");
-                section.classList.toggle("d-none", !allowed.includes(inputKind));
-            });
-        }
-
-        syncAnswerSections();
-    })();
-</script>
+<script src="/js/admin/admin-question-form.js"></script>

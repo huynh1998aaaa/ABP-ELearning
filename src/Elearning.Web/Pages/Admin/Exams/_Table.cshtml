@@ -53,33 +53,6 @@ else
                                        data-admin-modal-url="/admin/exams/edit/@exam.Id?handler=Modal"
                                        data-admin-modal-title="@L["Exams:EditTitle"]"
                                        data-admin-modal-size="lg">@L["Exams:Edit"]</a>
-                                    @if (exam.IsActive)
-                                    {
-                                        <form method="post" asp-page-handler="Deactivate" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary">@L["Exams:Deactivate"]</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form method="post" asp-page-handler="Activate" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Exams:Activate"]</button>
-                                        </form>
-                                    }
-                                }
-                                @if (Model.CanPublish)
-                                {
-                                    @if (exam.Status != ExamStatus.Published)
-                                    {
-                                        <form method="post" asp-page-handler="Publish" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Exams:Publish"]</button>
-                                        </form>
-                                    }
-                                    @if (exam.Status != ExamStatus.Archived)
-                                    {
-                                        <form method="post" asp-page-handler="Archive" asp-route-id="@exam.Id" data-admin-ajax-form="true" data-admin-refresh-target="#examsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-warning">@L["Exams:Archive"]</button>
-                                        </form>
-                                    }
                                 }
                                 @if (Model.CanDelete)
                                 {

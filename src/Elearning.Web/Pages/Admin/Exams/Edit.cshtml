@@ -21,8 +21,8 @@
             <div class="col-md-3"><label asp-for="Input.SelectionMode" class="form-label">@L["Exams:SelectionMode"]</label><select asp-for="Input.SelectionMode" asp-items="Model.SelectionModeOptions" class="form-select"></select></div>
             <div class="col-md-3"><label asp-for="Input.DurationMinutes" class="form-label">@L["Exams:DurationMinutes"]</label><input asp-for="Input.DurationMinutes" class="form-control" /></div>
             <div class="col-md-3"><label asp-for="Input.TotalQuestionCount" class="form-label">@L["Exams:TotalQuestionCount"]</label><input asp-for="Input.TotalQuestionCount" class="form-control" /></div>
-            <div class="col-md-4"><label asp-for="Input.PassingScore" class="form-label">@L["Exams:PassingScore"]</label><input asp-for="Input.PassingScore" class="form-control" /></div>
-            <div class="col-md-4"><label asp-for="Input.SortOrder" class="form-label">@L["Exams:SortOrder"]</label><input asp-for="Input.SortOrder" class="form-control" /></div>
+            <div class="col-md-6"><label asp-for="Input.PassingScore" class="form-label">@L["Exams:PassingScore"]</label><input asp-for="Input.PassingScore" class="form-control" /></div>
+            <input type="hidden" asp-for="Input.SortOrder" />
             <div class="col-md-6"><div class="form-check"><input asp-for="Input.ShuffleQuestions" class="form-check-input" /><label asp-for="Input.ShuffleQuestions" class="form-check-label">@L["Exams:ShuffleQuestions"]</label></div></div>
             <div class="col-md-6"><div class="form-check"><input asp-for="Input.ShuffleOptions" class="form-check-input" /><label asp-for="Input.ShuffleOptions" class="form-check-label">@L["Exams:ShuffleOptions"]</label></div></div>
             <div class="col-12 d-flex gap-2">

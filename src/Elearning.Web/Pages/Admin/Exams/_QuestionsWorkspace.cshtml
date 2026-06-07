@@ -52,10 +52,7 @@
                                 <label class="form-label">@L["Exams:AutoRuleTargetCount"]</label>
                                 <input name="AutoRuleInput.TargetCount" type="number" min="1" class="form-control form-control-sm" value="@Model.AutoRuleInput.TargetCount" />
                             </div>
-                            <div class="admin-field-stack">
-                                <label class="form-label">@L["Exams:SortOrder"]</label>
-                                <input name="AutoRuleInput.SortOrder" type="number" class="form-control form-control-sm" value="@Model.AutoRuleInput.SortOrder" />
-                            </div>
+                            <input name="AutoRuleInput.SortOrder" type="hidden" value="@Model.AutoRuleInput.SortOrder" />
                             <div class="admin-field-stack admin-field-stack-action">
                                 <button type="submit" class="btn btn-sm btn-outline-primary w-100">@L["Exams:AutoRuleAdd"]</button>
                             </div>
@@ -160,10 +157,7 @@
                                                 <label class="form-label">@L["Exams:AutoRuleTargetCount"]</label>
                                                 <input name="UpdateAutoRuleInput.TargetCount" type="number" min="1" class="form-control form-control-sm" value="@rule.TargetCount" />
                                             </div>
-                                            <div class="admin-field-stack admin-field-compact">
-                                                <label class="form-label">@L["Exams:SortOrder"]</label>
-                                                <input name="UpdateAutoRuleInput.SortOrder" type="number" class="form-control form-control-sm" value="@rule.SortOrder" />
-                                            </div>
+                                            <input name="UpdateAutoRuleInput.SortOrder" type="hidden" value="@rule.SortOrder" />
                                             <div class="admin-auto-rule-item-actions">
                                                 <button type="submit" class="btn btn-sm btn-outline-primary">@L["Exams:Save"]</button>
                                             </div>
@@ -224,10 +218,7 @@
                                       class="admin-assigned-form"
                                       data-admin-ajax-form="true"
                                       data-admin-refresh-target="#examQuestionsWorkspace">
-                                    <div class="admin-field-stack admin-field-compact">
-                                        <label class="form-label">@L["Exams:SortOrder"]</label>
-                                        <input name="UpdateInput.SortOrder" class="form-control form-control-sm" value="@examQuestion.SortOrder" />
-                                    </div>
+                                    <input name="UpdateInput.SortOrder" type="hidden" value="@examQuestion.SortOrder" />
                                     <div class="admin-field-stack admin-field-compact">
                                         <label class="form-label">@L["Exams:ScoreOverride"]</label>
                                         <input name="UpdateInput.ScoreOverride" class="form-control form-control-sm" value="@examQuestion.ScoreOverride" placeholder="@examQuestion.QuestionScore" />

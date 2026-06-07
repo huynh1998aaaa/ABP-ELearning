@@ -148,20 +148,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
     public async Task DeleteAsync(Guid id)
     {
         var exam = await _examRepository.GetAsync(id);
-        if (exam.Status != ExamStatus.Draft)
-        {
-            exam.Archive(Clock.Now);
-            await _examRepository.UpdateAsync(exam, autoSave: true);
-            return;
-        }
-
-        var examQuestions = await GetExamQuestionsByExamIdAsync(id);
-        foreach (var examQuestion in examQuestions)
-        {
-            await _examQuestionRepository.DeleteAsync(examQuestion);
-        }
-
-        await _examRepository.DeleteAsync(exam);
+        await _examRepository.DeleteAsync(exam, autoSave: true);
     }
 
     [Authorize(ElearningPermissions.Exams.Publish)]

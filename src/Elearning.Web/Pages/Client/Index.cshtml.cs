@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Elearning.ClientContent;
@@ -17,6 +18,8 @@ public class IndexModel : ElearningClientPageModel
 
     public bool IsPremium { get; private set; }
 
+    public DateTime? PremiumEndTime { get; private set; }
+
     public IReadOnlyList<ClientLearningItemDto> FreeItems { get; private set; } = new List<ClientLearningItemDto>();
 
     public IReadOnlyList<ClientLearningItemDto> PremiumItems { get; private set; } = new List<ClientLearningItemDto>();
@@ -25,6 +28,7 @@ public class IndexModel : ElearningClientPageModel
     {
         var portal = await _clientLearningPortalAppService.GetAsync();
         IsPremium = portal.IsPremium;
+        PremiumEndTime = portal.PremiumEndTime;
         FreeItems = portal.FreeItems;
         PremiumItems = portal.PremiumItems;
     }

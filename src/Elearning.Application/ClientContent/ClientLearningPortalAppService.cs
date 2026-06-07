@@ -50,6 +50,7 @@ public class ClientLearningPortalAppService : ElearningAppService, IClientLearni
         return new ClientLearningPortalDto
         {
             IsPremium = isPremium,
+            PremiumEndTime = isPremium ? premiumStatus.EndTime : null,
             FreeItems = items.Where(x => x.AccessLevel == ClientLearningAccessLevel.Free).ToList(),
             PremiumItems = items.Where(x => x.AccessLevel == ClientLearningAccessLevel.Premium).ToList()
         };

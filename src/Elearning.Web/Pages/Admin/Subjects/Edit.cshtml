@@ -34,11 +34,7 @@
                 <span asp-validation-for="Input.Description" class="text-danger"></span>
             </div>
 
-            <div class="col-md-6">
-                <label asp-for="Input.SortOrder" class="form-label">@L["Subjects:SortOrder"]</label>
-                <input asp-for="Input.SortOrder" class="form-control" />
-                <span asp-validation-for="Input.SortOrder" class="text-danger"></span>
-            </div>
+            <input type="hidden" asp-for="Input.SortOrder" />
 
             <div class="col-md-6">
                 <span class="badge mt-md-4 @(Model.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">

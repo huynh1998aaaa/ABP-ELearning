@@ -48,6 +48,7 @@ public class EditModel : PracticeSetFormPageModel
             return Page();
         }
 
+        await PreserveHiddenFieldsAsync();
         await _practiceSetAppService.UpdateAsync(Id, Input);
         return RedirectToPage("./Index");
     }
@@ -64,6 +65,7 @@ public class EditModel : PracticeSetFormPageModel
 
         try
         {
+            await PreserveHiddenFieldsAsync();
             await _practiceSetAppService.UpdateAsync(Id, Input);
             return AjaxSuccess();
         }
@@ -85,8 +87,16 @@ public class EditModel : PracticeSetFormPageModel
             SelectionMode = PracticeSet.SelectionMode,
             TotalQuestionCount = PracticeSet.TotalQuestionCount,
             ShuffleQuestions = PracticeSet.ShuffleQuestions,
+            ShuffleOptions = PracticeSet.ShuffleOptions,
             ShowExplanation = PracticeSet.ShowExplanation,
             SortOrder = PracticeSet.SortOrder
         };
+    }
+
+    private async Task PreserveHiddenFieldsAsync()
+    {
+        var current = await _practiceSetAppService.GetAsync(Id);
+        Input.Description = current.Description;
+        Input.SortOrder = current.SortOrder;
     }
 }

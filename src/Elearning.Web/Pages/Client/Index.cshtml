@@ -14,6 +14,12 @@
                 <div class="client-user-line">
                     <span class="client-user-icon" aria-hidden="true"></span>
                     <strong>@(Model.UserName ?? "Guest")</strong>
+                    @if (Model.IsPremium && Model.PremiumEndTime.HasValue)
+                    {
+                        <span class="client-premium-expiry">
+                            @L["Client:PremiumExpiresAt", Model.PremiumEndTime.Value.ToLocalTime().ToString("dd/MM/yyyy")]
+                        </span>
+                    }
                 </div>
                 <span class="client-status-badge @(Model.IsPremium ? "client-status-premium" : "client-status-free")">
                     @(Model.IsPremium ? L["Client:PremiumStatus"] : L["Client:FreeStatus"])
@@ -26,7 +32,8 @@
                         data-premium-contact-open
                         aria-haspopup="dialog"
                         aria-controls="premium-contact-dialog">
-                    @L["Client:UpgradePremium"]
+                    <span class="client-action-title">@L["Client:UpgradePremium"]</span>
+                    <span class="client-action-subtitle">@L["Client:UpgradePremiumPrice"]</span>
                 </button>
                 <a class="client-action-button client-action-logout" href="/client/logout">
                     @L["Auth:Logout"]

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Elearning.ClientContent;
@@ -5,6 +6,8 @@ namespace Elearning.ClientContent;
 public class ClientLearningPortalDto
 {
     public bool IsPremium { get; set; }
+
+    public DateTime? PremiumEndTime { get; set; }
 
     public List<ClientLearningItemDto> FreeItems { get; set; } = new();
 

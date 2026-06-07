@@ -59,8 +59,6 @@ public class IndexModel : ElearningAdminPageModel
 
     public bool CanDelete { get; private set; }
 
-    public bool CanPublish { get; private set; }
-
     public bool CanManageQuestions { get; private set; }
 
     public int TotalPages => TotalCount == 0
@@ -76,58 +74,6 @@ public class IndexModel : ElearningAdminPageModel
     {
         await LoadAsync();
         return Partial("_Table", this);
-    }
-
-    public async Task<IActionResult> OnPostActivateAsync(Guid id)
-    {
-        try
-        {
-            await _examAppService.ActivateAsync(id);
-            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, Status, AccessLevel, SelectionMode, IsActive, CurrentPage });
-        }
-        catch (Exception ex) when (IsAjaxRequest)
-        {
-            return AjaxError(ex);
-        }
-    }
-
-    public async Task<IActionResult> OnPostDeactivateAsync(Guid id)
-    {
-        try
-        {
-            await _examAppService.DeactivateAsync(id);
-            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, Status, AccessLevel, SelectionMode, IsActive, CurrentPage });
-        }
-        catch (Exception ex) when (IsAjaxRequest)
-        {
-            return AjaxError(ex);
-        }
-    }
-
-    public async Task<IActionResult> OnPostPublishAsync(Guid id)
-    {
-        try
-        {
-            await _examAppService.PublishAsync(id);
-            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, Status, AccessLevel, SelectionMode, IsActive, CurrentPage });
-        }
-        catch (Exception ex) when (IsAjaxRequest)
-        {
-            return AjaxError(ex);
-        }
-    }
-
-    public async Task<IActionResult> OnPostArchiveAsync(Guid id)
-    {
-        try
-        {
-            await _examAppService.ArchiveAsync(id);
-            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, Status, AccessLevel, SelectionMode, IsActive, CurrentPage });
-        }
-        catch (Exception ex) when (IsAjaxRequest)
-        {
-            return AjaxError(ex);
-        }
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)
@@ -185,7 +131,6 @@ public class IndexModel : ElearningAdminPageModel
         CanCreate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Exams.Create)).Succeeded;
         CanUpdate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Exams.Update)).Succeeded;
         CanDelete = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Exams.Delete)).Succeeded;
-        CanPublish = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Exams.Publish)).Succeeded;
         CanManageQuestions = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Exams.ManageQuestions)).Succeeded;
     }
 

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Elearning.Exams;
@@ -290,17 +292,22 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
             }
         }
 
+        var premiumStatus = await _currentUserPremiumAppService.GetCurrentUserPremiumStatusAsync();
+        var canViewExplanation = premiumStatus.IsPremium &&
+                                 session.ShowExplanation &&
+                                 session.SourceKind == LearningSessionSourceKind.Practice;
+
         var dto = await BuildSessionDtoAsync(
             session.Id,
             includeCorrectAnswers: true,
-            includeExplanation: session.ShowExplanation && session.SourceKind == LearningSessionSourceKind.Practice);
+            includeExplanation: canViewExplanation);
 
         return new ClientLearningSessionResultDto
         {
             Id = dto.Id,
             SourceKind = dto.SourceKind,
             Title = dto.Title,
-            ShowExplanation = dto.ShowExplanation,
+            ShowExplanation = canViewExplanation,
             StartedAt = dto.StartedAt,
             SubmittedAt = session.SubmittedAt,
             Score = session.Score,
@@ -309,7 +316,8 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
             TotalQuestionCount = session.TotalQuestionCount,
             PendingManualGradingCount = dto.Questions.Count(x =>
                 string.Equals(x.QuestionTypeCode, QuestionTypeCodes.Essay, StringComparison.Ordinal) &&
-                x.IsAnswered),
+                x.IsAnswered &&
+                !HasEssayKeywordRules(x.EssayRubric)),
             Questions = dto.Questions
         };
     }
@@ -345,7 +353,8 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
         var preparedQuestions = await PrepareQuestionsAsync(
             selectedAssignments
                 .Select((x, index) => new PreparedAssignment(x.QuestionId, index + 1, x.ScoreOverride))
-                .ToList());
+                .ToList(),
+            exam.ShuffleOptions);
 
         return new PreparedLearningSession(
             LearningSessionSourceKind.Exam,
@@ -391,7 +400,8 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
         var preparedQuestions = await PrepareQuestionsAsync(
             selectedAssignments
                 .Select((x, index) => new PreparedAssignment(x.QuestionId, index + 1, null))
-                .ToList());
+                .ToList(),
+            practiceSet.ShuffleOptions);
 
         return new PreparedLearningSession(
             LearningSessionSourceKind.Practice,
@@ -406,7 +416,7 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
             preparedQuestions);
     }
 
-    private async Task<List<PreparedSessionQuestion>> PrepareQuestionsAsync(List<PreparedAssignment> assignments)
+    private async Task<List<PreparedSessionQuestion>> PrepareQuestionsAsync(List<PreparedAssignment> assignments, bool shuffleOptions)
     {
         var questionIds = assignments.Select(x => x.QuestionId).ToList();
         var questionQuery = await _questionRepository.GetQueryableAsync();
@@ -461,6 +471,15 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
                 .OrderBy(x => x.SortOrder)
                 .ToList();
             var questionEssayAnswer = essayAnswerLookup.GetValueOrDefault(question.Id);
+            var preparedOptions = (shuffleOptions
+                    ? questionOptions.OrderBy(_ => Guid.NewGuid())
+                    : questionOptions.OrderBy(x => x.SortOrder))
+                .Select((x, index) => new PreparedSessionQuestionOption(
+                    x.Id,
+                    x.Text,
+                    x.IsCorrect,
+                    shuffleOptions ? (index + 1) * 10 : x.SortOrder))
+                .ToList();
 
             if (string.Equals(questionType.Code, QuestionTypeCodes.Matching, StringComparison.Ordinal))
             {
@@ -510,11 +529,7 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
                 question.Explanation,
                 assignment.SortOrder,
                 assignment.ScoreOverride ?? question.Score,
-                questionOptions.Select(x => new PreparedSessionQuestionOption(
-                    x.Id,
-                    x.Text,
-                    x.IsCorrect,
-                    x.SortOrder)).ToList(),
+                preparedOptions,
                 questionEssayAnswer == null
                     ? null
                     : new PreparedSessionQuestionEssayAnswer(
@@ -650,9 +665,12 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
 
         var questionQuery = await _learningSessionQuestionRepository.GetQueryableAsync();
         var questions = await AsyncExecuter.ToListAsync(questionQuery.Where(x => x.LearningSessionId == session.Id));
+        var essayAnswerQuery = await _learningSessionQuestionEssayAnswerRepository.GetQueryableAsync();
+        var essayAnswers = await AsyncExecuter.ToListAsync(essayAnswerQuery.Where(x => questions.Select(q => q.Id).Contains(x.LearningSessionQuestionId)));
         var answerQuery = await _learningSessionAnswerRepository.GetQueryableAsync();
         var answers = await AsyncExecuter.ToListAsync(answerQuery.Where(x => x.LearningSessionId == session.Id));
         var answerLookup = answers.ToDictionary(x => x.LearningSessionQuestionId);
+        var essayAnswerLookup = essayAnswers.ToDictionary(x => x.LearningSessionQuestionId);
 
         var correctCount = 0;
         var answeredCount = 0;
@@ -668,6 +686,16 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
             if (answer.IsAnswered)
             {
                 answeredCount++;
+            }
+
+            if (string.Equals(question.QuestionTypeCode, QuestionTypeCodes.Essay, StringComparison.Ordinal) &&
+                answer.IsAnswered)
+            {
+                if (TryAutoGradeEssayAnswer(essayAnswerLookup.GetValueOrDefault(question.Id), answer.EssayAnswerText, out var essayIsCorrect))
+                {
+                    answer.GradeEssay(essayIsCorrect);
+                    await _learningSessionAnswerRepository.UpdateAsync(answer);
+                }
             }
 
             if (answer.IsCorrect)
@@ -864,6 +892,64 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
         return text
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Length;
+    }
+
+    private static bool TryAutoGradeEssayAnswer(
+        LearningSessionQuestionEssayAnswer? essayAnswer,
+        string? essayAnswerText,
+        out bool isCorrect)
+    {
+        isCorrect = false;
+
+        if (essayAnswer == null || essayAnswerText.IsNullOrWhiteSpace())
+        {
+            return false;
+        }
+
+        var keywords = ParseEssayKeywords(essayAnswer.Rubric);
+        if (keywords.Count == 0)
+        {
+            return false;
+        }
+
+        var normalizedAnswer = NormalizeKeywordText(essayAnswerText);
+        isCorrect = keywords.All(keyword => normalizedAnswer.Contains(keyword, StringComparison.Ordinal));
+        return true;
+    }
+
+    private static bool HasEssayKeywordRules(string? rubric)
+    {
+        return ParseEssayKeywords(rubric).Count > 0;
+    }
+
+    private static List<string> ParseEssayKeywords(string? rubric)
+    {
+        if (rubric.IsNullOrWhiteSpace())
+        {
+            return [];
+        }
+
+        return rubric
+            .Split(['\r', '\n', ',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => x.Trim().TrimStart('-', '*', '•', '+'))
+            .Where(x => !x.IsNullOrWhiteSpace())
+            .Select(NormalizeKeywordText)
+            .Where(x => !x.IsNullOrWhiteSpace())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static string NormalizeKeywordText(string text)
+    {
+        var normalized = text.Normalize(NormalizationForm.FormD);
+        var chars = normalized
+            .Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark)
+            .Select(ch => char.ToLowerInvariant(ch))
+            .ToArray();
+
+        return string.Join(' ', new string(chars)
+            .Normalize(NormalizationForm.FormC)
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 
     private sealed record PreparedLearningSession(

@@ -23,6 +23,8 @@ public class PracticeSetDto : FullAuditedEntityDto<Guid>
 
     public bool ShuffleQuestions { get; set; }
 
+    public bool ShuffleOptions { get; set; }
+
     public bool ShowExplanation { get; set; }
 
     public bool IsActive { get; set; }

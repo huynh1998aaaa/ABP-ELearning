@@ -25,21 +25,16 @@
         <span asp-validation-for="Input.Description" class="text-danger"></span>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label asp-for="Input.InputKind" class="form-label">@L["QuestionTypes:InputKind"]</label>
         <select asp-for="Input.InputKind" asp-items="Model.InputKindOptions" class="form-select"></select>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label asp-for="Input.ScoringKind" class="form-label">@L["QuestionTypes:ScoringKind"]</label>
         <select asp-for="Input.ScoringKind" asp-items="Model.ScoringKindOptions" class="form-select"></select>
     </div>
-
-    <div class="col-md-4">
-        <label asp-for="Input.SortOrder" class="form-label">@L["QuestionTypes:SortOrder"]</label>
-        <input asp-for="Input.SortOrder" class="form-control" />
-        <span asp-validation-for="Input.SortOrder" class="text-danger"></span>
-    </div>
+    <input type="hidden" asp-for="Input.SortOrder" />
 
     <div class="col-md-6">
         <label asp-for="Input.MinimumOptions" class="form-label">@L["QuestionTypes:MinimumOptions"]</label>

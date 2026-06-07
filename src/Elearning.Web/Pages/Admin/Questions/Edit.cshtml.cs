@@ -55,8 +55,20 @@ public class EditModel : QuestionFormPageModel
             return Page();
         }
 
-        await _questionAppService.UpdateAsync(Id, Input);
-        return RedirectToPage("./Preview", new { id = Id });
+        try
+        {
+            await _questionAppService.UpdateAsync(Id, Input);
+            return RedirectToPage("./Preview", new { id = Id });
+        }
+        catch (System.Exception ex) when (IsQuestionFormException(ex))
+        {
+            AddQuestionFormError(ex);
+            await LoadQuestionTypesAsync(activeOnly: false);
+            Question = await _questionAppService.GetAsync(Id);
+            Input.Options = PadOptions(Input.Options);
+            Input.MatchingPairs = PadMatchingPairs(Input.MatchingPairs);
+            return Page();
+        }
     }
 
     public async Task<IActionResult> OnPostModalAsync()

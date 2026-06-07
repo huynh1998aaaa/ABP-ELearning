@@ -64,4 +64,15 @@ public class LearningSessionAnswer : FullAuditedEntity<Guid>
         IsCorrect = false;
         AnsweredAt = answeredAt;
     }
+
+    public void GradeEssay(bool isCorrect)
+    {
+        if (!IsAnswered)
+        {
+            IsCorrect = false;
+            return;
+        }
+
+        IsCorrect = isCorrect;
+    }
 }

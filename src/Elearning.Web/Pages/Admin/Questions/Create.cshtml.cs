@@ -51,8 +51,19 @@ public class CreateModel : QuestionFormPageModel
             return Page();
         }
 
-        var question = await _questionAppService.CreateAsync(Input);
-        return RedirectToPage("./Preview", new { id = question.Id });
+        try
+        {
+            var question = await _questionAppService.CreateAsync(Input);
+            return RedirectToPage("./Preview", new { id = question.Id });
+        }
+        catch (System.Exception ex) when (IsQuestionFormException(ex))
+        {
+            AddQuestionFormError(ex);
+            await LoadQuestionTypesAsync(activeOnly: true);
+            Input.Options = PadOptions(Input.Options);
+            Input.MatchingPairs = PadMatchingPairs(Input.MatchingPairs);
+            return Page();
+        }
     }
 
     public async Task<IActionResult> OnPostModalAsync()

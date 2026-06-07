@@ -16,11 +16,6 @@
         <input asp-for="Input.Title" class="form-control" />
         <span asp-validation-for="Input.Title" class="text-danger"></span>
     </div>
-    <div class="col-12">
-        <label asp-for="Input.Description" class="form-label">@L["Practices:Description"]</label>
-        <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
-        <span asp-validation-for="Input.Description" class="text-danger"></span>
-    </div>
     <div class="col-md-3">
         <label asp-for="Input.AccessLevel" class="form-label">@L["Practices:AccessLevel"]</label>
         <select asp-for="Input.AccessLevel" asp-items="Model.AccessLevelOptions" class="form-select"></select>
@@ -29,15 +24,10 @@
         <label asp-for="Input.SelectionMode" class="form-label">@L["Practices:SelectionMode"]</label>
         <select asp-for="Input.SelectionMode" asp-items="Model.SelectionModeOptions" class="form-select"></select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-6">
         <label asp-for="Input.TotalQuestionCount" class="form-label">@L["Practices:TotalQuestionCount"]</label>
         <input asp-for="Input.TotalQuestionCount" class="form-control" />
         <span asp-validation-for="Input.TotalQuestionCount" class="text-danger"></span>
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Input.SortOrder" class="form-label">@L["Practices:SortOrder"]</label>
-        <input asp-for="Input.SortOrder" class="form-control" />
-        <span asp-validation-for="Input.SortOrder" class="text-danger"></span>
     </div>
     <div class="col-md-4">
         <div class="form-check">
@@ -49,6 +39,12 @@
         <div class="form-check">
             <input asp-for="Input.ShuffleQuestions" class="form-check-input" />
             <label asp-for="Input.ShuffleQuestions" class="form-check-label">@L["Practices:ShuffleQuestions"]</label>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-check">
+            <input asp-for="Input.ShuffleOptions" class="form-check-input" />
+            <label asp-for="Input.ShuffleOptions" class="form-check-label">@L["Practices:ShuffleOptions"]</label>
         </div>
     </div>
     <div class="col-md-4">

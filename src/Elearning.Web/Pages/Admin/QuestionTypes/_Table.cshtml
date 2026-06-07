@@ -17,7 +17,6 @@ else
                     <th>@L["QuestionTypes:DisplayName"]</th>
                     <th>@L["QuestionTypes:InputKind"]</th>
                     <th>@L["QuestionTypes:ScoringKind"]</th>
-                    <th>@L["QuestionTypes:SortOrder"]</th>
                     <th>@L["QuestionTypes:Status"]</th>
                     <th class="text-end">@L["QuestionTypes:Actions"]</th>
                 </tr>
@@ -36,7 +35,6 @@ else
                         </td>
                         <td>@L[$"Enum:QuestionInputKind:{questionType.InputKind}"]</td>
                         <td>@L[$"Enum:QuestionScoringKind:{questionType.ScoringKind}"]</td>
-                        <td>@questionType.SortOrder</td>
                         <td>
                             <span class="badge @(questionType.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
                                 @(questionType.IsActive ? L["QuestionTypes:IsActive"] : L["QuestionTypes:Inactive"])

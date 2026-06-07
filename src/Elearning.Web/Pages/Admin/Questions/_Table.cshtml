@@ -10,50 +10,10 @@
 }
 else
 {
-    @if (Model.CanPublish)
-    {
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <span class="text-muted small">@L["Questions:BulkActions"]</span>
-            <form method="post"
-                  asp-page-handler="BulkPublish"
-                  data-admin-ajax-form="true"
-                  data-admin-bulk-form="true"
-                  data-admin-selection-selector=".js-question-select:checked"
-                  data-admin-selection-name="SelectedQuestionIds"
-                  data-admin-no-selection-message="@L["Questions:BulkNoSelection"]"
-                  data-admin-refresh-target="#questionsTable"
-                  data-admin-confirm-message="@L["Questions:ConfirmBulkPublish"]">
-                <div data-admin-selection-container></div>
-                <button type="submit" class="btn btn-sm btn-success">@L["Questions:BulkPublish"]</button>
-            </form>
-            <form method="post"
-                  asp-page-handler="BulkArchive"
-                  data-admin-ajax-form="true"
-                  data-admin-bulk-form="true"
-                  data-admin-selection-selector=".js-question-select:checked"
-                  data-admin-selection-name="SelectedQuestionIds"
-                  data-admin-no-selection-message="@L["Questions:BulkNoSelection"]"
-                  data-admin-refresh-target="#questionsTable"
-                  data-admin-confirm-message="@L["Questions:ConfirmBulkArchive"]">
-                <div data-admin-selection-container></div>
-                <button type="submit" class="btn btn-sm btn-warning">@L["Questions:BulkArchive"]</button>
-            </form>
-        </div>
-    }
-
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
-                    @if (Model.CanPublish)
-                    {
-                        <th class="text-center" style="width: 48px;">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   data-admin-select-all=".js-question-select"
-                                   aria-label="@L["Questions:SelectAll"]" />
-                        </th>
-                    }
                     <th>@L["Questions:TitleColumn"]</th>
                     <th>@L["Questions:QuestionType"]</th>
                     <th>@L["Questions:Difficulty"]</th>
@@ -66,15 +26,6 @@ else
                 @foreach (var question in Model.Questions)
                 {
                     <tr>
-                        @if (Model.CanPublish)
-                        {
-                            <td class="text-center">
-                                <input class="form-check-input js-question-select"
-                                       type="checkbox"
-                                       value="@question.Id"
-                                       aria-label="@L["Questions:SelectQuestion"]" />
-                            </td>
-                        }
                         <td>
                             <strong>@question.Title</strong>
                             <div class="text-muted small">@question.Content</div>
@@ -98,43 +49,16 @@ else
                                        data-admin-modal-url="/admin/questions/edit/@question.Id?handler=Modal"
                                        data-admin-modal-title="@L["Questions:EditTitle"]"
                                        data-admin-modal-size="xl">@L["Questions:Edit"]</a>
-                                    @if (question.IsActive)
-                                    {
-                                        <form method="post" asp-page-handler="Deactivate" asp-route-id="@question.Id" data-admin-ajax-form="true" data-admin-refresh-target="#questionsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary">@L["Questions:Deactivate"]</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form method="post" asp-page-handler="Activate" asp-route-id="@question.Id" data-admin-ajax-form="true" data-admin-refresh-target="#questionsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Questions:Activate"]</button>
-                                        </form>
-                                    }
                                 }
-                                @if (Model.CanPublish)
-                                {
-                                    @if (question.Status != QuestionStatus.Published)
-                                    {
-                                        <form method="post" asp-page-handler="Publish" asp-route-id="@question.Id" data-admin-ajax-form="true" data-admin-refresh-target="#questionsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">@L["Questions:Publish"]</button>
-                                        </form>
-                                    }
-                                    @if (question.Status != QuestionStatus.Archived)
-                                    {
-                                        <form method="post" asp-page-handler="Archive" asp-route-id="@question.Id" data-admin-ajax-form="true" data-admin-refresh-target="#questionsTable">
-                                            <button type="submit" class="btn btn-sm btn-outline-warning">@L["Questions:Archive"]</button>
-                                        </form>
-                                    }
-                                }
-                                @if (Model.CanDelete && question.Status == QuestionStatus.Archived)
+                                @if (Model.CanDelete)
                                 {
                                     <form method="post"
                                           asp-page-handler="Delete"
                                           asp-route-id="@question.Id"
                                           data-admin-ajax-form="true"
                                           data-admin-refresh-target="#questionsTable"
-                                          data-admin-confirm-message="@L["Questions:ConfirmHardDelete"]">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">@L["Questions:HardDelete"]</button>
+                                          data-admin-confirm-message="@L["Questions:ConfirmDelete"]">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">@L["Questions:Delete"]</button>
                                     </form>
                                 }
                             </div>

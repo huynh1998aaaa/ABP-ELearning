@@ -16,7 +16,6 @@ else
                     <th>@L["Subjects:Code"]</th>
                     <th>@L["Subjects:Name"]</th>
                     <th>@L["Subjects:Description"]</th>
-                    <th>@L["Subjects:SortOrder"]</th>
                     <th>@L["Subjects:Status"]</th>
                     <th class="text-end">@L["Subjects:Actions"]</th>
                 </tr>
@@ -28,7 +27,6 @@ else
                         <td><code>@subject.Code</code></td>
                         <td><strong>@subject.Name</strong></td>
                         <td class="text-muted">@(string.IsNullOrWhiteSpace(subject.Description) ? "-" : subject.Description)</td>
-                        <td>@subject.SortOrder</td>
                         <td>
                             <span class="badge @(subject.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
                                 @(subject.IsActive ? L["Subjects:IsActive"] : L["Subjects:Inactive"])

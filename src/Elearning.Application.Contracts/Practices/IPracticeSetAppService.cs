@@ -34,6 +34,10 @@ public interface IPracticeSetAppService : IApplicationService
 
     Task<PracticeQuestionDto> AddQuestionAsync(Guid practiceSetId, AddPracticeQuestionDto input);
 
+    Task<PracticeBulkAddQuestionsResultDto> AddAllAvailableQuestionsAsync(Guid practiceSetId);
+
+    Task<PracticeBulkAddQuestionsResultDto> AddQuestionsByCountAsync(Guid practiceSetId, AddPracticeQuestionsByCountDto input);
+
     Task<PracticeQuestionDto> UpdateQuestionAsync(Guid practiceQuestionId, UpdatePracticeQuestionDto input);
 
     Task RemoveQuestionAsync(Guid practiceQuestionId);

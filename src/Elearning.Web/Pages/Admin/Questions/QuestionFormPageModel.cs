@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Elearning.QuestionTypes;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Volo.Abp;
 
 namespace Elearning.Web.Pages.Admin.Questions;
 
@@ -60,5 +61,41 @@ public abstract class QuestionFormPageModel : ElearningAdminPageModel
         }
 
         return result;
+    }
+
+    protected bool IsQuestionFormException(Exception exception)
+    {
+        return exception is BusinessException or UserFriendlyException;
+    }
+
+    protected void AddQuestionFormError(Exception exception)
+    {
+        ModelState.AddModelError(string.Empty, GetQuestionFormErrorMessage(exception));
+    }
+
+    private string GetQuestionFormErrorMessage(Exception exception)
+    {
+        if (exception is BusinessException businessException)
+        {
+            if (businessException.Code == ElearningDomainErrorCodes.InvalidQuestionAnswers &&
+                businessException.Data["Reason"] is string reason &&
+                !string.IsNullOrWhiteSpace(reason))
+            {
+                return reason;
+            }
+
+            if (!string.IsNullOrWhiteSpace(businessException.Message))
+            {
+                return businessException.Message;
+            }
+        }
+
+        if (exception is UserFriendlyException userFriendlyException &&
+            !string.IsNullOrWhiteSpace(userFriendlyException.Message))
+        {
+            return userFriendlyException.Message;
+        }
+
+        return L["Questions:InvalidAnswers"];
     }
 }

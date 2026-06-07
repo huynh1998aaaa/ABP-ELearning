@@ -16,13 +16,12 @@
             <abp-validation-summary />
             <div class="col-md-4"><label asp-for="Input.Code" class="form-label">@L["Practices:Code"]</label><input asp-for="Input.Code" class="form-control" /></div>
             <div class="col-md-8"><label asp-for="Input.Title" class="form-label">@L["Practices:TitleColumn"]</label><input asp-for="Input.Title" class="form-control" /></div>
-            <div class="col-12"><label asp-for="Input.Description" class="form-label">@L["Practices:Description"]</label><textarea asp-for="Input.Description" class="form-control" rows="3"></textarea></div>
             <div class="col-md-3"><label asp-for="Input.AccessLevel" class="form-label">@L["Practices:AccessLevel"]</label><select asp-for="Input.AccessLevel" asp-items="Model.AccessLevelOptions" class="form-select"></select></div>
             <div class="col-md-3"><label asp-for="Input.SelectionMode" class="form-label">@L["Practices:SelectionMode"]</label><select asp-for="Input.SelectionMode" asp-items="Model.SelectionModeOptions" class="form-select"></select></div>
-            <div class="col-md-3"><label asp-for="Input.TotalQuestionCount" class="form-label">@L["Practices:TotalQuestionCount"]</label><input asp-for="Input.TotalQuestionCount" class="form-control" /></div>
-            <div class="col-md-3"><label asp-for="Input.SortOrder" class="form-label">@L["Practices:SortOrder"]</label><input asp-for="Input.SortOrder" class="form-control" /></div>
-            <div class="col-md-6"><div class="form-check"><input asp-for="Input.ShuffleQuestions" class="form-check-input" /><label asp-for="Input.ShuffleQuestions" class="form-check-label">@L["Practices:ShuffleQuestions"]</label></div></div>
-            <div class="col-md-6"><div class="form-check"><input asp-for="Input.ShowExplanation" class="form-check-input" /><label asp-for="Input.ShowExplanation" class="form-check-label">@L["Practices:ShowExplanation"]</label></div></div>
+            <div class="col-md-6"><label asp-for="Input.TotalQuestionCount" class="form-label">@L["Practices:TotalQuestionCount"]</label><input asp-for="Input.TotalQuestionCount" class="form-control" /></div>
+            <div class="col-md-4"><div class="form-check"><input asp-for="Input.ShuffleQuestions" class="form-check-input" /><label asp-for="Input.ShuffleQuestions" class="form-check-label">@L["Practices:ShuffleQuestions"]</label></div></div>
+            <div class="col-md-4"><div class="form-check"><input asp-for="Input.ShuffleOptions" class="form-check-input" /><label asp-for="Input.ShuffleOptions" class="form-check-label">@L["Practices:ShuffleOptions"]</label></div></div>
+            <div class="col-md-4"><div class="form-check"><input asp-for="Input.ShowExplanation" class="form-check-input" /><label asp-for="Input.ShowExplanation" class="form-check-label">@L["Practices:ShowExplanation"]</label></div></div>
             <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">@L["Practices:Save"]</button>
                 <a class="btn btn-outline-secondary" href="/admin/practices">@L["Practices:Cancel"]</a>

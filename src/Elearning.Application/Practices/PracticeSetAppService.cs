@@ -107,6 +107,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             input.SortOrder,
             input.Description,
             input.ShuffleQuestions,
+            input.ShuffleOptions,
             input.ShowExplanation);
 
         if (!input.IsActive)
@@ -133,6 +134,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             input.SelectionMode,
             input.TotalQuestionCount,
             input.ShuffleQuestions,
+            input.ShuffleOptions,
             input.ShowExplanation,
             input.SortOrder);
 
@@ -144,20 +146,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
     public async Task DeleteAsync(Guid id)
     {
         var practiceSet = await _practiceSetRepository.GetAsync(id);
-        if (practiceSet.Status != PracticeStatus.Draft)
-        {
-            practiceSet.Archive(Clock.Now);
-            await _practiceSetRepository.UpdateAsync(practiceSet, autoSave: true);
-            return;
-        }
-
-        var practiceQuestions = await GetPracticeQuestionsByPracticeSetIdAsync(id);
-        foreach (var practiceQuestion in practiceQuestions)
-        {
-            await _practiceQuestionRepository.DeleteAsync(practiceQuestion);
-        }
-
-        await _practiceSetRepository.DeleteAsync(practiceSet);
+        await _practiceSetRepository.DeleteAsync(practiceSet, autoSave: true);
     }
 
     [Authorize(ElearningPermissions.Practices.Publish)]
@@ -323,6 +312,59 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         await _practiceQuestionRepository.InsertAsync(practiceQuestion, autoSave: true);
         var typeMap = await GetQuestionTypeMapAsync(new List<Guid> { question.QuestionTypeId });
         return MapToDto(practiceQuestion, question, typeMap);
+    }
+
+    [Authorize(ElearningPermissions.Practices.ManageQuestions)]
+    public async Task<PracticeBulkAddQuestionsResultDto> AddAllAvailableQuestionsAsync(Guid practiceSetId)
+    {
+        var practiceSet = await _practiceSetRepository.GetAsync(practiceSetId);
+        var assignedQuestions = await GetPracticeQuestionsByPracticeSetIdAsync(practiceSetId);
+        var assignedCount = assignedQuestions.Count;
+        var remainingCapacity = Math.Max(0, PracticeSetConsts.MaxQuestionCount - assignedCount);
+        var availableCount = await CountEligibleAvailableQuestionsAsync(assignedQuestions.Select(x => x.QuestionId).ToList());
+        var questionsToAdd = remainingCapacity == 0
+            ? new List<Question>()
+            : await GetEligibleAvailableQuestionsAsync(assignedQuestions.Select(x => x.QuestionId).ToList(), remainingCapacity);
+
+        await AddPracticeQuestionsAsync(practiceSetId, questionsToAdd);
+
+        var totalAssignedCount = assignedCount + questionsToAdd.Count;
+        await UpdatePracticeSetQuestionCountAsync(practiceSet, Math.Max(PracticeSetConsts.MinQuestionCount, totalAssignedCount));
+
+        return new PracticeBulkAddQuestionsResultDto
+        {
+            RequestedCount = Math.Min(availableCount, remainingCapacity),
+            AddedCount = questionsToAdd.Count,
+            AlreadyAssignedCount = assignedCount,
+            TotalAssignedCount = totalAssignedCount,
+            ShortageCount = Math.Max(0, availableCount - questionsToAdd.Count)
+        };
+    }
+
+    [Authorize(ElearningPermissions.Practices.ManageQuestions)]
+    public async Task<PracticeBulkAddQuestionsResultDto> AddQuestionsByCountAsync(Guid practiceSetId, AddPracticeQuestionsByCountDto input)
+    {
+        var targetQuestionCount = Check.Range(input.TargetQuestionCount, nameof(input.TargetQuestionCount), PracticeSetConsts.MinQuestionCount, PracticeSetConsts.MaxQuestionCount);
+        var practiceSet = await _practiceSetRepository.GetAsync(practiceSetId);
+        var assignedQuestions = await GetPracticeQuestionsByPracticeSetIdAsync(practiceSetId);
+        var assignedCount = assignedQuestions.Count;
+        var missingCount = Math.Max(0, targetQuestionCount - assignedCount);
+        var questionsToAdd = missingCount == 0
+            ? new List<Question>()
+            : await GetEligibleAvailableQuestionsAsync(assignedQuestions.Select(x => x.QuestionId).ToList(), missingCount);
+
+        await AddPracticeQuestionsAsync(practiceSetId, questionsToAdd);
+        await UpdatePracticeSetQuestionCountAsync(practiceSet, targetQuestionCount);
+
+        var totalAssignedCount = assignedCount + questionsToAdd.Count;
+        return new PracticeBulkAddQuestionsResultDto
+        {
+            RequestedCount = targetQuestionCount,
+            AddedCount = questionsToAdd.Count,
+            AlreadyAssignedCount = assignedCount,
+            TotalAssignedCount = totalAssignedCount,
+            ShortageCount = Math.Max(0, targetQuestionCount - totalAssignedCount)
+        };
     }
 
     [Authorize(ElearningPermissions.Practices.ManageQuestions)]
@@ -587,6 +629,71 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         return practiceQuestions.Count == 0 ? 10 : practiceQuestions.Max(x => x.SortOrder) + 10;
     }
 
+    private async Task AddPracticeQuestionsAsync(Guid practiceSetId, IReadOnlyList<Question> questions)
+    {
+        if (questions.Count == 0)
+        {
+            return;
+        }
+
+        var nextSortOrder = await GetNextPracticeQuestionSortOrderAsync(practiceSetId);
+        foreach (var question in questions)
+        {
+            await _practiceQuestionRepository.InsertAsync(new PracticeQuestion(
+                _guidGenerator.Create(),
+                practiceSetId,
+                question.Id,
+                nextSortOrder,
+                assignmentSource: QuestionAssignmentSource.Manual), autoSave: true);
+
+            nextSortOrder += 10;
+        }
+    }
+
+    private async Task UpdatePracticeSetQuestionCountAsync(PracticeSet practiceSet, int totalQuestionCount)
+    {
+        practiceSet.UpdateDetails(
+            practiceSet.Code,
+            practiceSet.Title,
+            practiceSet.Description,
+            practiceSet.AccessLevel,
+            practiceSet.SelectionMode,
+            totalQuestionCount,
+            practiceSet.ShuffleQuestions,
+            practiceSet.ShuffleOptions,
+            practiceSet.ShowExplanation,
+            practiceSet.SortOrder);
+
+        await _practiceSetRepository.UpdateAsync(practiceSet, autoSave: true);
+    }
+
+    private async Task<int> CountEligibleAvailableQuestionsAsync(IReadOnlyList<Guid> assignedQuestionIds)
+    {
+        var query = await _questionRepository.GetQueryableAsync();
+        query = query.Where(x =>
+            x.IsActive &&
+            x.Status == QuestionStatus.Published &&
+            !assignedQuestionIds.Contains(x.Id));
+
+        return await AsyncExecuter.CountAsync(query);
+    }
+
+    private async Task<List<Question>> GetEligibleAvailableQuestionsAsync(IReadOnlyList<Guid> assignedQuestionIds, int maxResultCount)
+    {
+        if (maxResultCount <= 0)
+        {
+            return new List<Question>();
+        }
+
+        var query = await _questionRepository.GetQueryableAsync();
+        query = query.Where(x =>
+            x.IsActive &&
+            x.Status == QuestionStatus.Published &&
+            !assignedQuestionIds.Contains(x.Id));
+
+        return await AsyncExecuter.ToListAsync(ApplyQuestionSorting(query, null).Take(maxResultCount));
+    }
+
     private async Task<QuestionType> GetActiveQuestionTypeAsync(Guid questionTypeId)
     {
         var questionType = await _questionTypeRepository.GetAsync(questionTypeId);
@@ -773,6 +880,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             TotalQuestionCount = practiceSet.TotalQuestionCount,
             AssignedQuestionCount = assignedQuestionCount,
             ShuffleQuestions = practiceSet.ShuffleQuestions,
+            ShuffleOptions = practiceSet.ShuffleOptions,
             ShowExplanation = practiceSet.ShowExplanation,
             IsActive = practiceSet.IsActive,
             SortOrder = practiceSet.SortOrder,
