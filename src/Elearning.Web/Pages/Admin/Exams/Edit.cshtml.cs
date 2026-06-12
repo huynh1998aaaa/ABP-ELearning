@@ -48,6 +48,7 @@ public class EditModel : ExamFormPageModel
             return Page();
         }
 
+        await PreserveHiddenFieldsAsync();
         await _examAppService.UpdateAsync(Id, Input);
         return RedirectToPage("./Index");
     }
@@ -64,6 +65,7 @@ public class EditModel : ExamFormPageModel
 
         try
         {
+            await PreserveHiddenFieldsAsync();
             await _examAppService.UpdateAsync(Id, Input);
             return AjaxSuccess();
         }
@@ -88,7 +90,15 @@ public class EditModel : ExamFormPageModel
             PassingScore = Exam.PassingScore,
             ShuffleQuestions = Exam.ShuffleQuestions,
             ShuffleOptions = Exam.ShuffleOptions,
+            ShowExplanation = Exam.ShowExplanation,
             SortOrder = Exam.SortOrder
         };
+    }
+
+    private async Task PreserveHiddenFieldsAsync()
+    {
+        var current = await _examAppService.GetAsync(Id);
+        Input.Description = current.Description;
+        Input.SortOrder = current.SortOrder;
     }
 }

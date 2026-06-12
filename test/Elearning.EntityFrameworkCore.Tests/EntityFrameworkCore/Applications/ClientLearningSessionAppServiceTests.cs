@@ -89,6 +89,30 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
     }
 
     [Fact]
+    public async Task Submit_Should_Hide_Exam_Explanation_For_Free_User()
+    {
+        var exam = await CreatePublishedExamAsync(
+            QuestionTypeCodes.SingleChoice,
+            explanation: "This explanation is reserved for Premium users.",
+            showExplanation: true);
+        var launch = await _clientLearningSessionAppService.StartOrResumeAsync(ClientLearningItemKind.Exam, exam.Id);
+        var session = await _clientLearningSessionAppService.GetAsync(launch.SessionId);
+        var firstQuestion = Assert.Single(session.Questions);
+        var correctOption = Assert.Single(firstQuestion.Options, x => x.Text == "Option A");
+
+        await _clientLearningSessionAppService.SaveAnswerAsync(session.Id, new SaveClientLearningAnswerDto
+        {
+            QuestionId = firstQuestion.Id,
+            SelectedOptionIds = new List<Guid> { correctOption.Id }
+        });
+
+        var result = await _clientLearningSessionAppService.SubmitAsync(session.Id);
+
+        Assert.False(result.ShowExplanation);
+        Assert.Null(Assert.Single(result.Questions).Explanation);
+    }
+
+    [Fact]
     public async Task Submit_Should_Calculate_Matching_Score()
     {
         var exam = await CreatePublishedExamAsync(QuestionTypeCodes.Matching);
@@ -197,7 +221,11 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
             }));
     }
 
-    private async Task<ExamDto> CreatePublishedExamAsync(string questionTypeCode, string? essayRubric = "Rubric")
+    private async Task<ExamDto> CreatePublishedExamAsync(
+        string questionTypeCode,
+        string? essayRubric = "Rubric",
+        string? explanation = null,
+        bool showExplanation = false)
     {
         var questionType = await _questionTypeRepository.GetAsync(x => x.Code == questionTypeCode);
         var question = questionTypeCode == QuestionTypeCodes.Matching
@@ -242,6 +270,7 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
                 QuestionTypeId = questionType.Id,
                 Title = $"Question {Guid.NewGuid():N}"[..18],
                 Content = "What is the correct answer?",
+                Explanation = explanation,
                 Difficulty = QuestionDifficulty.Medium,
                 Score = 1,
                 SortOrder = 100,
@@ -266,7 +295,8 @@ public class ClientLearningSessionAppServiceTests : ElearningEntityFrameworkCore
             DurationMinutes = 60,
             TotalQuestionCount = 1,
             SortOrder = 100,
-            IsActive = true
+            IsActive = true,
+            ShowExplanation = showExplanation
         });
 
         await _examAppService.AddQuestionAsync(exam.Id, new AddExamQuestionDto

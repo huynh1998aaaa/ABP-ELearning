@@ -28,4 +28,6 @@ public interface IQuestionAppService : IApplicationService
     Task<BulkQuestionActionResultDto> BulkPublishAsync(BulkQuestionActionInput input);
 
     Task<BulkQuestionActionResultDto> BulkArchiveAsync(BulkQuestionActionInput input);
+
+    Task<BulkQuestionActionResultDto> BulkDeleteAsync(BulkQuestionActionInput input);
 }

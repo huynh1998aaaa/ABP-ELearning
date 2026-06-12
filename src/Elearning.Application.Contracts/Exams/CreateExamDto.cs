@@ -32,6 +32,8 @@ public class CreateExamDto
 
     public bool ShuffleOptions { get; set; }
 
+    public bool ShowExplanation { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public int SortOrder { get; set; } = 100;

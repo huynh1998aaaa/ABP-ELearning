@@ -44,6 +44,9 @@ public class IndexModel : ElearningAdminPageModel
     [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
 
+    [BindProperty]
+    public BulkQuestionActionInput BulkDeleteInput { get; set; } = new();
+
     public IReadOnlyList<QuestionDto> Questions { get; private set; } = Array.Empty<QuestionDto>();
 
     public IReadOnlyList<QuestionTypeDto> QuestionTypes { get; private set; } = Array.Empty<QuestionTypeDto>();
@@ -131,6 +134,31 @@ public class IndexModel : ElearningAdminPageModel
         }
 
         return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+    }
+
+    public async Task<IActionResult> OnPostBulkDeleteAsync()
+    {
+        try
+        {
+            var result = await _questionAppService.BulkDeleteAsync(BulkDeleteInput);
+            if (IsAjaxRequest)
+            {
+                return AjaxSuccess(BuildBulkDeleteMessage(result));
+            }
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+
+        return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+    }
+
+    private string BuildBulkDeleteMessage(BulkQuestionActionResultDto result)
+    {
+        return result.HasErrors
+            ? L["Questions:BulkDeletePartial", result.SucceededCount, result.SkippedCount]
+            : L["Questions:BulkDeleteSuccess", result.SucceededCount, result.SkippedCount];
     }
 
     public string BuildTableUrl()

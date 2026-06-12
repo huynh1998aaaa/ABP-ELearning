@@ -285,6 +285,32 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
         return result;
     }
 
+    [Authorize(ElearningPermissions.Questions.Delete)]
+    public async Task<BulkQuestionActionResultDto> BulkDeleteAsync(BulkQuestionActionInput input)
+    {
+        var questionIds = NormalizeQuestionIds(input);
+        if (questionIds.Count == 0)
+        {
+            throw new UserFriendlyException(L["Questions:BulkNoSelection"]);
+        }
+
+        var result = CreateBulkResult(questionIds);
+        foreach (var questionId in questionIds)
+        {
+            try
+            {
+                await DeleteAsync(questionId);
+                result.SucceededCount++;
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add(BuildBulkErrorMessage(questionId, ex));
+            }
+        }
+
+        return result;
+    }
+
     private async Task ReplaceAnswersAsync(
         Guid questionId,
         QuestionType questionType,

@@ -29,6 +29,8 @@ public class ExamDto : FullAuditedEntityDto<Guid>
 
     public bool ShuffleOptions { get; set; }
 
+    public bool ShowExplanation { get; set; }
+
     public bool IsActive { get; set; }
 
     public int SortOrder { get; set; }

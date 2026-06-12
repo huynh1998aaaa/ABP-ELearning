@@ -109,7 +109,8 @@ public class ExamAppService : ElearningAppService, IExamAppService
             input.Description,
             input.PassingScore,
             input.ShuffleQuestions,
-            input.ShuffleOptions);
+            input.ShuffleOptions,
+            input.ShowExplanation);
 
         if (!input.IsActive)
         {
@@ -138,6 +139,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
             input.PassingScore,
             input.ShuffleQuestions,
             input.ShuffleOptions,
+            input.ShowExplanation,
             input.SortOrder);
 
         await _examRepository.UpdateAsync(exam, autoSave: true);
@@ -325,7 +327,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
         await _examQuestionRepository.UpdateAsync(examQuestion, autoSave: true);
 
         var question = await _questionRepository.GetAsync(examQuestion.QuestionId);
-        var typeMap = await GetQuestionTypeMapAsync(new List<Guid> { question.QuestionTypeId });
+            var typeMap = await GetQuestionTypeMapAsync(new List<Guid> { question.QuestionTypeId });
         return MapToDto(examQuestion, question, typeMap);
     }
 
@@ -768,6 +770,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
             PassingScore = exam.PassingScore,
             ShuffleQuestions = exam.ShuffleQuestions,
             ShuffleOptions = exam.ShuffleOptions,
+            ShowExplanation = exam.ShowExplanation,
             IsActive = exam.IsActive,
             SortOrder = exam.SortOrder,
             PublishedTime = exam.PublishedTime,

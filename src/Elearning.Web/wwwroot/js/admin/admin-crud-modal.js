@@ -63,6 +63,7 @@
             .then(html => {
                 target.innerHTML = html;
                 parseValidation(target);
+                updateBulkSelectionState();
             });
     }
 
@@ -107,20 +108,51 @@
         return true;
     }
 
-    document.addEventListener('change', function (event) {
-        const selectAll = event.target.closest('[data-admin-select-all]');
-        if (!selectAll) {
-            return;
-        }
-
+    function updateSelectAllState(selectAll) {
         const selector = selectAll.getAttribute('data-admin-select-all');
         if (!selector) {
             return;
         }
 
-        document.querySelectorAll(selector).forEach(item => {
-            item.checked = selectAll.checked;
+        const items = Array.from(document.querySelectorAll(selector));
+        const checkedItems = items.filter(item => item.checked);
+        selectAll.checked = items.length > 0 && checkedItems.length === items.length;
+        selectAll.indeterminate = checkedItems.length > 0 && checkedItems.length < items.length;
+    }
+
+    function updateBulkFormState(form) {
+        const selector = form.getAttribute('data-admin-selection-selector');
+        const selectedCount = selector
+            ? document.querySelectorAll(selector).length
+            : 0;
+
+        form.querySelectorAll('[data-admin-bulk-submit]').forEach(button => {
+            button.disabled = selectedCount === 0;
         });
+    }
+
+    function updateBulkSelectionState() {
+        document.querySelectorAll('[data-admin-select-all]').forEach(updateSelectAllState);
+        document.querySelectorAll('form[data-admin-bulk-form="true"]').forEach(updateBulkFormState);
+    }
+
+    document.addEventListener('change', function (event) {
+        const selectAll = event.target.closest('[data-admin-select-all]');
+        if (selectAll) {
+            const selector = selectAll.getAttribute('data-admin-select-all');
+            if (selector) {
+                document.querySelectorAll(selector).forEach(item => {
+                    item.checked = selectAll.checked;
+                });
+            }
+
+            updateBulkSelectionState();
+            return;
+        }
+
+        if (event.target.closest('[data-admin-selection-item]')) {
+            updateBulkSelectionState();
+        }
     });
 
     document.addEventListener('click', function (event) {
@@ -248,6 +280,12 @@
                 notifyError();
             })
             .catch(() => notifyError())
-            .finally(() => setBusy(submitter, false));
+            .finally(() => {
+                setBusy(submitter, false);
+                updateBulkSelectionState();
+            });
     });
+
+    document.addEventListener('admin:contentLoaded', updateBulkSelectionState);
+    updateBulkSelectionState();
 })(window.jQuery);

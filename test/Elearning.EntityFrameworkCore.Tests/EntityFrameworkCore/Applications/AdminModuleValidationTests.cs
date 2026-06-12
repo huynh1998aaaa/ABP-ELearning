@@ -92,6 +92,41 @@ public class AdminModuleValidationTests : ElearningEntityFrameworkCoreTestBase
     }
 
     [Fact]
+    public async Task Question_BulkDelete_Should_Delete_Selected_Questions_Without_Link_Check()
+    {
+        var questionTypeId = await CreateChoiceQuestionTypeAsync();
+        var assignedQuestion = await CreateChoiceQuestionAsync(questionTypeId, publish: true);
+        var standaloneQuestion = await CreateChoiceQuestionAsync(questionTypeId, publish: false);
+        var exam = await CreateExamAsync();
+
+        await _examAppService.AddQuestionAsync(exam.Id, new AddExamQuestionDto
+        {
+            QuestionId = assignedQuestion.Id
+        });
+
+        var result = await _questionAppService.BulkDeleteAsync(new BulkQuestionActionInput
+        {
+            QuestionIds = new List<Guid>
+            {
+                assignedQuestion.Id,
+                standaloneQuestion.Id
+            }
+        });
+
+        Assert.Equal(2, result.SucceededCount);
+        Assert.Empty(result.Errors);
+
+        var remainingQuestions = await _questionAppService.GetListAsync(new GetQuestionListInput
+        {
+            MaxResultCount = 1000,
+            SkipCount = 0
+        });
+
+        Assert.DoesNotContain(remainingQuestions.Items, x => x.Id == assignedQuestion.Id);
+        Assert.DoesNotContain(remainingQuestions.Items, x => x.Id == standaloneQuestion.Id);
+    }
+
+    [Fact]
     public async Task QuestionType_Create_Should_Reject_Invalid_Option_Range()
     {
         await Assert.ThrowsAsync<UserFriendlyException>(() =>

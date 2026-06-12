@@ -33,12 +33,9 @@
             <dd class="col-sm-9">@Model.Preview.Exam.AssignedQuestionCount</dd>
             <dt class="col-sm-3">@L["Exams:PassingScore"]</dt>
             <dd class="col-sm-9">@Model.Preview.Exam.PassingScore</dd>
+            <dt class="col-sm-3">@L["Exams:ShowExplanation"]</dt>
+            <dd class="col-sm-9">@(Model.Preview.Exam.ShowExplanation ? L["Common:Yes"] : L["Common:No"])</dd>
         </dl>
-
-        @if (!string.IsNullOrWhiteSpace(Model.Preview.Exam.Description))
-        {
-            <div class="alert alert-light border">@Model.Preview.Exam.Description</div>
-        }
     </div>
 </div>
 

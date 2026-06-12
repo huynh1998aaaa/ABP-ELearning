@@ -102,6 +102,30 @@
             </div>
         </form>
 
+        @if (Model.CanDelete)
+        {
+            <form method="post"
+                  asp-page-handler="BulkDelete"
+                  class="d-flex justify-content-end mb-3"
+                  data-admin-ajax-form="true"
+                  data-admin-bulk-form="true"
+                  data-admin-selection-selector="[data-question-row-checkbox]:checked"
+                  data-admin-selection-name="BulkDeleteInput.QuestionIds"
+                  data-admin-no-selection-message="@L["Questions:BulkNoSelection"]"
+                  data-admin-refresh-target="#questionsTable"
+                  data-admin-confirm-message="@L["Questions:ConfirmBulkDelete"]">
+                <input type="hidden" name="Filter" value="@Model.Filter" />
+                <input type="hidden" name="QuestionTypeId" value="@Model.QuestionTypeId" />
+                <input type="hidden" name="Difficulty" value="@Model.Difficulty" />
+                <input type="hidden" name="Status" value="@Model.Status" />
+                <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
+                <span data-admin-selection-container></span>
+                <button type="submit" class="btn btn-outline-danger btn-sm" data-admin-bulk-submit disabled>
+                    @L["Questions:BulkDelete"]
+                </button>
+            </form>
+        }
+
         <div id="questionsTable" data-admin-refresh-url="@Model.BuildTableUrl()">
             <partial name="_Table" model="Model" />
         </div>

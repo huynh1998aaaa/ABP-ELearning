@@ -295,7 +295,8 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
         var premiumStatus = await _currentUserPremiumAppService.GetCurrentUserPremiumStatusAsync();
         var canViewExplanation = premiumStatus.IsPremium &&
                                  session.ShowExplanation &&
-                                 session.SourceKind == LearningSessionSourceKind.Practice;
+                                 (session.SourceKind == LearningSessionSourceKind.Exam ||
+                                  session.SourceKind == LearningSessionSourceKind.Practice);
 
         var dto = await BuildSessionDtoAsync(
             session.Id,
@@ -363,7 +364,7 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
             exam.Title,
             exam.Description,
             exam.AccessLevel == ExamAccessLevel.Premium,
-            false,
+            exam.ShowExplanation,
             exam.DurationMinutes,
             exam.TotalQuestionCount,
             preparedQuestions);

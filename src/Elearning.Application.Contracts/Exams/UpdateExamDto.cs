@@ -32,5 +32,7 @@ public class UpdateExamDto
 
     public bool ShuffleOptions { get; set; }
 
+    public bool ShowExplanation { get; set; }
+
     public int SortOrder { get; set; }
 }

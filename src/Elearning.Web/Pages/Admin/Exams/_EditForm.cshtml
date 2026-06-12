@@ -16,11 +16,6 @@
         <input asp-for="Input.Title" class="form-control" />
         <span asp-validation-for="Input.Title" class="text-danger"></span>
     </div>
-    <div class="col-12">
-        <label asp-for="Input.Description" class="form-label">@L["Exams:Description"]</label>
-        <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
-        <span asp-validation-for="Input.Description" class="text-danger"></span>
-    </div>
     <div class="col-md-3">
         <label asp-for="Input.AccessLevel" class="form-label">@L["Exams:AccessLevel"]</label>
         <select asp-for="Input.AccessLevel" asp-items="Model.AccessLevelOptions" class="form-select"></select>
@@ -37,6 +32,7 @@
     <div class="col-md-3">
         <label asp-for="Input.TotalQuestionCount" class="form-label">@L["Exams:TotalQuestionCount"]</label>
         <input asp-for="Input.TotalQuestionCount" class="form-control" />
+        <div class="form-text">@L["Exams:TotalQuestionCountHelp"]</div>
         <span asp-validation-for="Input.TotalQuestionCount" class="text-danger"></span>
     </div>
     <div class="col-md-6">
@@ -58,6 +54,13 @@
         <div class="form-check">
             <input asp-for="Input.ShuffleOptions" class="form-check-input" />
             <label asp-for="Input.ShuffleOptions" class="form-check-label">@L["Exams:ShuffleOptions"]</label>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-check">
+            <input asp-for="Input.ShowExplanation" class="form-check-input" />
+            <label asp-for="Input.ShowExplanation" class="form-check-label">@L["Exams:ShowExplanation"]</label>
+            <div class="form-text">@L["Exams:ShowExplanationHelp"]</div>
         </div>
     </div>
     <div class="col-12 d-flex gap-2">

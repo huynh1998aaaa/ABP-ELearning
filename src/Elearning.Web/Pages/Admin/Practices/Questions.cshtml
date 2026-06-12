@@ -35,7 +35,7 @@
                     <label asp-for="AddByCountInput.TargetQuestionCount" class="form-label">@L["Practices:TargetQuestionCount"]</label>
                     <input asp-for="AddByCountInput.TargetQuestionCount" class="form-control form-control-sm" min="1" max="1000" />
                 </div>
-                <button type="submit" class="btn btn-sm btn-primary">@L["Practices:AddByCount"]</button>
+                <button type="submit" class="btn btn-sm btn-outline-secondary">@L["Practices:AddByCount"]</button>
             </form>
         </div>
         <div class="col-lg-5 d-flex justify-content-lg-end align-items-end">
@@ -45,7 +45,7 @@
                   data-admin-refresh-target="#practiceQuestionsWorkspace"
                   data-admin-confirm-message="@L["Practices:BulkAddConfirmAll"]">
                 <input type="hidden" asp-for="QuestionFilter" />
-                <button type="submit" class="btn btn-sm btn-outline-primary">@L["Practices:AddAllQuestions"]</button>
+                <button type="submit" class="btn btn-sm btn-primary">@L["Practices:AddAllQuestions"]</button>
             </form>
         </div>
     </div>

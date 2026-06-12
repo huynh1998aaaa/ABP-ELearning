@@ -28,6 +28,8 @@ public class Exam : FullAuditedAggregateRoot<Guid>
 
     public bool ShuffleOptions { get; private set; }
 
+    public bool ShowExplanation { get; private set; }
+
     public bool IsActive { get; private set; }
 
     public int SortOrder { get; private set; }
@@ -52,7 +54,8 @@ public class Exam : FullAuditedAggregateRoot<Guid>
         string? description = null,
         decimal? passingScore = null,
         bool shuffleQuestions = false,
-        bool shuffleOptions = false)
+        bool shuffleOptions = false,
+        bool showExplanation = false)
         : base(id)
     {
         Status = ExamStatus.Draft;
@@ -68,6 +71,7 @@ public class Exam : FullAuditedAggregateRoot<Guid>
             passingScore,
             shuffleQuestions,
             shuffleOptions,
+            showExplanation,
             sortOrder);
     }
 
@@ -82,6 +86,7 @@ public class Exam : FullAuditedAggregateRoot<Guid>
         decimal? passingScore,
         bool shuffleQuestions,
         bool shuffleOptions,
+        bool showExplanation,
         int sortOrder)
     {
         Code = Check.NotNullOrWhiteSpace(code, nameof(code), ExamConsts.MaxCodeLength);
@@ -94,6 +99,7 @@ public class Exam : FullAuditedAggregateRoot<Guid>
         PassingScore = passingScore.HasValue ? Check.Range(passingScore.Value, nameof(passingScore), 0, decimal.MaxValue) : null;
         ShuffleQuestions = shuffleQuestions;
         ShuffleOptions = shuffleOptions;
+        ShowExplanation = showExplanation;
         SortOrder = sortOrder;
     }
 

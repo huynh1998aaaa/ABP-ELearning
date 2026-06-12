@@ -276,6 +276,7 @@ public class ElearningDbContext :
             b.Property(x => x.Title).IsRequired().HasMaxLength(ExamConsts.MaxTitleLength);
             b.Property(x => x.Description).HasMaxLength(ExamConsts.MaxDescriptionLength);
             b.Property(x => x.PassingScore).HasColumnType("decimal(18,2)");
+            b.Property(x => x.ShowExplanation);
             b.HasIndex(x => x.Code).IsUnique();
             b.HasIndex(x => x.Status);
             b.HasIndex(x => x.AccessLevel);
