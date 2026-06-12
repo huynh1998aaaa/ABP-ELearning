@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.3" />
+    <PackageReference Include="Scriban" Version="7.2.4" />
     <ProjectReference Include="..\Elearning.Application.Tests\Elearning.Application.Tests.csproj" />
     <ProjectReference Include="..\..\src\Elearning.Web\Elearning.Web.csproj" />
     <PackageReference Include="Volo.Abp.AspNetCore.TestBase" Version="10.2.0" />
