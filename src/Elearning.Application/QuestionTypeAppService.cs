@@ -40,11 +40,6 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
                 (x.Description != null && x.Description.Contains(filter)));
         }
 
-        if (input.IsActive.HasValue)
-        {
-            query = query.Where(x => x.IsActive == input.IsActive.Value);
-        }
-
         var totalCount = await AsyncExecuter.CountAsync(query);
         var items = await AsyncExecuter.ToListAsync(ApplySorting(query, input.Sorting)
             .Skip(input.SkipCount)
@@ -82,10 +77,7 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
             minimumOptions: input.MinimumOptions,
             maximumOptions: input.MaximumOptions);
 
-        if (!input.IsActive)
-        {
-            questionType.Deactivate();
-        }
+        questionType.Activate();
 
         await _questionTypeRepository.InsertAsync(questionType, autoSave: true);
         return MapToDto(questionType);
@@ -116,6 +108,7 @@ public class QuestionTypeAppService : ElearningAppService, IQuestionTypeAppServi
             input.SortOrder,
             input.MinimumOptions,
             input.MaximumOptions);
+        questionType.Activate();
 
         await _questionTypeRepository.UpdateAsync(questionType, autoSave: true);
         return MapToDto(questionType);

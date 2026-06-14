@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Elearning.ClientContent;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Elearning.Web.Pages.Client;
 
@@ -19,6 +20,9 @@ public class IndexModel : ElearningClientPageModel
     public bool IsPremium { get; private set; }
 
     public DateTime? PremiumEndTime { get; private set; }
+
+    [TempData]
+    public string? ClientErrorMessage { get; set; }
 
     public IReadOnlyList<ClientLearningItemDto> FreeItems { get; private set; } = new List<ClientLearningItemDto>();
 

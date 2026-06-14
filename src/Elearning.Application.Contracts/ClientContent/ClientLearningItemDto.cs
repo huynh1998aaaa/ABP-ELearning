@@ -22,6 +22,10 @@ public class ClientLearningItemDto
 
     public int AssignedQuestionCount { get; set; }
 
+    public int ValidAssignedQuestionCount { get; set; }
+
+    public bool IsReady { get; set; }
+
     public bool IsLocked { get; set; }
 
     public bool ShowExplanation { get; set; }

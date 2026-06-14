@@ -40,6 +40,9 @@ public class QuestionsModel : ElearningAdminPageModel
     public UpdateExamQuestionDto UpdateInput { get; set; } = new();
 
     [BindProperty]
+    public AddExamQuestionsByCountDto AddByCountInput { get; set; } = new();
+
+    [BindProperty]
     public CreateExamAutoQuestionRuleDto AutoRuleInput { get; set; } = new()
     {
         TargetCount = 1,
@@ -78,6 +81,32 @@ public class QuestionsModel : ElearningAdminPageModel
         {
             await _examAppService.AddQuestionAsync(Id, AddInput);
             return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Id, QuestionFilter });
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+    }
+
+    public async Task<IActionResult> OnPostAddAllAsync()
+    {
+        try
+        {
+            var result = await _examAppService.AddAllAvailableQuestionsAsync(Id);
+            return IsAjaxRequest ? AjaxSuccess(BuildBulkAddMessage(result)) : RedirectToPage(new { Id, QuestionFilter });
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+    }
+
+    public async Task<IActionResult> OnPostAddByCountAsync()
+    {
+        try
+        {
+            var result = await _examAppService.AddQuestionsByCountAsync(Id, AddByCountInput);
+            return IsAjaxRequest ? AjaxSuccess(BuildBulkAddMessage(result)) : RedirectToPage(new { Id, QuestionFilter });
         }
         catch (Exception ex) when (IsAjaxRequest)
         {
@@ -186,6 +215,7 @@ public class QuestionsModel : ElearningAdminPageModel
     {
         await LoadQuestionTypesAsync();
         Exam = await _examAppService.GetAsync(Id);
+        AddByCountInput.TargetQuestionCount = Exam.TotalQuestionCount;
         ExamQuestions = (await _examAppService.GetQuestionsAsync(Id, new GetExamQuestionListInput
         {
             MaxResultCount = ExamConsts.MaxQuestionCount,
@@ -220,5 +250,17 @@ public class QuestionsModel : ElearningAdminPageModel
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.DisplayName)
             .ToList();
+    }
+
+    private string BuildBulkAddMessage(ExamBulkAddQuestionsResultDto result)
+    {
+        if (result.AddedCount == 0 && result.ShortageCount == 0)
+        {
+            return L["Exams:BulkAddNoAvailableQuestions"];
+        }
+
+        return result.ShortageCount > 0
+            ? L["Exams:BulkAddAppliedPartial", result.AddedCount, result.TotalAssignedCount, result.ShortageCount]
+            : L["Exams:BulkAddApplied", result.AddedCount, result.TotalAssignedCount];
     }
 }

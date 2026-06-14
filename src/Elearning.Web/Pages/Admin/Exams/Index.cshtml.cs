@@ -29,16 +29,10 @@ public class IndexModel : ElearningAdminPageModel
     public string? Filter { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public ExamStatus? Status { get; set; }
-
-    [BindProperty(SupportsGet = true)]
     public ExamAccessLevel? AccessLevel { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public ExamSelectionMode? SelectionMode { get; set; }
-
-    [BindProperty(SupportsGet = true)]
-    public bool? IsActive { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
@@ -46,12 +40,6 @@ public class IndexModel : ElearningAdminPageModel
     public IReadOnlyList<ExamDto> Exams { get; private set; } = Array.Empty<ExamDto>();
 
     public long TotalCount { get; private set; }
-
-    public int PublishedCount { get; private set; }
-
-    public int DraftCount { get; private set; }
-
-    public int ArchivedCount { get; private set; }
 
     public bool CanCreate { get; private set; }
 
@@ -81,7 +69,7 @@ public class IndexModel : ElearningAdminPageModel
         try
         {
             await _examAppService.DeleteAsync(id);
-            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, Status, AccessLevel, SelectionMode, IsActive, CurrentPage });
+            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, AccessLevel, SelectionMode, CurrentPage });
         }
         catch (Exception ex) when (IsAjaxRequest)
         {
@@ -113,16 +101,11 @@ public class IndexModel : ElearningAdminPageModel
             MaxResultCount = 1000,
             SkipCount = 0,
             Filter = Filter,
-            Status = Status,
             AccessLevel = AccessLevel,
-            SelectionMode = SelectionMode,
-            IsActive = IsActive
+            SelectionMode = SelectionMode
         });
 
         TotalCount = allItems.TotalCount;
-        PublishedCount = allItems.Items.Count(x => x.Status == ExamStatus.Published);
-        DraftCount = allItems.Items.Count(x => x.Status == ExamStatus.Draft);
-        ArchivedCount = allItems.Items.Count(x => x.Status == ExamStatus.Archived);
         Exams = allItems.Items.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
     }
 
@@ -145,10 +128,6 @@ public class IndexModel : ElearningAdminPageModel
         {
             yield return $"filter={Uri.EscapeDataString(Filter)}";
         }
-        if (Status.HasValue)
-        {
-            yield return $"status={Status.Value}";
-        }
         if (AccessLevel.HasValue)
         {
             yield return $"accessLevel={AccessLevel.Value}";
@@ -156,10 +135,6 @@ public class IndexModel : ElearningAdminPageModel
         if (SelectionMode.HasValue)
         {
             yield return $"selectionMode={SelectionMode.Value}";
-        }
-        if (IsActive.HasValue)
-        {
-            yield return $"isActive={IsActive.Value}";
         }
     }
 }

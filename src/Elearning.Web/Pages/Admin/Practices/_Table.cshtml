@@ -18,7 +18,6 @@ else
                     <th>@L["Practices:AccessLevel"]</th>
                     <th>@L["Practices:SelectionMode"]</th>
                     <th>@L["Practices:QuestionCount"]</th>
-                    <th>@L["Practices:Status"]</th>
                     <th class="text-end">@L["Practices:Actions"]</th>
                 </tr>
             </thead>
@@ -33,12 +32,6 @@ else
                         <td>@L[$"Enum:PracticeAccessLevel:{practiceSet.AccessLevel}"]</td>
                         <td>@L[$"Enum:PracticeSelectionMode:{practiceSet.SelectionMode}"]</td>
                         <td>@practiceSet.AssignedQuestionCount / @practiceSet.TotalQuestionCount</td>
-                        <td>
-                            <span class="badge @GetStatusBadge(practiceSet.Status)">@L[$"Enum:PracticeStatus:{practiceSet.Status}"]</span>
-                            <span class="badge @(practiceSet.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
-                                @(practiceSet.IsActive ? L["Practices:IsActive"] : L["Practices:Inactive"])
-                            </span>
-                        </td>
                         <td class="text-end">
                             <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                 <a class="btn btn-sm btn-outline-secondary" href="/admin/practices/preview/@practiceSet.Id">@L["Practices:Preview"]</a>
@@ -84,16 +77,4 @@ else
             }
         </div>
     </nav>
-}
-
-@functions {
-    private static string GetStatusBadge(PracticeStatus status)
-    {
-        return status switch
-        {
-            PracticeStatus.Published => "bg-success-subtle text-success-emphasis",
-            PracticeStatus.Archived => "bg-secondary-subtle text-secondary-emphasis",
-            _ => "bg-info-subtle text-info-emphasis"
-        };
-    }
 }

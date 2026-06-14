@@ -48,13 +48,6 @@
     </div>
     <input type="hidden" asp-for="Input.SortOrder" />
 
-    <div class="col-12">
-        <span class="badge bg-info-subtle text-info-emphasis">@L[$"Enum:QuestionStatus:{Model.Question.Status}"]</span>
-        <span class="badge @(Model.Question.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
-            @(Model.Question.IsActive ? L["Questions:IsActive"] : L["Questions:Inactive"])
-        </span>
-    </div>
-
     <div class="col-12" data-answer-section="SingleChoice MultipleChoice">
         <div class="border rounded p-3">
             <h2 class="h5">@L["Questions:Options"]</h2>

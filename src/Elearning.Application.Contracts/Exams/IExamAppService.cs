@@ -34,6 +34,10 @@ public interface IExamAppService : IApplicationService
 
     Task<ExamQuestionDto> AddQuestionAsync(Guid examId, AddExamQuestionDto input);
 
+    Task<ExamBulkAddQuestionsResultDto> AddAllAvailableQuestionsAsync(Guid examId);
+
+    Task<ExamBulkAddQuestionsResultDto> AddQuestionsByCountAsync(Guid examId, AddExamQuestionsByCountDto input);
+
     Task<ExamQuestionDto> UpdateQuestionAsync(Guid examQuestionId, UpdateExamQuestionDto input);
 
     Task RemoveQuestionAsync(Guid examQuestionId);

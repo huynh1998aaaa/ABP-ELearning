@@ -61,16 +61,6 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
             query = query.Where(x => x.Difficulty == input.Difficulty.Value);
         }
 
-        if (input.Status.HasValue)
-        {
-            query = query.Where(x => x.Status == input.Status.Value);
-        }
-
-        if (input.IsActive.HasValue)
-        {
-            query = query.Where(x => x.IsActive == input.IsActive.Value);
-        }
-
         var totalCount = await AsyncExecuter.CountAsync(query);
         var questions = await AsyncExecuter.ToListAsync(ApplySorting(query, input.Sorting)
             .Skip(input.SkipCount)
@@ -101,11 +91,6 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
     public async Task<QuestionDto> CreateAsync(CreateQuestionDto input)
     {
         var questionType = await _questionTypeRepository.GetAsync(input.QuestionTypeId);
-        if (!questionType.IsActive)
-        {
-            throw new BusinessException(ElearningDomainErrorCodes.InactiveQuestionTypeCannotBeUsed)
-                .WithData(nameof(Question.QuestionTypeId), input.QuestionTypeId);
-        }
 
         var normalizedOptions = NormalizeOptions(input.Options);
         var normalizedPairs = NormalizeMatchingPairs(input.MatchingPairs);
@@ -121,10 +106,8 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
             input.SortOrder,
             input.Explanation);
 
-        if (!input.IsActive)
-        {
-            question.Deactivate();
-        }
+        question.Activate();
+        question.Publish();
 
         await _questionRepository.InsertAsync(question, autoSave: true);
         await ReplaceAnswersAsync(question.Id, questionType, normalizedOptions, normalizedPairs, input.EssayAnswer);
@@ -150,6 +133,8 @@ public class QuestionAppService : ElearningAppService, IQuestionAppService
             input.Difficulty,
             input.Score,
             input.SortOrder);
+        question.Activate();
+        question.Publish();
 
         await _questionRepository.UpdateAsync(question, autoSave: true);
         await ReplaceAnswersAsync(question.Id, questionType, normalizedOptions, normalizedPairs, input.EssayAnswer);

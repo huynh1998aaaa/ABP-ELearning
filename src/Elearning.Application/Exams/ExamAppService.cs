@@ -21,6 +21,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
     private readonly IRepository<ExamQuestion, Guid> _examQuestionRepository;
     private readonly IRepository<Question, Guid> _questionRepository;
     private readonly IRepository<QuestionType, Guid> _questionTypeRepository;
+    private readonly QuestionRuntimeReadinessProvider _questionRuntimeReadinessProvider;
     private readonly IGuidGenerator _guidGenerator;
 
     public ExamAppService(
@@ -29,6 +30,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
         IRepository<ExamQuestion, Guid> examQuestionRepository,
         IRepository<Question, Guid> questionRepository,
         IRepository<QuestionType, Guid> questionTypeRepository,
+        QuestionRuntimeReadinessProvider questionRuntimeReadinessProvider,
         IGuidGenerator guidGenerator)
     {
         _examRepository = examRepository;
@@ -36,6 +38,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
         _examQuestionRepository = examQuestionRepository;
         _questionRepository = questionRepository;
         _questionTypeRepository = questionTypeRepository;
+        _questionRuntimeReadinessProvider = questionRuntimeReadinessProvider;
         _guidGenerator = guidGenerator;
     }
 
@@ -52,11 +55,6 @@ public class ExamAppService : ElearningAppService, IExamAppService
                 (x.Description != null && x.Description.Contains(filter)));
         }
 
-        if (input.Status.HasValue)
-        {
-            query = query.Where(x => x.Status == input.Status.Value);
-        }
-
         if (input.AccessLevel.HasValue)
         {
             query = query.Where(x => x.AccessLevel == input.AccessLevel.Value);
@@ -67,28 +65,23 @@ public class ExamAppService : ElearningAppService, IExamAppService
             query = query.Where(x => x.SelectionMode == input.SelectionMode.Value);
         }
 
-        if (input.IsActive.HasValue)
-        {
-            query = query.Where(x => x.IsActive == input.IsActive.Value);
-        }
-
         var totalCount = await AsyncExecuter.CountAsync(query);
         var exams = await AsyncExecuter.ToListAsync(ApplySorting(query, input.Sorting)
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount));
 
-        var questionCounts = await GetQuestionCountsAsync(exams.Select(x => x.Id).ToList());
+        var readinessMap = await GetReadinessByExamIdsAsync(exams);
 
         return new PagedResultDto<ExamDto>(
             totalCount,
-            exams.Select(x => MapToDto(x, questionCounts.GetValueOrDefault(x.Id))).ToList());
+            exams.Select(x => MapToDto(x, readinessMap.GetValueOrDefault(x.Id, AssignmentReadiness.Empty))).ToList());
     }
 
     public async Task<ExamDto> GetAsync(Guid id)
     {
         var exam = await _examRepository.GetAsync(id);
-        var questionCount = await GetQuestionCountAsync(id);
-        return MapToDto(exam, questionCount);
+        var readinessMap = await GetReadinessByExamIdsAsync(new List<Exam> { exam });
+        return MapToDto(exam, readinessMap.GetValueOrDefault(exam.Id, AssignmentReadiness.Empty));
     }
 
     [Authorize(ElearningPermissions.Exams.Create)]
@@ -112,13 +105,11 @@ public class ExamAppService : ElearningAppService, IExamAppService
             input.ShuffleOptions,
             input.ShowExplanation);
 
-        if (!input.IsActive)
-        {
-            exam.Deactivate();
-        }
+        exam.Activate();
+        exam.Publish(Clock.Now);
 
         await _examRepository.InsertAsync(exam, autoSave: true);
-        return MapToDto(exam, 0);
+        return MapToDto(exam, AssignmentReadiness.Empty);
     }
 
     [Authorize(ElearningPermissions.Exams.Update)]
@@ -141,9 +132,12 @@ public class ExamAppService : ElearningAppService, IExamAppService
             input.ShuffleOptions,
             input.ShowExplanation,
             input.SortOrder);
+        exam.Activate();
+        exam.Publish(Clock.Now);
 
         await _examRepository.UpdateAsync(exam, autoSave: true);
-        return MapToDto(exam, await GetQuestionCountAsync(id));
+        var readinessMap = await GetReadinessByExamIdsAsync(new List<Exam> { exam });
+        return MapToDto(exam, readinessMap.GetValueOrDefault(exam.Id, AssignmentReadiness.Empty));
     }
 
     [Authorize(ElearningPermissions.Exams.Delete)]
@@ -157,22 +151,23 @@ public class ExamAppService : ElearningAppService, IExamAppService
     public async Task PublishAsync(Guid id)
     {
         var exam = await _examRepository.GetAsync(id);
-        var questionCount = await GetQuestionCountAsync(id);
+        var readinessMap = await GetReadinessByExamIdsAsync(new List<Exam> { exam });
+        var readiness = readinessMap.GetValueOrDefault(id, AssignmentReadiness.Empty);
         EnsureCanPublish(exam);
 
-        if (questionCount == 0)
+        if (readiness.AssignedQuestionCount == 0)
         {
             throw new UserFriendlyException(L["Exams:CannotPublishWithoutQuestions"]);
         }
 
-        if (questionCount < exam.TotalQuestionCount)
+        if (readiness.ValidAssignedQuestionCount < exam.TotalQuestionCount)
         {
-            throw new UserFriendlyException(L["Exams:AssignedQuestionsBelowTarget", exam.TotalQuestionCount, questionCount]);
+            throw new UserFriendlyException(L["Exams:AssignedQuestionsBelowTarget", exam.TotalQuestionCount, readiness.ValidAssignedQuestionCount]);
         }
 
-        if (exam.SelectionMode == ExamSelectionMode.Random && exam.TotalQuestionCount > questionCount)
+        if (exam.SelectionMode == ExamSelectionMode.Random && exam.TotalQuestionCount > readiness.ValidAssignedQuestionCount)
         {
-            throw new UserFriendlyException(L["Exams:RandomCountExceedsPool", exam.TotalQuestionCount, questionCount]);
+            throw new UserFriendlyException(L["Exams:RandomCountExceedsPool", exam.TotalQuestionCount, readiness.ValidAssignedQuestionCount]);
         }
 
         await EnsureAssignedQuestionsCanBePublishedAsync(id);
@@ -254,10 +249,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
 
         var assignedQuestionIds = (await GetExamQuestionsByExamIdAsync(examId)).Select(x => x.QuestionId).ToList();
         var questionQuery = await _questionRepository.GetQueryableAsync();
-        questionQuery = questionQuery.Where(x =>
-            x.IsActive &&
-            x.Status == QuestionStatus.Published &&
-            !assignedQuestionIds.Contains(x.Id));
+        questionQuery = questionQuery.Where(x => !assignedQuestionIds.Contains(x.Id));
 
         if (!input.Filter.IsNullOrWhiteSpace())
         {
@@ -268,10 +260,17 @@ public class ExamAppService : ElearningAppService, IExamAppService
                 (x.Explanation != null && x.Explanation.Contains(filter)));
         }
 
-        var totalCount = await AsyncExecuter.CountAsync(questionQuery);
-        var questions = await AsyncExecuter.ToListAsync(ApplyQuestionSorting(questionQuery, input.Sorting)
+        var allQuestions = await AsyncExecuter.ToListAsync(ApplyQuestionSorting(questionQuery, input.Sorting));
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(allQuestions.Select(x => x.Id).ToList());
+        var readyQuestions = allQuestions
+            .Where(x => readinessMap.GetValueOrDefault(x.Id))
+            .ToList();
+
+        var totalCount = readyQuestions.Count;
+        var questions = readyQuestions
             .Skip(input.SkipCount)
-            .Take(input.MaxResultCount));
+            .Take(input.MaxResultCount)
+            .ToList();
 
         var typeMap = await GetQuestionTypeMapAsync(questions.Select(x => x.QuestionTypeId).Distinct().ToList());
 
@@ -296,6 +295,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
         await _examRepository.GetAsync(examId);
         var question = await _questionRepository.GetAsync(input.QuestionId);
         EnsureQuestionCanBeUsed(question);
+        await EnsureQuestionIsReadyForRuntimeAsync(question.Id);
 
         var examQuestionQuery = await _examQuestionRepository.GetQueryableAsync();
         if (await AsyncExecuter.AnyAsync(examQuestionQuery.Where(x => x.ExamId == examId && x.QuestionId == input.QuestionId)))
@@ -317,6 +317,58 @@ public class ExamAppService : ElearningAppService, IExamAppService
         await _examQuestionRepository.InsertAsync(examQuestion, autoSave: true);
         var typeMap = await GetQuestionTypeMapAsync(new List<Guid> { question.QuestionTypeId });
         return MapToDto(examQuestion, question, typeMap);
+    }
+
+    [Authorize(ElearningPermissions.Exams.ManageQuestions)]
+    public async Task<ExamBulkAddQuestionsResultDto> AddAllAvailableQuestionsAsync(Guid examId)
+    {
+        var exam = await _examRepository.GetAsync(examId);
+        var assignedQuestions = await GetExamQuestionsByExamIdAsync(examId);
+        var assignedCount = assignedQuestions.Count;
+        var remainingCapacity = Math.Max(0, ExamConsts.MaxQuestionCount - assignedCount);
+        var assignedQuestionIds = assignedQuestions.Select(x => x.QuestionId).ToList();
+        var availableCount = await CountEligibleAvailableQuestionsAsync(assignedQuestionIds);
+        var availableQuestions = remainingCapacity == 0
+            ? new List<Question>()
+            : await GetEligibleAvailableQuestionsAsync(assignedQuestionIds, remainingCapacity, exam.SelectionMode == ExamSelectionMode.Random);
+
+        await AddExamQuestionsAsync(examId, availableQuestions);
+
+        var totalAssignedCount = assignedCount + availableQuestions.Count;
+        return new ExamBulkAddQuestionsResultDto
+        {
+            RequestedCount = Math.Min(availableCount, remainingCapacity),
+            AddedCount = availableQuestions.Count,
+            AlreadyAssignedCount = assignedCount,
+            TotalAssignedCount = totalAssignedCount,
+            ShortageCount = Math.Max(0, availableCount - availableQuestions.Count)
+        };
+    }
+
+    [Authorize(ElearningPermissions.Exams.ManageQuestions)]
+    public async Task<ExamBulkAddQuestionsResultDto> AddQuestionsByCountAsync(Guid examId, AddExamQuestionsByCountDto input)
+    {
+        var targetQuestionCount = Check.Range(input.TargetQuestionCount, nameof(input.TargetQuestionCount), ExamConsts.MinQuestionCount, ExamConsts.MaxQuestionCount);
+        var exam = await _examRepository.GetAsync(examId);
+        var assignedQuestions = await GetExamQuestionsByExamIdAsync(examId);
+        var assignedCount = assignedQuestions.Count;
+        var missingCount = Math.Max(0, targetQuestionCount - assignedCount);
+        var questionsToAdd = missingCount == 0
+            ? new List<Question>()
+            : await GetEligibleAvailableQuestionsAsync(assignedQuestions.Select(x => x.QuestionId).ToList(), missingCount, exam.SelectionMode == ExamSelectionMode.Random);
+
+        await AddExamQuestionsAsync(examId, questionsToAdd);
+        await UpdateExamQuestionCountAsync(exam, targetQuestionCount);
+
+        var totalAssignedCount = assignedCount + questionsToAdd.Count;
+        return new ExamBulkAddQuestionsResultDto
+        {
+            RequestedCount = targetQuestionCount,
+            AddedCount = questionsToAdd.Count,
+            AlreadyAssignedCount = assignedCount,
+            TotalAssignedCount = totalAssignedCount,
+            ShortageCount = Math.Max(0, targetQuestionCount - totalAssignedCount)
+        };
     }
 
     [Authorize(ElearningPermissions.Exams.ManageQuestions)]
@@ -509,17 +561,8 @@ public class ExamAppService : ElearningAppService, IExamAppService
         }
     }
 
-    private void EnsureQuestionCanBeUsed(Question question)
+    private static void EnsureQuestionCanBeUsed(Question question)
     {
-        if (!question.IsActive)
-        {
-            throw new UserFriendlyException(L["Exams:InactiveQuestionCannotBeUsed"]);
-        }
-
-        if (question.Status != QuestionStatus.Published)
-        {
-            throw new UserFriendlyException(L["Exams:UnpublishedQuestionCannotBeUsed"]);
-        }
     }
 
     private async Task EnsureAssignedQuestionsCanBePublishedAsync(Guid examId)
@@ -531,12 +574,24 @@ public class ExamAppService : ElearningAppService, IExamAppService
         }
 
         var questionMap = await GetQuestionMapAsync(examQuestions.Select(x => x.QuestionId).Distinct().ToList());
-        if (examQuestions.Any(x =>
-                !questionMap.TryGetValue(x.QuestionId, out var question) ||
-                !question.IsActive ||
-                question.Status != QuestionStatus.Published))
+        if (examQuestions.Any(x => !questionMap.ContainsKey(x.QuestionId)))
         {
             throw new UserFriendlyException(L["Exams:AssignedQuestionsMustBePublished"]);
+        }
+
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(examQuestions.Select(x => x.QuestionId).Distinct().ToList());
+        if (examQuestions.Any(x => !readinessMap.GetValueOrDefault(x.QuestionId)))
+        {
+            throw new UserFriendlyException(L["Exams:AssignedQuestionsMustBeReady"]);
+        }
+    }
+
+    private async Task EnsureQuestionIsReadyForRuntimeAsync(Guid questionId)
+    {
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(new List<Guid> { questionId });
+        if (!readinessMap.GetValueOrDefault(questionId))
+        {
+            throw new UserFriendlyException(L["Exams:QuestionNotReadyForRuntime"]);
         }
     }
 
@@ -581,15 +636,103 @@ public class ExamAppService : ElearningAppService, IExamAppService
         return examQuestions.Count == 0 ? 10 : examQuestions.Max(x => x.SortOrder) + 10;
     }
 
-    private async Task<QuestionType> GetActiveQuestionTypeAsync(Guid questionTypeId)
+    private async Task<Dictionary<Guid, AssignmentReadiness>> GetReadinessByExamIdsAsync(IReadOnlyList<Exam> exams)
     {
-        var questionType = await _questionTypeRepository.GetAsync(questionTypeId);
-        if (!questionType.IsActive)
+        var result = exams.ToDictionary(x => x.Id, _ => AssignmentReadiness.Empty);
+        if (exams.Count == 0)
         {
-            throw new UserFriendlyException(L["Exams:InactiveQuestionTypeCannotBeUsed"]);
+            return result;
         }
 
-        return questionType;
+        var examIds = exams.Select(x => x.Id).ToList();
+        var query = await _examQuestionRepository.GetQueryableAsync();
+        var examQuestions = await AsyncExecuter.ToListAsync(query.Where(x => examIds.Contains(x.ExamId)));
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(examQuestions.Select(x => x.QuestionId).Distinct().ToList());
+
+        foreach (var group in examQuestions.GroupBy(x => x.ExamId))
+        {
+            var assignedQuestionCount = group.Count();
+            var validAssignedQuestionCount = group.Count(x => readinessMap.GetValueOrDefault(x.QuestionId));
+            result[group.Key] = new AssignmentReadiness(assignedQuestionCount, validAssignedQuestionCount);
+        }
+
+        return result;
+    }
+
+    private async Task AddExamQuestionsAsync(Guid examId, IReadOnlyList<Question> questions)
+    {
+        if (questions.Count == 0)
+        {
+            return;
+        }
+
+        var nextSortOrder = await GetNextExamQuestionSortOrderAsync(examId);
+        foreach (var question in questions)
+        {
+            await _examQuestionRepository.InsertAsync(new ExamQuestion(
+                _guidGenerator.Create(),
+                examId,
+                question.Id,
+                nextSortOrder,
+                assignmentSource: QuestionAssignmentSource.Manual), autoSave: true);
+
+            nextSortOrder += 10;
+        }
+    }
+
+    private async Task UpdateExamQuestionCountAsync(Exam exam, int totalQuestionCount)
+    {
+        exam.UpdateDetails(
+            exam.Code,
+            exam.Title,
+            exam.Description,
+            exam.AccessLevel,
+            exam.SelectionMode,
+            exam.DurationMinutes,
+            totalQuestionCount,
+            exam.PassingScore,
+            exam.ShuffleQuestions,
+            exam.ShuffleOptions,
+            exam.ShowExplanation,
+            exam.SortOrder);
+
+        await _examRepository.UpdateAsync(exam, autoSave: true);
+    }
+
+    private async Task<int> CountEligibleAvailableQuestionsAsync(IReadOnlyList<Guid> assignedQuestionIds)
+    {
+        var query = await _questionRepository.GetQueryableAsync();
+        query = query.Where(x => !assignedQuestionIds.Contains(x.Id));
+
+        var questions = await AsyncExecuter.ToListAsync(query);
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(questions.Select(x => x.Id).ToList());
+        return questions.Count(x => readinessMap.GetValueOrDefault(x.Id));
+    }
+
+    private async Task<List<Question>> GetEligibleAvailableQuestionsAsync(IReadOnlyList<Guid> assignedQuestionIds, int maxResultCount, bool randomize)
+    {
+        if (maxResultCount <= 0)
+        {
+            return new List<Question>();
+        }
+
+        var query = await _questionRepository.GetQueryableAsync();
+        query = query.Where(x => !assignedQuestionIds.Contains(x.Id));
+
+        var questions = await AsyncExecuter.ToListAsync(ApplyQuestionSorting(query, null));
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(questions.Select(x => x.Id).ToList());
+        var readyQuestions = questions.Where(x => readinessMap.GetValueOrDefault(x.Id));
+        if (randomize)
+        {
+            readyQuestions = readyQuestions.OrderBy(_ => Guid.NewGuid());
+        }
+
+        return readyQuestions.Take(maxResultCount).ToList();
+    }
+
+    private async Task<QuestionType> GetActiveQuestionTypeAsync(Guid questionTypeId)
+    {
+        return await _questionTypeRepository.GetAsync(questionTypeId);
     }
 
     private async Task<Dictionary<Guid, Question>> GetQuestionMapAsync(IReadOnlyList<Guid> questionIds)
@@ -666,8 +809,6 @@ public class ExamAppService : ElearningAppService, IExamAppService
             var remainingTargetCount = Math.Max(0, rule.TargetCount - fulfilledByManual.Count);
             var query = await _questionRepository.GetQueryableAsync();
             query = query.Where(x =>
-                x.IsActive &&
-                x.Status == QuestionStatus.Published &&
                 x.QuestionTypeId == rule.QuestionTypeId &&
                 !excludedQuestionIds.Contains(x.Id));
 
@@ -676,10 +817,14 @@ public class ExamAppService : ElearningAppService, IExamAppService
                 query = query.Where(x => x.Difficulty == rule.Difficulty.Value);
             }
 
-            var selectedQuestions = await AsyncExecuter.ToListAsync(query
+            var candidateQuestions = await AsyncExecuter.ToListAsync(query
                 .OrderBy(x => x.SortOrder)
-                .ThenBy(x => x.CreationTime)
-                .Take(remainingTargetCount));
+                .ThenBy(x => x.CreationTime));
+            var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(candidateQuestions.Select(x => x.Id).ToList());
+            var selectedQuestions = candidateQuestions
+                .Where(x => readinessMap.GetValueOrDefault(x.Id))
+                .Take(remainingTargetCount)
+                .ToList();
 
             foreach (var selectedQuestion in selectedQuestions)
             {
@@ -753,7 +898,7 @@ public class ExamAppService : ElearningAppService, IExamAppService
         };
     }
 
-    private static ExamDto MapToDto(Exam exam, int assignedQuestionCount)
+    private static ExamDto MapToDto(Exam exam, AssignmentReadiness readiness)
     {
         return new ExamDto
         {
@@ -766,7 +911,11 @@ public class ExamAppService : ElearningAppService, IExamAppService
             SelectionMode = exam.SelectionMode,
             DurationMinutes = exam.DurationMinutes,
             TotalQuestionCount = exam.TotalQuestionCount,
-            AssignedQuestionCount = assignedQuestionCount,
+            AssignedQuestionCount = readiness.AssignedQuestionCount,
+            ValidAssignedQuestionCount = readiness.ValidAssignedQuestionCount,
+            InvalidQuestionCount = readiness.InvalidQuestionCount,
+            MissingQuestionCount = Math.Max(0, exam.TotalQuestionCount - readiness.ValidAssignedQuestionCount),
+            IsReady = readiness.ValidAssignedQuestionCount >= exam.TotalQuestionCount,
             PassingScore = exam.PassingScore,
             ShuffleQuestions = exam.ShuffleQuestions,
             ShuffleOptions = exam.ShuffleOptions,
@@ -857,5 +1006,22 @@ public class ExamAppService : ElearningAppService, IExamAppService
         public required TAssignment Assignment { get; init; }
 
         public required Question Question { get; init; }
+    }
+
+    private sealed class AssignmentReadiness
+    {
+        public static AssignmentReadiness Empty { get; } = new(0, 0);
+
+        public AssignmentReadiness(int assignedQuestionCount, int validAssignedQuestionCount)
+        {
+            AssignedQuestionCount = assignedQuestionCount;
+            ValidAssignedQuestionCount = validAssignedQuestionCount;
+        }
+
+        public int AssignedQuestionCount { get; }
+
+        public int ValidAssignedQuestionCount { get; }
+
+        public int InvalidQuestionCount => Math.Max(0, AssignedQuestionCount - ValidAssignedQuestionCount);
     }
 }

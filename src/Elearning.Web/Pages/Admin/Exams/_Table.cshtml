@@ -18,7 +18,6 @@ else
                     <th>@L["Exams:AccessLevel"]</th>
                     <th>@L["Exams:SelectionMode"]</th>
                     <th>@L["Exams:QuestionCount"]</th>
-                    <th>@L["Exams:Status"]</th>
                     <th class="text-end">@L["Exams:Actions"]</th>
                 </tr>
             </thead>
@@ -33,12 +32,6 @@ else
                         <td>@L[$"Enum:ExamAccessLevel:{exam.AccessLevel}"]</td>
                         <td>@L[$"Enum:ExamSelectionMode:{exam.SelectionMode}"]</td>
                         <td>@exam.AssignedQuestionCount / @exam.TotalQuestionCount</td>
-                        <td>
-                            <span class="badge @GetStatusBadge(exam.Status)">@L[$"Enum:ExamStatus:{exam.Status}"]</span>
-                            <span class="badge @(exam.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
-                                @(exam.IsActive ? L["Exams:IsActive"] : L["Exams:Inactive"])
-                            </span>
-                        </td>
                         <td class="text-end">
                             <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                 <a class="btn btn-sm btn-outline-secondary" href="/admin/exams/preview/@exam.Id">@L["Exams:Preview"]</a>
@@ -84,16 +77,4 @@ else
             }
         </div>
     </nav>
-}
-
-@functions {
-    private static string GetStatusBadge(ExamStatus status)
-    {
-        return status switch
-        {
-            ExamStatus.Published => "bg-success-subtle text-success-emphasis",
-            ExamStatus.Archived => "bg-secondary-subtle text-secondary-emphasis",
-            _ => "bg-info-subtle text-info-emphasis"
-        };
-    }
 }

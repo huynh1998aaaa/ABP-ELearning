@@ -27,7 +27,6 @@ else
                     <th>@L["Questions:QuestionType"]</th>
                     <th>@L["Questions:Difficulty"]</th>
                     <th>@L["Questions:Score"]</th>
-                    <th>@L["Questions:Status"]</th>
                     <th class="text-end">@L["Questions:Actions"]</th>
                 </tr>
             </thead>
@@ -53,12 +52,6 @@ else
                         <td>@question.QuestionTypeName</td>
                         <td>@L[$"Enum:QuestionDifficulty:{question.Difficulty}"]</td>
                         <td>@question.Score</td>
-                        <td>
-                            <span class="badge bg-info-subtle text-info-emphasis">@L[$"Enum:QuestionStatus:{question.Status}"]</span>
-                            <span class="badge @(question.IsActive ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
-                                @(question.IsActive ? L["Questions:IsActive"] : L["Questions:Inactive"])
-                            </span>
-                        </td>
                         <td class="text-end">
                             <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                 <a class="btn btn-sm btn-outline-secondary" href="/admin/questions/preview/@question.Id">@L["Questions:Preview"]</a>

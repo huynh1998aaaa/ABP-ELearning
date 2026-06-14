@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Elearning.Exams;
 using Elearning.Practices;
 using Elearning.PremiumSubscriptions;
+using Elearning.Questions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Domain.Repositories;
 
@@ -18,18 +19,21 @@ public class ClientLearningPortalAppService : ElearningAppService, IClientLearni
     private readonly IRepository<ExamQuestion, Guid> _examQuestionRepository;
     private readonly IRepository<PracticeSet, Guid> _practiceSetRepository;
     private readonly IRepository<PracticeQuestion, Guid> _practiceQuestionRepository;
+    private readonly QuestionRuntimeReadinessProvider _questionRuntimeReadinessProvider;
 
     public ClientLearningPortalAppService(
         IRepository<Exam, Guid> examRepository,
         IRepository<ExamQuestion, Guid> examQuestionRepository,
         IRepository<PracticeSet, Guid> practiceSetRepository,
         IRepository<PracticeQuestion, Guid> practiceQuestionRepository,
+        QuestionRuntimeReadinessProvider questionRuntimeReadinessProvider,
         ICurrentUserPremiumAppService currentUserPremiumAppService)
     {
         _examRepository = examRepository;
         _examQuestionRepository = examQuestionRepository;
         _practiceSetRepository = practiceSetRepository;
         _practiceQuestionRepository = practiceQuestionRepository;
+        _questionRuntimeReadinessProvider = questionRuntimeReadinessProvider;
         _currentUserPremiumAppService = currentUserPremiumAppService;
     }
 
@@ -60,83 +64,134 @@ public class ClientLearningPortalAppService : ElearningAppService, IClientLearni
     {
         var query = await _examRepository.GetQueryableAsync();
         var exams = await AsyncExecuter.ToListAsync(query
-            .Where(x => x.Status == ExamStatus.Published && x.IsActive)
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.Title));
-        var questionCounts = await GetExamQuestionCountsAsync(exams.Select(x => x.Id).ToList());
+        var readinessMap = await GetExamReadinessAsync(exams);
 
-        return exams.Select(x => new ClientLearningItemDto
+        return exams.Select(x =>
         {
-            Id = x.Id,
-            Kind = ClientLearningItemKind.Exam,
-            Code = x.Code,
-            Title = x.Title,
-            Description = x.Description,
-            AccessLevel = x.AccessLevel == ExamAccessLevel.Premium
-                ? ClientLearningAccessLevel.Premium
-                : ClientLearningAccessLevel.Free,
-            SelectionMode = x.SelectionMode == ExamSelectionMode.Random
-                ? ClientLearningSelectionMode.Random
-                : ClientLearningSelectionMode.Fixed,
-            TotalQuestionCount = x.TotalQuestionCount,
-            AssignedQuestionCount = questionCounts.GetValueOrDefault(x.Id),
-            IsLocked = x.AccessLevel == ExamAccessLevel.Premium && !isPremium,
-            ShowExplanation = false,
-            SortOrder = x.SortOrder
-        }).ToList();
+            var readiness = readinessMap.GetValueOrDefault(x.Id, AssignmentReadiness.Empty);
+            return new ClientLearningItemDto
+            {
+                Id = x.Id,
+                Kind = ClientLearningItemKind.Exam,
+                Code = x.Code,
+                Title = x.Title,
+                Description = x.Description,
+                AccessLevel = x.AccessLevel == ExamAccessLevel.Premium
+                    ? ClientLearningAccessLevel.Premium
+                    : ClientLearningAccessLevel.Free,
+                SelectionMode = x.SelectionMode == ExamSelectionMode.Random
+                    ? ClientLearningSelectionMode.Random
+                    : ClientLearningSelectionMode.Fixed,
+                TotalQuestionCount = x.TotalQuestionCount,
+                AssignedQuestionCount = readiness.AssignedQuestionCount,
+                ValidAssignedQuestionCount = readiness.ValidAssignedQuestionCount,
+                IsReady = readiness.ValidAssignedQuestionCount >= x.TotalQuestionCount,
+                IsLocked = x.AccessLevel == ExamAccessLevel.Premium && !isPremium,
+                ShowExplanation = false,
+                SortOrder = x.SortOrder
+            };
+        })
+            .Where(x => x.IsReady)
+            .ToList();
     }
 
     private async Task<List<ClientLearningItemDto>> GetPracticeItemsAsync(bool isPremium)
     {
         var query = await _practiceSetRepository.GetQueryableAsync();
         var practiceSets = await AsyncExecuter.ToListAsync(query
-            .Where(x => x.Status == PracticeStatus.Published && x.IsActive)
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.Title));
-        var questionCounts = await GetPracticeQuestionCountsAsync(practiceSets.Select(x => x.Id).ToList());
+        var readinessMap = await GetPracticeReadinessAsync(practiceSets);
 
-        return practiceSets.Select(x => new ClientLearningItemDto
+        return practiceSets.Select(x =>
         {
-            Id = x.Id,
-            Kind = ClientLearningItemKind.Practice,
-            Code = x.Code,
-            Title = x.Title,
-            Description = x.Description,
-            AccessLevel = x.AccessLevel == PracticeAccessLevel.Premium
-                ? ClientLearningAccessLevel.Premium
-                : ClientLearningAccessLevel.Free,
-            SelectionMode = x.SelectionMode == PracticeSelectionMode.Random
-                ? ClientLearningSelectionMode.Random
-                : ClientLearningSelectionMode.Fixed,
-            TotalQuestionCount = x.TotalQuestionCount,
-            AssignedQuestionCount = questionCounts.GetValueOrDefault(x.Id),
-            IsLocked = x.AccessLevel == PracticeAccessLevel.Premium && !isPremium,
-            ShowExplanation = x.ShowExplanation,
-            SortOrder = x.SortOrder
-        }).ToList();
+            var readiness = readinessMap.GetValueOrDefault(x.Id, AssignmentReadiness.Empty);
+            return new ClientLearningItemDto
+            {
+                Id = x.Id,
+                Kind = ClientLearningItemKind.Practice,
+                Code = x.Code,
+                Title = x.Title,
+                Description = x.Description,
+                AccessLevel = x.AccessLevel == PracticeAccessLevel.Premium
+                    ? ClientLearningAccessLevel.Premium
+                    : ClientLearningAccessLevel.Free,
+                SelectionMode = x.SelectionMode == PracticeSelectionMode.Random
+                    ? ClientLearningSelectionMode.Random
+                    : ClientLearningSelectionMode.Fixed,
+                TotalQuestionCount = x.TotalQuestionCount,
+                AssignedQuestionCount = readiness.AssignedQuestionCount,
+                ValidAssignedQuestionCount = readiness.ValidAssignedQuestionCount,
+                IsReady = readiness.ValidAssignedQuestionCount >= x.TotalQuestionCount,
+                IsLocked = x.AccessLevel == PracticeAccessLevel.Premium && !isPremium,
+                ShowExplanation = x.ShowExplanation,
+                SortOrder = x.SortOrder
+            };
+        })
+            .Where(x => x.IsReady)
+            .ToList();
     }
 
-    private async Task<Dictionary<Guid, int>> GetExamQuestionCountsAsync(IReadOnlyList<Guid> examIds)
+    private async Task<Dictionary<Guid, AssignmentReadiness>> GetExamReadinessAsync(IReadOnlyList<Exam> exams)
     {
-        if (examIds.Count == 0)
+        var result = exams.ToDictionary(x => x.Id, _ => AssignmentReadiness.Empty);
+        if (exams.Count == 0)
         {
-            return new Dictionary<Guid, int>();
+            return result;
         }
 
+        var examIds = exams.Select(x => x.Id).ToList();
         var query = await _examQuestionRepository.GetQueryableAsync();
         var rows = await AsyncExecuter.ToListAsync(query.Where(x => examIds.Contains(x.ExamId)));
-        return rows.GroupBy(x => x.ExamId).ToDictionary(x => x.Key, x => x.Count());
-    }
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(rows.Select(x => x.QuestionId).Distinct().ToList());
 
-    private async Task<Dictionary<Guid, int>> GetPracticeQuestionCountsAsync(IReadOnlyList<Guid> practiceSetIds)
-    {
-        if (practiceSetIds.Count == 0)
+        foreach (var group in rows.GroupBy(x => x.ExamId))
         {
-            return new Dictionary<Guid, int>();
+            result[group.Key] = new AssignmentReadiness(
+                group.Count(),
+                group.Count(x => readinessMap.GetValueOrDefault(x.QuestionId)));
         }
 
+        return result;
+    }
+
+    private async Task<Dictionary<Guid, AssignmentReadiness>> GetPracticeReadinessAsync(IReadOnlyList<PracticeSet> practiceSets)
+    {
+        var result = practiceSets.ToDictionary(x => x.Id, _ => AssignmentReadiness.Empty);
+        if (practiceSets.Count == 0)
+        {
+            return result;
+        }
+
+        var practiceSetIds = practiceSets.Select(x => x.Id).ToList();
         var query = await _practiceQuestionRepository.GetQueryableAsync();
         var rows = await AsyncExecuter.ToListAsync(query.Where(x => practiceSetIds.Contains(x.PracticeSetId)));
-        return rows.GroupBy(x => x.PracticeSetId).ToDictionary(x => x.Key, x => x.Count());
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(rows.Select(x => x.QuestionId).Distinct().ToList());
+
+        foreach (var group in rows.GroupBy(x => x.PracticeSetId))
+        {
+            result[group.Key] = new AssignmentReadiness(
+                group.Count(),
+                group.Count(x => readinessMap.GetValueOrDefault(x.QuestionId)));
+        }
+
+        return result;
+    }
+
+    private sealed class AssignmentReadiness
+    {
+        public static AssignmentReadiness Empty { get; } = new(0, 0);
+
+        public AssignmentReadiness(int assignedQuestionCount, int validAssignedQuestionCount)
+        {
+            AssignedQuestionCount = assignedQuestionCount;
+            ValidAssignedQuestionCount = validAssignedQuestionCount;
+        }
+
+        public int AssignedQuestionCount { get; }
+
+        public int ValidAssignedQuestionCount { get; }
     }
 }

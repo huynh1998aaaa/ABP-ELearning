@@ -327,11 +327,6 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
     {
         var exam = await _examRepository.GetAsync(examId);
 
-        if (exam.Status != ExamStatus.Published || !exam.IsActive)
-        {
-            throw new UserFriendlyException(L["Client:ItemNotAvailable"]);
-        }
-
         if (exam.AccessLevel == ExamAccessLevel.Premium && !isPremiumUser)
         {
             throw new UserFriendlyException(L["Client:PremiumRequired"]);
@@ -373,11 +368,6 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
     private async Task<PreparedLearningSession> PreparePracticeSessionAsync(Guid practiceSetId, bool isPremiumUser)
     {
         var practiceSet = await _practiceSetRepository.GetAsync(practiceSetId);
-
-        if (practiceSet.Status != PracticeStatus.Published || !practiceSet.IsActive)
-        {
-            throw new UserFriendlyException(L["Client:ItemNotAvailable"]);
-        }
 
         if (practiceSet.AccessLevel == PracticeAccessLevel.Premium && !isPremiumUser)
         {
@@ -451,11 +441,6 @@ public class ClientLearningSessionAppService : ElearningAppService, IClientLearn
             }
 
             if (!typeLookup.TryGetValue(question.QuestionTypeId, out var questionType))
-            {
-                throw new UserFriendlyException(L["Client:ItemNotReady"]);
-            }
-
-            if (question.Status != QuestionStatus.Published || !question.IsActive)
             {
                 throw new UserFriendlyException(L["Client:ItemNotReady"]);
             }

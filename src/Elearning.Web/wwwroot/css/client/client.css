@@ -251,6 +251,12 @@ body.premium-contact-modal-open {
     text-align: center;
 }
 
+.client-announcement-warning {
+    border-color: #f7b4a4;
+    background: #fff3ef;
+    color: #bd3b22;
+}
+
 .learning-section {
     max-width: 1290px;
     margin-bottom: 2.2rem;

@@ -29,9 +29,6 @@ public class IndexModel : ElearningAdminPageModel
     public string? Filter { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public PracticeStatus? Status { get; set; }
-
-    [BindProperty(SupportsGet = true)]
     public PracticeAccessLevel? AccessLevel { get; set; }
 
     [BindProperty(SupportsGet = true)]
@@ -43,12 +40,6 @@ public class IndexModel : ElearningAdminPageModel
     public IReadOnlyList<PracticeSetDto> PracticeSets { get; private set; } = Array.Empty<PracticeSetDto>();
 
     public long TotalCount { get; private set; }
-
-    public int PublishedCount { get; private set; }
-
-    public int DraftCount { get; private set; }
-
-    public int ArchivedCount { get; private set; }
 
     public bool CanCreate { get; private set; }
 
@@ -78,7 +69,7 @@ public class IndexModel : ElearningAdminPageModel
         try
         {
             await _practiceSetAppService.DeleteAsync(id);
-            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, Status, AccessLevel, SelectionMode, CurrentPage });
+            return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, AccessLevel, SelectionMode, CurrentPage });
         }
         catch (Exception ex) when (IsAjaxRequest)
         {
@@ -110,15 +101,11 @@ public class IndexModel : ElearningAdminPageModel
             MaxResultCount = 1000,
             SkipCount = 0,
             Filter = Filter,
-            Status = Status,
             AccessLevel = AccessLevel,
             SelectionMode = SelectionMode
         });
 
         TotalCount = allItems.TotalCount;
-        PublishedCount = allItems.Items.Count(x => x.Status == PracticeStatus.Published);
-        DraftCount = allItems.Items.Count(x => x.Status == PracticeStatus.Draft);
-        ArchivedCount = allItems.Items.Count(x => x.Status == PracticeStatus.Archived);
         PracticeSets = allItems.Items.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
     }
 
@@ -140,10 +127,6 @@ public class IndexModel : ElearningAdminPageModel
         if (!string.IsNullOrWhiteSpace(Filter))
         {
             yield return $"filter={Uri.EscapeDataString(Filter)}";
-        }
-        if (Status.HasValue)
-        {
-            yield return $"status={Status.Value}";
         }
         if (AccessLevel.HasValue)
         {

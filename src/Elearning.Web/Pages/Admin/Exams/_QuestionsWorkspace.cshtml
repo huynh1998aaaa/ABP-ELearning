@@ -1,10 +1,50 @@
 @model Elearning.Web.Pages.Admin.Exams.QuestionsModel
+@using Elearning.Exams
 @using Elearning.Localization
 @using Elearning.Questions
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
 
 <div class="admin-question-workspace">
+    <section class="card admin-workspace-panel admin-workspace-panel-full">
+        <div class="card-header admin-workspace-panel-header">
+            <div>
+                <div class="fw-semibold">@L["Exams:QuestionReadinessTitle"]</div>
+                <div class="text-muted small">
+                    @L["Exams:QuestionReadinessSummary", Model.Exam.ValidAssignedQuestionCount, Model.Exam.TotalQuestionCount, Model.Exam.InvalidQuestionCount]
+                </div>
+            </div>
+            <span class="badge @(Model.Exam.IsReady ? "bg-success-subtle text-success-emphasis" : "bg-warning-subtle text-warning-emphasis")">
+                @(Model.Exam.IsReady ? L["Exams:QuestionReadinessReady"] : L["Exams:QuestionReadinessNotReady"])
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="admin-workspace-bulk-actions">
+                <form method="post"
+                      asp-page-handler="AddByCount"
+                      data-admin-ajax-form="true"
+                      data-admin-refresh-target="#examQuestionsWorkspace"
+                      class="admin-inline-form">
+                    <label class="form-label mb-0" for="examTargetQuestionCount">@L["Exams:BulkTargetQuestionCount"]</label>
+                    <input id="examTargetQuestionCount"
+                           name="AddByCountInput.TargetQuestionCount"
+                           type="number"
+                           min="1"
+                           max="@ExamConsts.MaxQuestionCount"
+                           class="form-control form-control-sm admin-number-input"
+                           value="@Model.AddByCountInput.TargetQuestionCount" />
+                    <button type="submit" class="btn btn-sm btn-primary">@L["Exams:BulkAddByCount"]</button>
+                </form>
+                <form method="post"
+                      asp-page-handler="AddAll"
+                      data-admin-ajax-form="true"
+                      data-admin-refresh-target="#examQuestionsWorkspace">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">@L["Exams:BulkAddAll"]</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
     <section class="card admin-workspace-panel admin-workspace-panel-full">
         <div class="card-header admin-workspace-panel-header">
             <div>

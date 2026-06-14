@@ -21,6 +21,14 @@ public class PracticeSetDto : FullAuditedEntityDto<Guid>
 
     public int AssignedQuestionCount { get; set; }
 
+    public int ValidAssignedQuestionCount { get; set; }
+
+    public int MissingQuestionCount { get; set; }
+
+    public int InvalidQuestionCount { get; set; }
+
+    public bool IsReady { get; set; }
+
     public bool ShuffleQuestions { get; set; }
 
     public bool ShuffleOptions { get; set; }

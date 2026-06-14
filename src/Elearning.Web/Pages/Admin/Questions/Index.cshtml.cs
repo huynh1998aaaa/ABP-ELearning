@@ -39,9 +39,6 @@ public class IndexModel : ElearningAdminPageModel
     public QuestionDifficulty? Difficulty { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public QuestionStatus? Status { get; set; }
-
-    [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
 
     [BindProperty]
@@ -52,12 +49,6 @@ public class IndexModel : ElearningAdminPageModel
     public IReadOnlyList<QuestionTypeDto> QuestionTypes { get; private set; } = Array.Empty<QuestionTypeDto>();
 
     public long TotalCount { get; private set; }
-
-    public int PublishedCount { get; private set; }
-
-    public int DraftCount { get; private set; }
-
-    public int ArchivedCount { get; private set; }
 
     public bool CanCreate { get; private set; }
 
@@ -107,14 +98,10 @@ public class IndexModel : ElearningAdminPageModel
             SkipCount = 0,
             Filter = Filter,
             QuestionTypeId = QuestionTypeId,
-            Difficulty = Difficulty,
-            Status = Status
+            Difficulty = Difficulty
         });
 
         TotalCount = allQuestions.TotalCount;
-        PublishedCount = allQuestions.Items.Count(x => x.Status == QuestionStatus.Published);
-        DraftCount = allQuestions.Items.Count(x => x.Status == QuestionStatus.Draft);
-        ArchivedCount = allQuestions.Items.Count(x => x.Status == QuestionStatus.Archived);
         Questions = allQuestions.Items.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
     }
 
@@ -133,7 +120,7 @@ public class IndexModel : ElearningAdminPageModel
             return AjaxError(ex);
         }
 
-        return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+        return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, CurrentPage });
     }
 
     public async Task<IActionResult> OnPostBulkDeleteAsync()
@@ -151,7 +138,7 @@ public class IndexModel : ElearningAdminPageModel
             return AjaxError(ex);
         }
 
-        return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, Status, CurrentPage });
+        return RedirectToPage(new { Filter, QuestionTypeId, Difficulty, CurrentPage });
     }
 
     private string BuildBulkDeleteMessage(BulkQuestionActionResultDto result)
@@ -176,10 +163,6 @@ public class IndexModel : ElearningAdminPageModel
         {
             query.Add($"difficulty={Difficulty}");
         }
-        if (Status.HasValue)
-        {
-            query.Add($"status={Status}");
-        }
 
         return "/admin/questions?" + string.Join("&", query);
     }
@@ -198,10 +181,6 @@ public class IndexModel : ElearningAdminPageModel
         if (Difficulty.HasValue)
         {
             query.Add($"difficulty={Difficulty}");
-        }
-        if (Status.HasValue)
-        {
-            query.Add($"status={Status}");
         }
 
         return "/admin/questions?" + string.Join("&", query);

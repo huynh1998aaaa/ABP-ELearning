@@ -45,11 +45,6 @@ public class SubjectAppService : ElearningAppService, ISubjectAppService
                 (x.Description != null && x.Description.Contains(filter)));
         }
 
-        if (input.IsActive.HasValue)
-        {
-            query = query.Where(x => x.IsActive == input.IsActive.Value);
-        }
-
         var totalCount = await AsyncExecuter.CountAsync(query);
         var items = await AsyncExecuter.ToListAsync(ApplySorting(query, input.Sorting)
             .Skip(input.SkipCount)
@@ -78,10 +73,7 @@ public class SubjectAppService : ElearningAppService, ISubjectAppService
             input.SortOrder,
             input.Description);
 
-        if (!input.IsActive)
-        {
-            subject.Deactivate();
-        }
+        subject.Activate();
 
         await _subjectRepository.InsertAsync(subject, autoSave: true);
         return MapToDto(subject);
@@ -99,6 +91,7 @@ public class SubjectAppService : ElearningAppService, ISubjectAppService
             input.Name,
             input.Description,
             input.SortOrder);
+        subject.Activate();
 
         await _subjectRepository.UpdateAsync(subject, autoSave: true);
         return MapToDto(subject);

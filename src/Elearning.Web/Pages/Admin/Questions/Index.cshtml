@@ -20,30 +20,6 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <span>@L["Questions:Stats:Published"]</span>
-                <div class="fs-2 fw-bold">@Model.PublishedCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <span>@L["Questions:Stats:Draft"]</span>
-                <div class="fs-2 fw-bold">@Model.DraftCount</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <span>@L["Questions:Stats:Archived"]</span>
-                <div class="fs-2 fw-bold">@Model.ArchivedCount</div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="card">
@@ -87,15 +63,6 @@
                     }
                 </select>
             </div>
-            <div class="col-lg-2">
-                <select asp-for="Status" class="form-select">
-                    <option value="">@L["Questions:AllStatuses"]</option>
-                    @foreach (var status in Enum.GetValues<QuestionStatus>())
-                    {
-                        <option value="@status">@L[$"Enum:QuestionStatus:{status}"]</option>
-                    }
-                </select>
-            </div>
             <div class="col-lg-2 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">@L["Questions:Search"]</button>
                 <a class="btn btn-outline-secondary" href="/admin/questions">@L["Questions:Reset"]</a>
@@ -117,7 +84,6 @@
                 <input type="hidden" name="Filter" value="@Model.Filter" />
                 <input type="hidden" name="QuestionTypeId" value="@Model.QuestionTypeId" />
                 <input type="hidden" name="Difficulty" value="@Model.Difficulty" />
-                <input type="hidden" name="Status" value="@Model.Status" />
                 <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
                 <span data-admin-selection-container></span>
                 <button type="submit" class="btn btn-outline-danger btn-sm" data-admin-bulk-submit disabled>

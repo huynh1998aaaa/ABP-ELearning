@@ -639,6 +639,18 @@ body:has(.admin-login-shell) {
     gap: 0.55rem;
 }
 
+.admin-workspace-bulk-actions,
+.admin-inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.admin-number-input {
+    max-width: 120px;
+}
+
 .admin-workspace-split {
     display: grid;
     grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);

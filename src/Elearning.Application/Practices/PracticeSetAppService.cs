@@ -21,6 +21,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
     private readonly IRepository<PracticeQuestion, Guid> _practiceQuestionRepository;
     private readonly IRepository<Question, Guid> _questionRepository;
     private readonly IRepository<QuestionType, Guid> _questionTypeRepository;
+    private readonly QuestionRuntimeReadinessProvider _questionRuntimeReadinessProvider;
     private readonly IGuidGenerator _guidGenerator;
 
     public PracticeSetAppService(
@@ -29,6 +30,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         IRepository<PracticeQuestion, Guid> practiceQuestionRepository,
         IRepository<Question, Guid> questionRepository,
         IRepository<QuestionType, Guid> questionTypeRepository,
+        QuestionRuntimeReadinessProvider questionRuntimeReadinessProvider,
         IGuidGenerator guidGenerator)
     {
         _practiceSetRepository = practiceSetRepository;
@@ -36,6 +38,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         _practiceQuestionRepository = practiceQuestionRepository;
         _questionRepository = questionRepository;
         _questionTypeRepository = questionTypeRepository;
+        _questionRuntimeReadinessProvider = questionRuntimeReadinessProvider;
         _guidGenerator = guidGenerator;
     }
 
@@ -52,11 +55,6 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
                 (x.Description != null && x.Description.Contains(filter)));
         }
 
-        if (input.Status.HasValue)
-        {
-            query = query.Where(x => x.Status == input.Status.Value);
-        }
-
         if (input.AccessLevel.HasValue)
         {
             query = query.Where(x => x.AccessLevel == input.AccessLevel.Value);
@@ -67,28 +65,23 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             query = query.Where(x => x.SelectionMode == input.SelectionMode.Value);
         }
 
-        if (input.IsActive.HasValue)
-        {
-            query = query.Where(x => x.IsActive == input.IsActive.Value);
-        }
-
         var totalCount = await AsyncExecuter.CountAsync(query);
         var practiceSets = await AsyncExecuter.ToListAsync(ApplySorting(query, input.Sorting)
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount));
 
-        var questionCounts = await GetQuestionCountsAsync(practiceSets.Select(x => x.Id).ToList());
+        var readinessMap = await GetReadinessByPracticeSetIdsAsync(practiceSets);
 
         return new PagedResultDto<PracticeSetDto>(
             totalCount,
-            practiceSets.Select(x => MapToDto(x, questionCounts.GetValueOrDefault(x.Id))).ToList());
+            practiceSets.Select(x => MapToDto(x, readinessMap.GetValueOrDefault(x.Id, AssignmentReadiness.Empty))).ToList());
     }
 
     public async Task<PracticeSetDto> GetAsync(Guid id)
     {
         var practiceSet = await _practiceSetRepository.GetAsync(id);
-        var questionCount = await GetQuestionCountAsync(id);
-        return MapToDto(practiceSet, questionCount);
+        var readinessMap = await GetReadinessByPracticeSetIdsAsync(new List<PracticeSet> { practiceSet });
+        return MapToDto(practiceSet, readinessMap.GetValueOrDefault(practiceSet.Id, AssignmentReadiness.Empty));
     }
 
     [Authorize(ElearningPermissions.Practices.Create)]
@@ -110,13 +103,11 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             input.ShuffleOptions,
             input.ShowExplanation);
 
-        if (!input.IsActive)
-        {
-            practiceSet.Deactivate();
-        }
+        practiceSet.Activate();
+        practiceSet.Publish(Clock.Now);
 
         await _practiceSetRepository.InsertAsync(practiceSet, autoSave: true);
-        return MapToDto(practiceSet, 0);
+        return MapToDto(practiceSet, AssignmentReadiness.Empty);
     }
 
     [Authorize(ElearningPermissions.Practices.Update)]
@@ -137,9 +128,12 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             input.ShuffleOptions,
             input.ShowExplanation,
             input.SortOrder);
+        practiceSet.Activate();
+        practiceSet.Publish(Clock.Now);
 
         await _practiceSetRepository.UpdateAsync(practiceSet, autoSave: true);
-        return MapToDto(practiceSet, await GetQuestionCountAsync(id));
+        var readinessMap = await GetReadinessByPracticeSetIdsAsync(new List<PracticeSet> { practiceSet });
+        return MapToDto(practiceSet, readinessMap.GetValueOrDefault(practiceSet.Id, AssignmentReadiness.Empty));
     }
 
     [Authorize(ElearningPermissions.Practices.Delete)]
@@ -153,22 +147,23 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
     public async Task PublishAsync(Guid id)
     {
         var practiceSet = await _practiceSetRepository.GetAsync(id);
-        var questionCount = await GetQuestionCountAsync(id);
+        var readinessMap = await GetReadinessByPracticeSetIdsAsync(new List<PracticeSet> { practiceSet });
+        var readiness = readinessMap.GetValueOrDefault(id, AssignmentReadiness.Empty);
         EnsureCanPublish(practiceSet);
 
-        if (questionCount == 0)
+        if (readiness.AssignedQuestionCount == 0)
         {
             throw new UserFriendlyException(L["Practices:CannotPublishWithoutQuestions"]);
         }
 
-        if (questionCount < practiceSet.TotalQuestionCount)
+        if (readiness.ValidAssignedQuestionCount < practiceSet.TotalQuestionCount)
         {
-            throw new UserFriendlyException(L["Practices:AssignedQuestionsBelowTarget", practiceSet.TotalQuestionCount, questionCount]);
+            throw new UserFriendlyException(L["Practices:AssignedQuestionsBelowTarget", practiceSet.TotalQuestionCount, readiness.ValidAssignedQuestionCount]);
         }
 
-        if (practiceSet.SelectionMode == PracticeSelectionMode.Random && practiceSet.TotalQuestionCount > questionCount)
+        if (practiceSet.SelectionMode == PracticeSelectionMode.Random && practiceSet.TotalQuestionCount > readiness.ValidAssignedQuestionCount)
         {
-            throw new UserFriendlyException(L["Practices:RandomCountExceedsPool", practiceSet.TotalQuestionCount, questionCount]);
+            throw new UserFriendlyException(L["Practices:RandomCountExceedsPool", practiceSet.TotalQuestionCount, readiness.ValidAssignedQuestionCount]);
         }
 
         await EnsureAssignedQuestionsCanBePublishedAsync(id);
@@ -250,10 +245,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
 
         var assignedQuestionIds = (await GetPracticeQuestionsByPracticeSetIdAsync(practiceSetId)).Select(x => x.QuestionId).ToList();
         var questionQuery = await _questionRepository.GetQueryableAsync();
-        questionQuery = questionQuery.Where(x =>
-            x.IsActive &&
-            x.Status == QuestionStatus.Published &&
-            !assignedQuestionIds.Contains(x.Id));
+        questionQuery = questionQuery.Where(x => !assignedQuestionIds.Contains(x.Id));
 
         if (!input.Filter.IsNullOrWhiteSpace())
         {
@@ -264,10 +256,17 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
                 (x.Explanation != null && x.Explanation.Contains(filter)));
         }
 
-        var totalCount = await AsyncExecuter.CountAsync(questionQuery);
-        var questions = await AsyncExecuter.ToListAsync(ApplyQuestionSorting(questionQuery, input.Sorting)
+        var allQuestions = await AsyncExecuter.ToListAsync(ApplyQuestionSorting(questionQuery, input.Sorting));
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(allQuestions.Select(x => x.Id).ToList());
+        var readyQuestions = allQuestions
+            .Where(x => readinessMap.GetValueOrDefault(x.Id))
+            .ToList();
+
+        var totalCount = readyQuestions.Count;
+        var questions = readyQuestions
             .Skip(input.SkipCount)
-            .Take(input.MaxResultCount));
+            .Take(input.MaxResultCount)
+            .ToList();
 
         var typeMap = await GetQuestionTypeMapAsync(questions.Select(x => x.QuestionTypeId).Distinct().ToList());
 
@@ -292,6 +291,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         await _practiceSetRepository.GetAsync(practiceSetId);
         var question = await _questionRepository.GetAsync(input.QuestionId);
         EnsureQuestionCanBeUsed(question);
+        await EnsureQuestionIsReadyForRuntimeAsync(question.Id);
 
         var practiceQuestionQuery = await _practiceQuestionRepository.GetQueryableAsync();
         if (await AsyncExecuter.AnyAsync(practiceQuestionQuery.Where(x => x.PracticeSetId == practiceSetId && x.QuestionId == input.QuestionId)))
@@ -557,17 +557,8 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         }
     }
 
-    private void EnsureQuestionCanBeUsed(Question question)
+    private static void EnsureQuestionCanBeUsed(Question question)
     {
-        if (!question.IsActive)
-        {
-            throw new UserFriendlyException(L["Practices:InactiveQuestionCannotBeUsed"]);
-        }
-
-        if (question.Status != QuestionStatus.Published)
-        {
-            throw new UserFriendlyException(L["Practices:UnpublishedQuestionCannotBeUsed"]);
-        }
     }
 
     private async Task EnsureAssignedQuestionsCanBePublishedAsync(Guid practiceSetId)
@@ -579,12 +570,24 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         }
 
         var questionMap = await GetQuestionMapAsync(practiceQuestions.Select(x => x.QuestionId).Distinct().ToList());
-        if (practiceQuestions.Any(x =>
-                !questionMap.TryGetValue(x.QuestionId, out var question) ||
-                !question.IsActive ||
-                question.Status != QuestionStatus.Published))
+        if (practiceQuestions.Any(x => !questionMap.ContainsKey(x.QuestionId)))
         {
             throw new UserFriendlyException(L["Practices:AssignedQuestionsMustBePublished"]);
+        }
+
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(practiceQuestions.Select(x => x.QuestionId).Distinct().ToList());
+        if (practiceQuestions.Any(x => !readinessMap.GetValueOrDefault(x.QuestionId)))
+        {
+            throw new UserFriendlyException(L["Practices:AssignedQuestionsMustBeReady"]);
+        }
+    }
+
+    private async Task EnsureQuestionIsReadyForRuntimeAsync(Guid questionId)
+    {
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(new List<Guid> { questionId });
+        if (!readinessMap.GetValueOrDefault(questionId))
+        {
+            throw new UserFriendlyException(L["Practices:QuestionNotReadyForRuntime"]);
         }
     }
 
@@ -629,6 +632,29 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         return practiceQuestions.Count == 0 ? 10 : practiceQuestions.Max(x => x.SortOrder) + 10;
     }
 
+    private async Task<Dictionary<Guid, AssignmentReadiness>> GetReadinessByPracticeSetIdsAsync(IReadOnlyList<PracticeSet> practiceSets)
+    {
+        var result = practiceSets.ToDictionary(x => x.Id, _ => AssignmentReadiness.Empty);
+        if (practiceSets.Count == 0)
+        {
+            return result;
+        }
+
+        var practiceSetIds = practiceSets.Select(x => x.Id).ToList();
+        var query = await _practiceQuestionRepository.GetQueryableAsync();
+        var practiceQuestions = await AsyncExecuter.ToListAsync(query.Where(x => practiceSetIds.Contains(x.PracticeSetId)));
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(practiceQuestions.Select(x => x.QuestionId).Distinct().ToList());
+
+        foreach (var group in practiceQuestions.GroupBy(x => x.PracticeSetId))
+        {
+            var assignedQuestionCount = group.Count();
+            var validAssignedQuestionCount = group.Count(x => readinessMap.GetValueOrDefault(x.QuestionId));
+            result[group.Key] = new AssignmentReadiness(assignedQuestionCount, validAssignedQuestionCount);
+        }
+
+        return result;
+    }
+
     private async Task AddPracticeQuestionsAsync(Guid practiceSetId, IReadOnlyList<Question> questions)
     {
         if (questions.Count == 0)
@@ -670,12 +696,11 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
     private async Task<int> CountEligibleAvailableQuestionsAsync(IReadOnlyList<Guid> assignedQuestionIds)
     {
         var query = await _questionRepository.GetQueryableAsync();
-        query = query.Where(x =>
-            x.IsActive &&
-            x.Status == QuestionStatus.Published &&
-            !assignedQuestionIds.Contains(x.Id));
+        query = query.Where(x => !assignedQuestionIds.Contains(x.Id));
 
-        return await AsyncExecuter.CountAsync(query);
+        var questions = await AsyncExecuter.ToListAsync(query);
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(questions.Select(x => x.Id).ToList());
+        return questions.Count(x => readinessMap.GetValueOrDefault(x.Id));
     }
 
     private async Task<List<Question>> GetEligibleAvailableQuestionsAsync(IReadOnlyList<Guid> assignedQuestionIds, int maxResultCount)
@@ -686,23 +711,19 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         }
 
         var query = await _questionRepository.GetQueryableAsync();
-        query = query.Where(x =>
-            x.IsActive &&
-            x.Status == QuestionStatus.Published &&
-            !assignedQuestionIds.Contains(x.Id));
+        query = query.Where(x => !assignedQuestionIds.Contains(x.Id));
 
-        return await AsyncExecuter.ToListAsync(ApplyQuestionSorting(query, null).Take(maxResultCount));
+        var questions = await AsyncExecuter.ToListAsync(ApplyQuestionSorting(query, null));
+        var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(questions.Select(x => x.Id).ToList());
+        return questions
+            .Where(x => readinessMap.GetValueOrDefault(x.Id))
+            .Take(maxResultCount)
+            .ToList();
     }
 
     private async Task<QuestionType> GetActiveQuestionTypeAsync(Guid questionTypeId)
     {
-        var questionType = await _questionTypeRepository.GetAsync(questionTypeId);
-        if (!questionType.IsActive)
-        {
-            throw new UserFriendlyException(L["Practices:InactiveQuestionTypeCannotBeUsed"]);
-        }
-
-        return questionType;
+        return await _questionTypeRepository.GetAsync(questionTypeId);
     }
 
     private async Task<Dictionary<Guid, Question>> GetQuestionMapAsync(IReadOnlyList<Guid> questionIds)
@@ -779,8 +800,6 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             var remainingTargetCount = Math.Max(0, rule.TargetCount - fulfilledByManual.Count);
             var query = await _questionRepository.GetQueryableAsync();
             query = query.Where(x =>
-                x.IsActive &&
-                x.Status == QuestionStatus.Published &&
                 x.QuestionTypeId == rule.QuestionTypeId &&
                 !excludedQuestionIds.Contains(x.Id));
 
@@ -789,10 +808,14 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
                 query = query.Where(x => x.Difficulty == rule.Difficulty.Value);
             }
 
-            var selectedQuestions = await AsyncExecuter.ToListAsync(query
+            var candidateQuestions = await AsyncExecuter.ToListAsync(query
                 .OrderBy(x => x.SortOrder)
-                .ThenBy(x => x.CreationTime)
-                .Take(remainingTargetCount));
+                .ThenBy(x => x.CreationTime));
+            var readinessMap = await _questionRuntimeReadinessProvider.GetReadinessMapAsync(candidateQuestions.Select(x => x.Id).ToList());
+            var selectedQuestions = candidateQuestions
+                .Where(x => readinessMap.GetValueOrDefault(x.Id))
+                .Take(remainingTargetCount)
+                .ToList();
 
             foreach (var selectedQuestion in selectedQuestions)
             {
@@ -866,7 +889,7 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         };
     }
 
-    private static PracticeSetDto MapToDto(PracticeSet practiceSet, int assignedQuestionCount)
+    private static PracticeSetDto MapToDto(PracticeSet practiceSet, AssignmentReadiness readiness)
     {
         return new PracticeSetDto
         {
@@ -878,7 +901,11 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             AccessLevel = practiceSet.AccessLevel,
             SelectionMode = practiceSet.SelectionMode,
             TotalQuestionCount = practiceSet.TotalQuestionCount,
-            AssignedQuestionCount = assignedQuestionCount,
+            AssignedQuestionCount = readiness.AssignedQuestionCount,
+            ValidAssignedQuestionCount = readiness.ValidAssignedQuestionCount,
+            InvalidQuestionCount = readiness.InvalidQuestionCount,
+            MissingQuestionCount = Math.Max(0, practiceSet.TotalQuestionCount - readiness.ValidAssignedQuestionCount),
+            IsReady = readiness.ValidAssignedQuestionCount >= practiceSet.TotalQuestionCount,
             ShuffleQuestions = practiceSet.ShuffleQuestions,
             ShuffleOptions = practiceSet.ShuffleOptions,
             ShowExplanation = practiceSet.ShowExplanation,
@@ -967,5 +994,22 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
         public required TAssignment Assignment { get; init; }
 
         public required Question Question { get; init; }
+    }
+
+    private sealed class AssignmentReadiness
+    {
+        public static AssignmentReadiness Empty { get; } = new(0, 0);
+
+        public AssignmentReadiness(int assignedQuestionCount, int validAssignedQuestionCount)
+        {
+            AssignedQuestionCount = assignedQuestionCount;
+            ValidAssignedQuestionCount = validAssignedQuestionCount;
+        }
+
+        public int AssignedQuestionCount { get; }
+
+        public int ValidAssignedQuestionCount { get; }
+
+        public int InvalidQuestionCount => Math.Max(0, AssignedQuestionCount - ValidAssignedQuestionCount);
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Elearning.ClientContent;
 using Microsoft.AspNetCore.Mvc;
+using Volo.Abp;
 
 namespace Elearning.Web.Pages.Client;
 
@@ -22,7 +23,15 @@ public class LaunchModel : ElearningClientPageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var launch = await _clientLearningSessionAppService.StartOrResumeAsync(Kind, Id);
-        return RedirectToPage("/Client/Session", new { id = launch.SessionId });
+        try
+        {
+            var launch = await _clientLearningSessionAppService.StartOrResumeAsync(Kind, Id);
+            return RedirectToPage("/Client/Session", new { id = launch.SessionId });
+        }
+        catch (UserFriendlyException ex)
+        {
+            TempData["ClientErrorMessage"] = ex.Message;
+            return RedirectToPage("/Client/Index");
+        }
     }
 }

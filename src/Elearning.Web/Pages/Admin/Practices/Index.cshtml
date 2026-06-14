@@ -13,9 +13,6 @@
 
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Total"]</span><div class="fs-2 fw-bold">@Model.TotalCount</div></div></div></div>
-    <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Published"]</span><div class="fs-2 fw-bold">@Model.PublishedCount</div></div></div></div>
-    <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Draft"]</span><div class="fs-2 fw-bold">@Model.DraftCount</div></div></div></div>
-    <div class="col-xl-3 col-md-6"><div class="card h-100"><div class="card-body"><span>@L["Practices:Stats:Archived"]</span><div class="fs-2 fw-bold">@Model.ArchivedCount</div></div></div></div>
 </div>
 
 <div class="card">
@@ -29,15 +26,6 @@
     <div class="card-body">
         <form method="get" class="row g-3 mb-4">
             <div class="col-lg-3"><input asp-for="Filter" class="form-control" placeholder="@L["Practices:SearchPlaceholder"]" /></div>
-            <div class="col-lg-2">
-                <select asp-for="Status" class="form-select">
-                    <option value="">@L["Practices:AllStatuses"]</option>
-                    @foreach (var status in Enum.GetValues<PracticeStatus>())
-                    {
-                        <option value="@status">@L[$"Enum:PracticeStatus:{status}"]</option>
-                    }
-                </select>
-            </div>
             <div class="col-lg-2">
                 <select asp-for="AccessLevel" class="form-select">
                     <option value="">@L["Practices:AllAccessLevels"]</option>
