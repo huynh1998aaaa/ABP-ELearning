@@ -28,10 +28,6 @@ body:has(.result-shell) {
     --lpx-side-menu-width: 0 !important;
 }
 
-body.elearning-client-mode aside,
-body:has(.client-shell) aside,
-body:has(.session-shell) aside,
-body:has(.result-shell) aside,
 body.elearning-client-mode .lpx-sidebar-container,
 body:has(.client-shell) .lpx-sidebar-container,
 body:has(.session-shell) .lpx-sidebar-container,

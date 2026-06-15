@@ -12,6 +12,8 @@ namespace Elearning.Web.Pages.Admin;
 [Authorize(ElearningPermissions.AdminPortal.Access)]
 public abstract class ElearningAdminPageModel : ElearningPageModel
 {
+    protected const int DefaultAdminPageSize = 100;
+
     protected bool IsAjaxRequest =>
         string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", System.StringComparison.OrdinalIgnoreCase);
 

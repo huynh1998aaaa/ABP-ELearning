@@ -69,21 +69,81 @@
                 <div class="border rounded p-3">
                     <h2 class="h5">@L["Questions:Options"]</h2>
                     <p class="text-muted">@L["Questions:OptionsHelp"]</p>
-                    @for (var i = 0; i < Model.Input.Options.Count; i++)
-                    {
-                        <div class="row g-2 align-items-center mb-2">
-                            <div class="col-md-10">
-                                <input asp-for="Input.Options[i].Text" class="form-control" placeholder="@L["Questions:OptionText"]" />
-                            </div>
-                            <input type="hidden" asp-for="Input.Options[i].SortOrder" />
-                            <div class="col-md-2">
-                                <div class="form-check">
-                                    <input asp-for="Input.Options[i].IsCorrect" class="form-check-input" />
-                                    <label asp-for="Input.Options[i].IsCorrect" class="form-check-label">@L["Questions:IsCorrect"]</label>
+                    <div class="question-option-list" data-question-options-list>
+                        @for (var i = 0; i < Model.Input.Options.Count; i++)
+                        {
+                            var option = Model.Input.Options[i];
+                            <div class="question-option-row" data-question-option-row>
+                                <div class="question-option-main">
+                                    <input id="Input_Options_@(i)__Text"
+                                           name="Input.Options[@i].Text"
+                                           value="@option.Text"
+                                           class="form-control"
+                                           placeholder="@L["Questions:OptionText"]"
+                                           data-question-option-text />
+                                    <input type="hidden"
+                                           name="Input.Options[@i].SortOrder"
+                                           value="@(option.SortOrder == 0 ? i + 1 : option.SortOrder)"
+                                           data-question-option-sort />
+                                </div>
+                                <div class="question-option-controls">
+                                    <div class="form-check mb-0">
+                                        <input id="Input_Options_@(i)__IsCorrect"
+                                               name="Input.Options[@i].IsCorrect"
+                                               value="true"
+                                               type="checkbox"
+                                               class="form-check-input"
+                                               checked="@(option.IsCorrect ? "checked" : null)"
+                                               data-question-option-correct />
+                                        <label class="form-check-label" for="Input_Options_@(i)__IsCorrect">@L["Questions:IsCorrect"]</label>
+                                    </div>
+                                    <input type="hidden"
+                                           name="Input.Options[@i].IsCorrect"
+                                           value="false"
+                                           data-question-option-correct-fallback />
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-question-option-remove>
+                                        @L["Questions:RemoveOption"]
+                                    </button>
                                 </div>
                             </div>
+                        }
+                    </div>
+                    <template data-question-option-template>
+                        <div class="question-option-row" data-question-option-row>
+                            <div class="question-option-main">
+                                <input id="Input_Options___index____Text"
+                                       name="Input.Options[__index__].Text"
+                                       class="form-control"
+                                       placeholder="@L["Questions:OptionText"]"
+                                       data-question-option-text />
+                                <input type="hidden"
+                                       name="Input.Options[__index__].SortOrder"
+                                       value="__sortOrder__"
+                                       data-question-option-sort />
+                            </div>
+                            <div class="question-option-controls">
+                                <div class="form-check mb-0">
+                                    <input id="Input_Options___index____IsCorrect"
+                                           name="Input.Options[__index__].IsCorrect"
+                                           value="true"
+                                           type="checkbox"
+                                           class="form-check-input"
+                                           data-question-option-correct />
+                                    <label class="form-check-label" for="Input_Options___index____IsCorrect">@L["Questions:IsCorrect"]</label>
+                                </div>
+                                <input type="hidden"
+                                       name="Input.Options[__index__].IsCorrect"
+                                       value="false"
+                                       data-question-option-correct-fallback />
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-question-option-remove>
+                                    @L["Questions:RemoveOption"]
+                                </button>
+                            </div>
                         </div>
-                    }
+                    </template>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-3" data-question-option-add>
+                        @L["Questions:AddOption"]
+                    </button>
                 </div>
             </div>
 

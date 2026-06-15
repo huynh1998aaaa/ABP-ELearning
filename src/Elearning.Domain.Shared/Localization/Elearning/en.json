@@ -414,6 +414,8 @@
     "Questions:Option": "Option",
     "Questions:OptionText": "Option text",
     "Questions:IsCorrect": "Correct",
+    "Questions:AddOption": "Add option",
+    "Questions:RemoveOption": "Remove option",
     "Questions:MatchingPairs": "Matching pairs",
     "Questions:MatchingPairsHelp": "Matching questions require at least two complete pairs.",
     "Questions:LeftText": "Left text",

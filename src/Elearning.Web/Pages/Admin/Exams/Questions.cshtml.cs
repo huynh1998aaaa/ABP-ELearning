@@ -228,7 +228,7 @@ public class QuestionsModel : ElearningAdminPageModel
 
         AvailableQuestions = (await _examAppService.GetAvailableQuestionsAsync(Id, new GetExamAvailableQuestionListInput
         {
-            MaxResultCount = 20,
+            MaxResultCount = DefaultAdminPageSize,
             SkipCount = 0,
             Filter = QuestionFilter
         })).Items;

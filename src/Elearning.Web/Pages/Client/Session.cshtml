@@ -23,6 +23,9 @@
                     <h1>@L["Client:RuntimeTitle", Model.Session.Title]</h1>
                 </div>
                 <div class="session-progress">
+                    <div class="session-progress-meta">
+                        <span>@Model.Session.AnsweredCount/@Model.Session.TotalQuestionCount</span>
+                    </div>
                     <div class="session-progress-bar">
                         <div class="session-progress-fill" style="width:@(Model.Session.TotalQuestionCount == 0 ? 0 : (Model.Session.AnsweredCount * 100 / Model.Session.TotalQuestionCount))%"></div>
                     </div>

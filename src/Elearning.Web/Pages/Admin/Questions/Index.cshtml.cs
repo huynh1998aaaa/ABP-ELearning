@@ -13,7 +13,7 @@ namespace Elearning.Web.Pages.Admin.Questions;
 [Authorize(ElearningPermissions.Questions.Default)]
 public class IndexModel : ElearningAdminPageModel
 {
-    private const int PageSize = 10;
+    private const int PageSize = DefaultAdminPageSize;
 
     private readonly IAuthorizationService _authorizationService;
     private readonly IQuestionAppService _questionAppService;
@@ -94,15 +94,15 @@ public class IndexModel : ElearningAdminPageModel
 
         var allQuestions = await _questionAppService.GetListAsync(new GetQuestionListInput
         {
-            MaxResultCount = 1000,
-            SkipCount = 0,
+            MaxResultCount = PageSize,
+            SkipCount = (CurrentPage - 1) * PageSize,
             Filter = Filter,
             QuestionTypeId = QuestionTypeId,
             Difficulty = Difficulty
         });
 
         TotalCount = allQuestions.TotalCount;
-        Questions = allQuestions.Items.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        Questions = allQuestions.Items.ToList();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)

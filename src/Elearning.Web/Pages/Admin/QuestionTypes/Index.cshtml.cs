@@ -12,7 +12,7 @@ namespace Elearning.Web.Pages.Admin.QuestionTypes;
 [Authorize(ElearningPermissions.QuestionTypes.Default)]
 public class IndexModel : ElearningAdminPageModel
 {
-    private const int PageSize = 10;
+    private const int PageSize = DefaultAdminPageSize;
 
     private readonly IAuthorizationService _authorizationService;
     private readonly IQuestionTypeAppService _questionTypeAppService;

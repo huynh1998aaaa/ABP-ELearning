@@ -12,7 +12,7 @@ namespace Elearning.Web.Pages.Admin.Practices;
 [Authorize(ElearningPermissions.Practices.Default)]
 public class IndexModel : ElearningAdminPageModel
 {
-    private const int PageSize = 10;
+    private const int PageSize = DefaultAdminPageSize;
 
     private readonly IAuthorizationService _authorizationService;
     private readonly IPracticeSetAppService _practiceSetAppService;
@@ -98,15 +98,15 @@ public class IndexModel : ElearningAdminPageModel
 
         var allItems = await _practiceSetAppService.GetListAsync(new GetPracticeSetListInput
         {
-            MaxResultCount = 1000,
-            SkipCount = 0,
+            MaxResultCount = PageSize,
+            SkipCount = (CurrentPage - 1) * PageSize,
             Filter = Filter,
             AccessLevel = AccessLevel,
             SelectionMode = SelectionMode
         });
 
         TotalCount = allItems.TotalCount;
-        PracticeSets = allItems.Items.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        PracticeSets = allItems.Items.ToList();
     }
 
     private async Task LoadPermissionsAsync()

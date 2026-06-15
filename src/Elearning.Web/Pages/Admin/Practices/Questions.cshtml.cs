@@ -139,7 +139,7 @@ public class QuestionsModel : ElearningAdminPageModel
 
         AvailableQuestions = (await _practiceSetAppService.GetAvailableQuestionsAsync(Id, new GetPracticeAvailableQuestionListInput
         {
-            MaxResultCount = 20,
+            MaxResultCount = DefaultAdminPageSize,
             SkipCount = 0,
             Filter = QuestionFilter
         })).Items;

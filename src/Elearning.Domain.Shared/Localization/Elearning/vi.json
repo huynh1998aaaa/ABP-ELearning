@@ -414,6 +414,8 @@
     "Questions:Option": "Đáp án",
     "Questions:OptionText": "Nội dung đáp án",
     "Questions:IsCorrect": "Đúng",
+    "Questions:AddOption": "Thêm đáp án",
+    "Questions:RemoveOption": "Xóa đáp án",
     "Questions:MatchingPairs": "Cặp nối đáp án",
     "Questions:MatchingPairsHelp": "Dạng nối đáp án cần ít nhất 2 cặp đầy đủ.",
     "Questions:LeftText": "Vế trái",

@@ -12,7 +12,7 @@ namespace Elearning.Web.Pages.Admin.Accounts;
 [Authorize(IdentityPermissions.Users.Default)]
 public class IndexModel : ElearningAdminPageModel
 {
-    private const int PageSize = 10;
+    private const int PageSize = DefaultAdminPageSize;
     private const int MaxIdentityQueryResultCount = 1000;
     private readonly IAuthorizationService _authorizationService;
     private readonly IIdentityUserAppService _identityUserAppService;

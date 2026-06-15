@@ -583,6 +583,8 @@
         window.addEventListener("resize", updateStickyMetrics);
     }
 
+    window.addEventListener("load", updateStickyMetrics);
+
     if (submitButton) {
         submitButton.addEventListener("click", async () => {
             if (!window.confirm(submitConfirm)) {
