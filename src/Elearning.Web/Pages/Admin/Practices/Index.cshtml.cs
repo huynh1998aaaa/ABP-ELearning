@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Elearning.Common;
 using Elearning.Permissions;
 using Elearning.Practices;
 using Microsoft.AspNetCore.Authorization;
@@ -37,6 +38,9 @@ public class IndexModel : ElearningAdminPageModel
     [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
 
+    [BindProperty]
+    public BulkDeleteInput BulkDeleteInput { get; set; } = new();
+
     public IReadOnlyList<PracticeSetDto> PracticeSets { get; private set; } = Array.Empty<PracticeSetDto>();
 
     public long TotalCount { get; private set; }
@@ -70,6 +74,21 @@ public class IndexModel : ElearningAdminPageModel
         {
             await _practiceSetAppService.DeleteAsync(id);
             return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Filter, AccessLevel, SelectionMode, CurrentPage });
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+    }
+
+    public async Task<IActionResult> OnPostBulkDeleteAsync()
+    {
+        try
+        {
+            var result = await _practiceSetAppService.BulkDeleteAsync(BulkDeleteInput);
+            return IsAjaxRequest
+                ? AjaxSuccess(BuildBulkDeleteMessage(result))
+                : RedirectToPage(new { Filter, AccessLevel, SelectionMode, CurrentPage });
         }
         catch (Exception ex) when (IsAjaxRequest)
         {
@@ -115,6 +134,13 @@ public class IndexModel : ElearningAdminPageModel
         CanUpdate = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Practices.Update)).Succeeded;
         CanDelete = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Practices.Delete)).Succeeded;
         CanManageQuestions = (await _authorizationService.AuthorizeAsync(User, ElearningPermissions.Practices.ManageQuestions)).Succeeded;
+    }
+
+    private string BuildBulkDeleteMessage(BulkDeleteResultDto result)
+    {
+        return result.HasErrors
+            ? L["Practices:BulkDeletePartial", result.SucceededCount, result.SkippedCount]
+            : L["Practices:BulkDeleteSuccess", result.SucceededCount, result.SkippedCount];
     }
 
     private IEnumerable<string> BuildQuery(params string[] firstParts)

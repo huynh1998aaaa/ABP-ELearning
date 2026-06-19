@@ -14,6 +14,15 @@ else
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
+                    @if (Model.CanDelete)
+                    {
+                        <th class="admin-question-selection-column">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   data-admin-select-all="[data-exam-row-checkbox]"
+                                   aria-label="@L["Exams:SelectAll"]" />
+                        </th>
+                    }
                     <th>@L["Exams:TitleColumn"]</th>
                     <th>@L["Exams:AccessLevel"]</th>
                     <th>@L["Exams:SelectionMode"]</th>
@@ -25,6 +34,17 @@ else
                 @foreach (var exam in Model.Exams)
                 {
                     <tr>
+                        @if (Model.CanDelete)
+                        {
+                            <td class="admin-question-selection-column">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       value="@exam.Id"
+                                       data-exam-row-checkbox
+                                       data-admin-selection-item
+                                       aria-label="@L["Exams:SelectExam"]" />
+                            </td>
+                        }
                         <td>
                             <strong>@exam.Title</strong>
                             <div class="text-muted small">@exam.Code</div>

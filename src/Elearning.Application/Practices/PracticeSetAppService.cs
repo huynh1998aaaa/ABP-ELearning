@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Elearning.Common;
 using Elearning.Permissions;
 using Elearning.Questions;
 using Elearning.QuestionTypes;
@@ -141,6 +142,33 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
     {
         var practiceSet = await _practiceSetRepository.GetAsync(id);
         await _practiceSetRepository.DeleteAsync(practiceSet, autoSave: true);
+    }
+
+    [Authorize(ElearningPermissions.Practices.Delete)]
+    public async Task<BulkDeleteResultDto> BulkDeleteAsync(BulkDeleteInput input)
+    {
+        var ids = NormalizeIds(input);
+        if (ids.Count == 0)
+        {
+            throw new UserFriendlyException(L["Practices:BulkNoSelection"]);
+        }
+
+        var result = CreateBulkDeleteResult(ids);
+        foreach (var id in ids)
+        {
+            try
+            {
+                await DeleteAsync(id);
+                result.SucceededCount++;
+            }
+            catch (Exception ex)
+            {
+                result.SkippedCount++;
+                result.Errors.Add(BuildBulkDeleteErrorMessage(id, ex));
+            }
+        }
+
+        return result;
     }
 
     [Authorize(ElearningPermissions.Practices.Publish)]
@@ -980,6 +1008,31 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
             DeleterId = rule.DeleterId,
             DeletionTime = rule.DeletionTime
         };
+    }
+
+    private static List<Guid> NormalizeIds(BulkDeleteInput? input)
+    {
+        return input?.Ids?
+            .Where(x => x != Guid.Empty)
+            .Distinct()
+            .ToList() ?? [];
+    }
+
+    private static BulkDeleteResultDto CreateBulkDeleteResult(IReadOnlyCollection<Guid> ids)
+    {
+        return new BulkDeleteResultDto
+        {
+            RequestedCount = ids.Count
+        };
+    }
+
+    private string BuildBulkDeleteErrorMessage(Guid id, Exception exception)
+    {
+        var message = exception is UserFriendlyException
+            ? exception.Message
+            : L["Common:AjaxOperationFailed"].Value;
+
+        return L["Practices:BulkItemError", id, message];
     }
 
     private sealed class PracticeAutoAssignmentPlan

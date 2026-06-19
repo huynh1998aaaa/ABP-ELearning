@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Elearning.Common;
 using Elearning.Permissions;
 using Elearning.Questions;
 using Elearning.QuestionTypes;
@@ -145,6 +146,33 @@ public class ExamAppService : ElearningAppService, IExamAppService
     {
         var exam = await _examRepository.GetAsync(id);
         await _examRepository.DeleteAsync(exam, autoSave: true);
+    }
+
+    [Authorize(ElearningPermissions.Exams.Delete)]
+    public async Task<BulkDeleteResultDto> BulkDeleteAsync(BulkDeleteInput input)
+    {
+        var ids = NormalizeIds(input);
+        if (ids.Count == 0)
+        {
+            throw new UserFriendlyException(L["Exams:BulkNoSelection"]);
+        }
+
+        var result = CreateBulkDeleteResult(ids);
+        foreach (var id in ids)
+        {
+            try
+            {
+                await DeleteAsync(id);
+                result.SucceededCount++;
+            }
+            catch (Exception ex)
+            {
+                result.SkippedCount++;
+                result.Errors.Add(BuildBulkDeleteErrorMessage(id, ex));
+            }
+        }
+
+        return result;
     }
 
     [Authorize(ElearningPermissions.Exams.Publish)]
@@ -992,6 +1020,31 @@ public class ExamAppService : ElearningAppService, IExamAppService
             DeleterId = rule.DeleterId,
             DeletionTime = rule.DeletionTime
         };
+    }
+
+    private static List<Guid> NormalizeIds(BulkDeleteInput? input)
+    {
+        return input?.Ids?
+            .Where(x => x != Guid.Empty)
+            .Distinct()
+            .ToList() ?? [];
+    }
+
+    private static BulkDeleteResultDto CreateBulkDeleteResult(IReadOnlyCollection<Guid> ids)
+    {
+        return new BulkDeleteResultDto
+        {
+            RequestedCount = ids.Count
+        };
+    }
+
+    private string BuildBulkDeleteErrorMessage(Guid id, Exception exception)
+    {
+        var message = exception is UserFriendlyException
+            ? exception.Message
+            : L["Common:AjaxOperationFailed"].Value;
+
+        return L["Exams:BulkItemError", id, message];
     }
 
     private sealed class ExamAutoAssignmentPlan

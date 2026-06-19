@@ -56,6 +56,29 @@
             </div>
         </form>
 
+        @if (Model.CanDelete)
+        {
+            <form method="post"
+                  asp-page-handler="BulkDelete"
+                  class="d-flex justify-content-end mb-3"
+                  data-admin-ajax-form="true"
+                  data-admin-bulk-form="true"
+                  data-admin-selection-selector="[data-exam-row-checkbox]:checked"
+                  data-admin-selection-name="BulkDeleteInput.Ids"
+                  data-admin-no-selection-message="@L["Exams:BulkNoSelection"]"
+                  data-admin-refresh-target="#examsTable"
+                  data-admin-confirm-message="@L["Exams:ConfirmBulkDelete"]">
+                <input type="hidden" name="Filter" value="@Model.Filter" />
+                <input type="hidden" name="AccessLevel" value="@Model.AccessLevel" />
+                <input type="hidden" name="SelectionMode" value="@Model.SelectionMode" />
+                <input type="hidden" name="CurrentPage" value="@Model.CurrentPage" />
+                <span data-admin-selection-container></span>
+                <button type="submit" class="btn btn-outline-danger btn-sm" data-admin-bulk-submit disabled>
+                    @L["Exams:BulkDelete"]
+                </button>
+            </form>
+        }
+
         <div id="examsTable" data-admin-refresh-url="@Model.BuildTableUrl()">
             <partial name="_Table" model="Model" />
         </div>

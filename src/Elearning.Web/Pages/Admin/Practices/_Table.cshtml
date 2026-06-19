@@ -14,6 +14,15 @@ else
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
+                    @if (Model.CanDelete)
+                    {
+                        <th class="admin-question-selection-column">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   data-admin-select-all="[data-practice-row-checkbox]"
+                                   aria-label="@L["Practices:SelectAll"]" />
+                        </th>
+                    }
                     <th>@L["Practices:TitleColumn"]</th>
                     <th>@L["Practices:AccessLevel"]</th>
                     <th>@L["Practices:SelectionMode"]</th>
@@ -25,6 +34,17 @@ else
                 @foreach (var practiceSet in Model.PracticeSets)
                 {
                     <tr>
+                        @if (Model.CanDelete)
+                        {
+                            <td class="admin-question-selection-column">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       value="@practiceSet.Id"
+                                       data-practice-row-checkbox
+                                       data-admin-selection-item
+                                       aria-label="@L["Practices:SelectPractice"]" />
+                            </td>
+                        }
                         <td>
                             <strong>@practiceSet.Title</strong>
                             <div class="text-muted small">@practiceSet.Code</div>

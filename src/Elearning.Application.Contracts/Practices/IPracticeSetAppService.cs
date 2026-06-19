@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Elearning.Common;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 
@@ -17,6 +18,8 @@ public interface IPracticeSetAppService : IApplicationService
     Task<PracticeSetDto> UpdateAsync(Guid id, UpdatePracticeSetDto input);
 
     Task DeleteAsync(Guid id);
+
+    Task<BulkDeleteResultDto> BulkDeleteAsync(BulkDeleteInput input);
 
     Task PublishAsync(Guid id);
 
