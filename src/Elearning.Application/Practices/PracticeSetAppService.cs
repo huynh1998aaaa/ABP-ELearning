@@ -414,6 +414,34 @@ public class PracticeSetAppService : ElearningAppService, IPracticeSetAppService
     }
 
     [Authorize(ElearningPermissions.Practices.ManageQuestions)]
+    public async Task<BulkDeleteResultDto> BulkRemoveQuestionsAsync(Guid practiceSetId, BulkDeleteInput input)
+    {
+        await _practiceSetRepository.GetAsync(practiceSetId);
+
+        var ids = NormalizeIds(input);
+        if (ids.Count == 0)
+        {
+            throw new UserFriendlyException(L["Practices:AssignedBulkNoSelection"]);
+        }
+
+        var query = await _practiceQuestionRepository.GetQueryableAsync();
+        var assignedQuestions = await AsyncExecuter.ToListAsync(query
+            .Where(x => x.PracticeSetId == practiceSetId && ids.Contains(x.Id)));
+
+        foreach (var assignedQuestion in assignedQuestions)
+        {
+            await _practiceQuestionRepository.DeleteAsync(assignedQuestion.Id, autoSave: true);
+        }
+
+        return new BulkDeleteResultDto
+        {
+            RequestedCount = ids.Count,
+            SucceededCount = assignedQuestions.Count,
+            SkippedCount = ids.Count - assignedQuestions.Count
+        };
+    }
+
+    [Authorize(ElearningPermissions.Practices.ManageQuestions)]
     public async Task ReorderQuestionsAsync(Guid practiceSetId, List<Guid> practiceQuestionIds)
     {
         await _practiceSetRepository.GetAsync(practiceSetId);

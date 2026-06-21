@@ -815,6 +815,11 @@ body:has(.admin-login-shell) {
     min-width: 0;
 }
 
+.admin-question-selection-column {
+    width: 2.75rem;
+    vertical-align: middle;
+}
+
 .admin-assigned-copy strong,
 .admin-bank-head strong {
     display: block;
@@ -834,21 +839,61 @@ body:has(.admin-login-shell) {
     text-align: left;
 }
 
+.admin-assigned-header {
+    align-items: center;
+}
+
+.admin-assigned-bulk-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.admin-assigned-select-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #475467;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.admin-assigned-select-all .form-check-input,
+.admin-assigned-select-cell .form-check-input {
+    margin-top: 0;
+}
+
 .admin-assigned-controls {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;
     justify-content: flex-end;
     gap: 0.75rem;
     min-width: 0;
 }
 
 .admin-assigned-form {
-    display: grid;
-    grid-template-columns: 110px 130px auto auto;
-    align-items: end;
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: flex-end;
     gap: 0.75rem;
     min-width: 0;
-    flex: 1 1 320px;
+}
+
+.admin-assigned-score-input {
+    width: min(7.5rem, 100%);
+}
+
+.admin-assigned-select-cell {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 0.15rem;
 }
 
 .admin-inline-check {
@@ -856,10 +901,10 @@ body:has(.admin-login-shell) {
     align-items: center;
     gap: 0.5rem;
     min-height: 2rem;
-    padding-top: 1.45rem;
     color: #344054;
     font-size: 0.88rem;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .admin-inline-check .form-check-input {
@@ -867,9 +912,9 @@ body:has(.admin-login-shell) {
 }
 
 .admin-bank-head {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    justify-content: space-between;
     gap: 0.85rem;
 }
 
@@ -887,16 +932,53 @@ body:has(.admin-login-shell) {
     justify-content: flex-start;
 }
 
+.admin-question-workspace .admin-assigned-item {
+    grid-template-columns: auto minmax(0, 1fr) minmax(280px, 360px);
+    align-items: start;
+}
+
+.admin-question-workspace .admin-assigned-copy {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.admin-question-workspace .admin-assigned-copy .text-muted {
+    line-height: 1.45;
+}
+
+.admin-question-workspace .admin-assigned-controls .btn,
+.admin-question-workspace .admin-assigned-bulk-toolbar .btn {
+    min-height: 2.15rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.admin-question-workspace .admin-inline-danger-form {
+    align-self: flex-end;
+}
+
+.admin-question-workspace .admin-bank-item {
+    grid-template-rows: auto 1fr auto;
+    align-content: start;
+}
+
+.admin-question-workspace .admin-bank-head .badge {
+    margin-top: 0;
+    justify-self: end;
+}
+
 @media (max-width: 1399.98px) {
     .admin-question-workspace {
         grid-template-columns: 1fr;
     }
 
-    .admin-assigned-item {
+    .admin-question-workspace .admin-assigned-item {
         grid-template-columns: 1fr;
     }
 
-    .admin-assigned-controls {
+    .admin-question-workspace .admin-assigned-controls {
         justify-content: flex-start;
     }
 }
@@ -929,16 +1011,15 @@ body:has(.admin-login-shell) {
         justify-content: flex-start;
     }
 
-    .admin-assigned-form {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .admin-assigned-bulk-toolbar {
+        justify-content: flex-start;
     }
 }
 
 @media (max-width: 767.98px) {
     .admin-auto-preview-grid,
     .admin-auto-rule-grid,
-    .admin-auto-rule-item-grid,
-    .admin-assigned-form {
+    .admin-auto-rule-item-grid {
         grid-template-columns: 1fr;
     }
 
@@ -968,6 +1049,37 @@ body:has(.admin-login-shell) {
 
     .admin-bank-head {
         flex-direction: column;
+    }
+
+    .admin-question-workspace .admin-assigned-item {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-assigned-select-cell {
+        justify-content: flex-start;
+        padding-top: 0;
+    }
+
+    .admin-assigned-form,
+    .admin-assigned-bulk-toolbar {
+        width: 100%;
+    }
+
+    .admin-question-workspace .admin-assigned-controls {
+        justify-content: stretch;
+    }
+
+    .admin-question-workspace .admin-assigned-controls .btn,
+    .admin-question-workspace .admin-assigned-bulk-toolbar .btn {
+        width: 100%;
+    }
+
+    .admin-bank-head {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-question-workspace .admin-bank-head .badge {
+        justify-self: start;
     }
 }
 

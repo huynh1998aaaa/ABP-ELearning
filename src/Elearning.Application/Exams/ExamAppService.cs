@@ -418,6 +418,34 @@ public class ExamAppService : ElearningAppService, IExamAppService
     }
 
     [Authorize(ElearningPermissions.Exams.ManageQuestions)]
+    public async Task<BulkDeleteResultDto> BulkRemoveQuestionsAsync(Guid examId, BulkDeleteInput input)
+    {
+        await _examRepository.GetAsync(examId);
+
+        var ids = NormalizeIds(input);
+        if (ids.Count == 0)
+        {
+            throw new UserFriendlyException(L["Exams:AssignedBulkNoSelection"]);
+        }
+
+        var query = await _examQuestionRepository.GetQueryableAsync();
+        var assignedQuestions = await AsyncExecuter.ToListAsync(query
+            .Where(x => x.ExamId == examId && ids.Contains(x.Id)));
+
+        foreach (var assignedQuestion in assignedQuestions)
+        {
+            await _examQuestionRepository.DeleteAsync(assignedQuestion.Id, autoSave: true);
+        }
+
+        return new BulkDeleteResultDto
+        {
+            RequestedCount = ids.Count,
+            SucceededCount = assignedQuestions.Count,
+            SkippedCount = ids.Count - assignedQuestions.Count
+        };
+    }
+
+    [Authorize(ElearningPermissions.Exams.ManageQuestions)]
     public async Task ReorderQuestionsAsync(Guid examId, List<Guid> examQuestionIds)
     {
         await _examRepository.GetAsync(examId);

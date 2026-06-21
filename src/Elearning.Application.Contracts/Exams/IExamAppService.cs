@@ -45,6 +45,8 @@ public interface IExamAppService : IApplicationService
 
     Task RemoveQuestionAsync(Guid examQuestionId);
 
+    Task<BulkDeleteResultDto> BulkRemoveQuestionsAsync(Guid examId, BulkDeleteInput input);
+
     Task ReorderQuestionsAsync(Guid examId, List<Guid> examQuestionIds);
 
     Task<List<ExamAutoQuestionRuleDto>> GetAutoQuestionRulesAsync(Guid examId);

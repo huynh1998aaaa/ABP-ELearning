@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Elearning.Common;
 using Elearning.Exams;
 using Elearning.Permissions;
 using Elearning.QuestionTypes;
@@ -38,6 +39,9 @@ public class QuestionsModel : ElearningAdminPageModel
 
     [BindProperty]
     public UpdateExamQuestionDto UpdateInput { get; set; } = new();
+
+    [BindProperty]
+    public BulkDeleteInput BulkRemoveInput { get; set; } = new();
 
     [BindProperty]
     public AddExamQuestionsByCountDto AddByCountInput { get; set; } = new();
@@ -188,6 +192,22 @@ public class QuestionsModel : ElearningAdminPageModel
         {
             await _examAppService.RemoveQuestionAsync(examQuestionId);
             return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Id, QuestionFilter });
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+    }
+
+    public async Task<IActionResult> OnPostBulkRemoveAsync()
+    {
+        try
+        {
+            var result = await _examAppService.BulkRemoveQuestionsAsync(Id, BulkRemoveInput);
+            var message = L["Exams:BulkRemoveAssignedQuestionsSuccess", result.SucceededCount, result.SkippedCount];
+            return IsAjaxRequest
+                ? AjaxSuccess(message)
+                : RedirectToPage(new { Id, QuestionFilter, ShowAutoPreview });
         }
         catch (Exception ex) when (IsAjaxRequest)
         {

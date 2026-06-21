@@ -1227,3 +1227,36 @@
         min-width: 0;
     }
 }
+
+/* Keep only the question navigator panel sticky; the session header should scroll normally. */
+.session-shell .session-sticky-stack {
+    position: static;
+    top: auto;
+    z-index: auto;
+}
+
+.session-shell .session-left-rail {
+    position: sticky;
+    top: calc(var(--session-sticky-top) + 0.65rem);
+    max-height: calc(100vh - var(--session-sticky-top) - 1rem);
+}
+
+.session-shell .session-nav-grid {
+    max-height: min(26rem, calc(100vh - var(--session-sticky-top) - 12rem));
+}
+
+.session-shell .question-runtime-card {
+    scroll-margin-top: 1rem;
+}
+
+.session-shell .session-progress-meta strong {
+    color: #075fc8;
+}
+
+@media (max-width: 991.98px) {
+    .session-shell .session-left-rail {
+        position: static;
+        top: auto;
+        max-height: none;
+    }
+}

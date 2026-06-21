@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Elearning.Common;
 using Elearning.Permissions;
 using Elearning.Practices;
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +33,9 @@ public class QuestionsModel : ElearningAdminPageModel
 
     [BindProperty]
     public UpdatePracticeQuestionDto UpdateInput { get; set; } = new();
+
+    [BindProperty]
+    public BulkDeleteInput BulkRemoveInput { get; set; } = new();
 
     public PracticeSetDto PracticeSet { get; private set; } = new();
 
@@ -109,6 +113,22 @@ public class QuestionsModel : ElearningAdminPageModel
         {
             await _practiceSetAppService.RemoveQuestionAsync(practiceQuestionId);
             return IsAjaxRequest ? AjaxSuccess() : RedirectToPage(new { Id, QuestionFilter });
+        }
+        catch (Exception ex) when (IsAjaxRequest)
+        {
+            return AjaxError(ex);
+        }
+    }
+
+    public async Task<IActionResult> OnPostBulkRemoveAsync()
+    {
+        try
+        {
+            var result = await _practiceSetAppService.BulkRemoveQuestionsAsync(Id, BulkRemoveInput);
+            var message = L["Practices:BulkRemoveAssignedQuestionsSuccess", result.SucceededCount, result.SkippedCount];
+            return IsAjaxRequest
+                ? AjaxSuccess(message)
+                : RedirectToPage(new { Id, QuestionFilter });
         }
         catch (Exception ex) when (IsAjaxRequest)
         {

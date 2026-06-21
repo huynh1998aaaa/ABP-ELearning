@@ -18,6 +18,9 @@
     const formStates = new WeakMap();
     const matchingRenderStates = new WeakMap();
     const stickyStack = root.querySelector(".session-sticky-stack");
+    const answeredCountElement = root.querySelector("[data-session-answered-count]");
+    const totalCountElement = root.querySelector("[data-session-total-count]");
+    const progressFillElement = root.querySelector("[data-session-progress-fill]");
 
     function updateStickyMetrics() {
         if (!stickyStack) {
@@ -40,6 +43,70 @@
         const stickyTop = parseFloat(stickyStyle.top || "0") || 0;
         const stickyHeight = stickyStack.offsetHeight || 0;
         return stickyTop + stickyHeight + 16;
+    }
+
+    function getTotalQuestionCount() {
+        const total = Number.parseInt(totalCountElement?.textContent || "", 10);
+        return Number.isFinite(total) && total > 0
+            ? total
+            : forms.length;
+    }
+
+    function isFormAnswered(form) {
+        const matchingInputs = Array.from(form.querySelectorAll("[data-matching-hidden='true']"));
+        if (matchingInputs.length) {
+            return matchingInputs.every((input) => Boolean(input.value && input.value.trim()));
+        }
+
+        const essayInput = form.querySelector("[data-essay-input='true']");
+        if (essayInput) {
+            return Boolean(essayInput.value && essayInput.value.trim());
+        }
+
+        return Boolean(form.querySelector("input[name='SelectedOptionIds']:checked"));
+    }
+
+    function setQuestionAnsweredState(questionId, isAnswered) {
+        if (!questionId) {
+            return;
+        }
+
+        const nav = root.querySelector(`[data-question-id='${questionId}']`);
+        if (!nav) {
+            return;
+        }
+
+        nav.classList.toggle("session-nav-answered", isAnswered);
+        nav.classList.toggle("session-nav-unanswered", !isAnswered);
+    }
+
+    function updateAnsweredProgress(overrideQuestionId = null, overrideIsAnswered = null) {
+        let answeredCount = 0;
+
+        forms.forEach((form) => {
+            const questionId = form.getAttribute("data-question-id");
+            const isAnswered = overrideQuestionId && questionId === overrideQuestionId
+                ? overrideIsAnswered === true
+                : isFormAnswered(form);
+
+            if (isAnswered) {
+                answeredCount += 1;
+            }
+
+            setQuestionAnsweredState(questionId, isAnswered);
+        });
+
+        const totalCount = getTotalQuestionCount();
+        if (answeredCountElement) {
+            answeredCountElement.textContent = String(answeredCount);
+        }
+
+        if (progressFillElement) {
+            const percent = totalCount > 0
+                ? Math.min(100, Math.max(0, (answeredCount * 100) / totalCount))
+                : 0;
+            progressFillElement.style.width = `${percent}%`;
+        }
     }
 
     function getFormState(form) {
@@ -423,11 +490,7 @@
 
             const questionId = form.getAttribute("data-question-id");
             const isAnswered = payload?.data?.isAnswered === true;
-            const nav = root.querySelector(`[data-question-id='${questionId}']`);
-            if (nav) {
-                nav.classList.toggle("session-nav-answered", isAnswered);
-                nav.classList.toggle("session-nav-unanswered", !isAnswered);
-            }
+            updateAnsweredProgress(questionId, isAnswered);
 
             setEssayStatus(form, essaySavedText, "saved");
         } catch (error) {
@@ -490,6 +553,8 @@
                 return;
             }
 
+            updateAnsweredProgress();
+
             try {
                 await submitForm(form);
             } catch (error) {
@@ -501,6 +566,7 @@
         if (essayInput) {
             essayInput.addEventListener("input", () => {
                 updateEssayCounter(form);
+                updateAnsweredProgress();
                 scheduleEssaySave(form);
             });
 
@@ -575,6 +641,7 @@
     });
 
     updateStickyMetrics();
+    updateAnsweredProgress();
 
     if (typeof ResizeObserver !== "undefined" && stickyStack) {
         const resizeObserver = new ResizeObserver(() => updateStickyMetrics());

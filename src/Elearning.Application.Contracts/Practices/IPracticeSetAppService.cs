@@ -45,6 +45,8 @@ public interface IPracticeSetAppService : IApplicationService
 
     Task RemoveQuestionAsync(Guid practiceQuestionId);
 
+    Task<BulkDeleteResultDto> BulkRemoveQuestionsAsync(Guid practiceSetId, BulkDeleteInput input);
+
     Task ReorderQuestionsAsync(Guid practiceSetId, List<Guid> practiceQuestionIds);
 
     Task<List<PracticeAutoQuestionRuleDto>> GetAutoQuestionRulesAsync(Guid practiceSetId);

@@ -230,8 +230,39 @@
     </section>
 
     <section class="card admin-workspace-panel">
-        <div class="card-header admin-workspace-panel-header">
-            <span class="fw-semibold">@L["Exams:AssignedQuestions"]</span>
+        <div class="card-header admin-workspace-panel-header admin-assigned-header">
+            <div>
+                <div class="fw-semibold">@L["Exams:AssignedQuestions"]</div>
+                <div class="text-muted small">@L["Exams:QuestionReadinessSummary", Model.Exam.ValidAssignedQuestionCount, Model.Exam.TotalQuestionCount, Model.Exam.InvalidQuestionCount]</div>
+            </div>
+            @if (Model.ExamQuestions.Count > 0)
+            {
+                <form method="post"
+                      asp-page-handler="BulkRemove"
+                      class="admin-assigned-bulk-toolbar"
+                      data-admin-ajax-form="true"
+                      data-admin-bulk-form="true"
+                      data-admin-selection-selector="[data-exam-assigned-question-checkbox]:checked"
+                      data-admin-selection-name="BulkRemoveInput.Ids"
+                      data-admin-no-selection-message="@L["Exams:AssignedBulkNoSelection"]"
+                      data-admin-refresh-target="#examQuestionsWorkspace"
+                      data-admin-confirm-message="@L["Exams:ConfirmBulkRemoveAssignedQuestions"]">
+                    <label class="admin-assigned-select-all">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               data-admin-select-all="[data-exam-assigned-question-checkbox]"
+                               aria-label="@L["Exams:SelectAllAssignedQuestions"]" />
+                        <span>@L["Exams:SelectAllAssignedQuestions"]</span>
+                    </label>
+                    <span data-admin-selection-container></span>
+                    <button type="submit"
+                            class="btn btn-sm btn-outline-danger"
+                            data-admin-bulk-submit
+                            disabled>
+                        @L["Exams:BulkRemoveAssignedQuestions"]
+                    </button>
+                </form>
+            }
         </div>
         <div class="card-body">
             @if (Model.ExamQuestions.Count == 0)
@@ -244,6 +275,14 @@
                     @foreach (var examQuestion in Model.ExamQuestions)
                     {
                         <article class="admin-assigned-item">
+                            <div class="admin-assigned-select-cell">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       value="@examQuestion.Id"
+                                       data-exam-assigned-question-checkbox
+                                       data-admin-selection-item
+                                       aria-label="@L["Exams:SelectAssignedQuestion"]" />
+                            </div>
                             <div class="admin-assigned-copy">
                                 <strong>@examQuestion.QuestionTitle</strong>
                                 <div class="text-muted small">@examQuestion.QuestionTypeName</div>
@@ -261,7 +300,10 @@
                                     <input name="UpdateInput.SortOrder" type="hidden" value="@examQuestion.SortOrder" />
                                     <div class="admin-field-stack admin-field-compact">
                                         <label class="form-label">@L["Exams:ScoreOverride"]</label>
-                                        <input name="UpdateInput.ScoreOverride" class="form-control form-control-sm" value="@examQuestion.ScoreOverride" placeholder="@examQuestion.QuestionScore" />
+                                        <input name="UpdateInput.ScoreOverride"
+                                               class="form-control form-control-sm admin-assigned-score-input"
+                                               value="@examQuestion.ScoreOverride"
+                                               placeholder="@examQuestion.QuestionScore" />
                                     </div>
                                     <label class="admin-inline-check">
                                         <input class="form-check-input" type="checkbox" name="UpdateInput.IsRequired" value="true" @(examQuestion.IsRequired ? "checked" : null) />
