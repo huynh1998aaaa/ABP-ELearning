@@ -62,6 +62,21 @@
         }
     }
 
+    function setupPremiumRequiredNotice() {
+        document.querySelectorAll('[data-premium-required]').forEach(function (trigger) {
+            trigger.addEventListener('click', function () {
+                var message = trigger.getAttribute('data-premium-required-message') || 'Vui lòng nâng cấp Premium.';
+
+                if (window.abp && abp.notify && typeof abp.notify.warn === 'function') {
+                    abp.notify.warn(message);
+                    return;
+                }
+
+                window.alert(message);
+            });
+        });
+    }
+
     function applyClientMode() {
         if (!isClientRuntimePage()) {
             return;
@@ -104,6 +119,7 @@
         });
 
         setupPremiumContactModal();
+        setupPremiumRequiredNotice();
     }
 
     if (document.readyState === 'loading') {

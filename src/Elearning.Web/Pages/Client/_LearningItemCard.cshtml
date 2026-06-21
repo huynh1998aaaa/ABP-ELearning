@@ -3,10 +3,17 @@
 @using Elearning.Localization
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<ElearningResource> L
+@{
+    var premiumRequiredMessage = L["Client:PleaseUpgradePremium"];
+}
 
 @if (Model.IsLocked)
 {
-    <article class="learning-card learning-card-locked">
+    <button type="button"
+            class="learning-card learning-card-locked"
+            data-premium-required
+            data-premium-required-message="@premiumRequiredMessage"
+            aria-label="@($"{Model.Title}. {premiumRequiredMessage}")">
         <div class="learning-card-main">
             <h3>@Model.Title</h3>
             @if (Model.AccessLevel == ClientLearningAccessLevel.Premium)
@@ -14,7 +21,7 @@
                 <span class="learning-card-gem" aria-hidden="true"></span>
             }
         </div>
-    </article>
+    </button>
 }
 else
 {

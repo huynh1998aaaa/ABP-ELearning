@@ -217,14 +217,21 @@
 
 .learning-card {
     display: block;
+    width: 100%;
     min-height: 4.8rem;
     padding: 1.28rem 1.5rem;
     border: 1px solid #dddddf;
     border-radius: 1rem;
     background: #fff;
     color: #101828;
+    font: inherit;
+    text-align: left;
     text-decoration: none;
     transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+button.learning-card {
+    cursor: pointer;
 }
 
 .learning-card:hover {

@@ -392,9 +392,9 @@ body.premium-contact-modal-open {
 }
 
 .session-sticky-stack {
-    position: sticky;
-    top: var(--session-sticky-top);
-    z-index: 20;
+    position: static;
+    top: auto;
+    z-index: auto;
 }
 
 .session-header {
@@ -455,9 +455,9 @@ body.premium-contact-modal-open {
 
 .session-left-rail {
     position: sticky;
-    top: calc(var(--session-sticky-top) + var(--session-sticky-height) + 0.75rem);
+    top: calc(var(--session-sticky-top) + 0.75rem);
     align-self: start;
-    max-height: calc(100vh - var(--session-sticky-top) - var(--session-sticky-height) - 1.25rem);
+    max-height: calc(100vh - var(--session-sticky-top) - 1.25rem);
     overflow-y: auto;
     scrollbar-width: thin;
 }

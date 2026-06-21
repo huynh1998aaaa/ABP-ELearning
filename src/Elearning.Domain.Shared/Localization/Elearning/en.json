@@ -136,6 +136,7 @@
     "Client:ExplanationLabel": "Explanation",
     "Client:AuthRequired": "You need to sign in before starting a learning session.",
     "Client:PremiumRequired": "This content requires a Premium account.",
+    "Client:PleaseUpgradePremium": "Please upgrade to Premium.",
     "Client:ItemNotAvailable": "This content is not available right now.",
     "Client:ItemNotReady": "This content does not have enough data to start.",
     "Client:RuntimeUnsupportedQuestionType": "The \"{0}\" question type is not supported yet.",

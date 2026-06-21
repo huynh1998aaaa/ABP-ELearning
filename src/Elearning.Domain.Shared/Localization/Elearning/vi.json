@@ -136,6 +136,7 @@
     "Client:ExplanationLabel": "Lời giải",
     "Client:AuthRequired": "Bạn cần đăng nhập để bắt đầu làm bài.",
     "Client:PremiumRequired": "Nội dung này yêu cầu tài khoản Premium.",
+    "Client:PleaseUpgradePremium": "Vui lòng nâng cấp Premium.",
     "Client:ItemNotAvailable": "Nội dung này hiện chưa sẵn sàng để làm bài.",
     "Client:ItemNotReady": "Nội dung này chưa đủ dữ liệu để bắt đầu.",
     "Client:RuntimeUnsupportedQuestionType": "Loại câu hỏi \"{0}\" hiện chưa được hỗ trợ.",
